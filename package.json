@@ -23,7 +23,7 @@
     "test:website-gate": "node --experimental-strip-types --test lib/website-gate.test.ts lib/website-proxy.test.mjs",
     "test:deployment-polling": "node --test lib/deployment-polling.test.mjs",
     "test:ui:auth": "playwright test test/auth-login-ui.spec.ts",
-    "test:operations": "node --test lib/operations-security.test.mjs",
+    "test:operations": "node --test lib/operations-security.test.mjs lib/operations-api.test.mjs",
     "test:anonymous-presence": "node --test lib/anonymous-presence.test.mjs lib/website-proxy.test.mjs",
     "test:anonymous-presence:browser": "node test/maintenance-consent-browser.mjs",
     "generate-types": "npx openapi-typescript http://localhost:3005/openapi.json -o lib/types.gen.ts",

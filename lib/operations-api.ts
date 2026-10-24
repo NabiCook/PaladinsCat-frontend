@@ -1,21 +1,82 @@
 /**
- * Defines operations-api's shared contracts and runtime helpers.
- * Keep behavior aligned with its callers and browser/server boundary.
- * refs: none
+ * Adapt backend operations read models and authenticated ticket/project endpoints.
+ * Validate wire shapes only; the backend owns statistics and moderation policy.
+ * Failures reject into the existing page error state, never synthetic zero data.
+ * refs: endpoints: GET /operations/stats; see: lib/api-client.ts
  */
-import { accountAuthHeaders, fetchJson } from "./api-client";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
+import { accountAuthHeaders, API_ERROR_KEYS, ApiRequestError, fetchJson } from "./api-client";
 /**
- * Defines the  public operations stats contract used by this module.
- * refs: none
+ * Carry validated operations statistics without substituting missing measurements.
+ * I/O types: backend read model -> PublicOperationsStats (presentation field names).
+ * refs: endpoints: GET /operations/stats
  */
-export interface PublicOperationsStats { generatedAt:string; release:{version:string;gitCommitShort:string;deployedAt:string|null}; traffic:{activeUsers:number;activeWindowSeconds:number;heartbeatSeconds:number;visitorsToday:number;viewsToday:number;visitorDays7d:number;views7d:number}; catalog:{matches:number;rankedMatches:number;casualMatches:number;specialMatches:number;players:number;registeredUsers:number;verifiedUsers:number;communityBuilds:number;tierLists:number;communityPosts:number;recoveredMatches:number;incompleteMatches:number;latestMatchAt:string|null}; ingestCoverage:{totalMatches:number;directMatches:number;recoveredMatches:number;incompleteMatches:number}; }
+export interface PublicOperationsStats { generatedAt:string; release:{version:string;gitCommitShort:string|null;deployedAt:string|null}; traffic:{activeUsers:number;activeWindowSeconds:number;heartbeatSeconds:number;visitorsToday:number;viewsToday:number;visitorDays7d:number;views7d:number}; catalog:{matches:number;rankedMatches:number;casualMatches:number;specialMatches:number;players:number;registeredUsers:number;verifiedUsers:number;communityBuilds:number;tierLists:number;communityPosts:number;recoveredMatches:number;incompleteMatches:number;latestMatchAt:string|null}; ingestCoverage:{totalMatches:number;directMatches:number;recoveredMatches:number;incompleteMatches:number}; }
 /**
- * Fetch public operations statistics and normalize release, traffic, catalog, and ingest-coverage fields. Use documented numeric defaults for missing fields; reject network failures or non-success HTTP responses.
- * refs: none
- * I/O types: `none -> Promise<PublicOperationsStats>`.
+ * Fetch and validate the backend operations success envelope through shared transport.
+ * Preserve finite numeric values (including zero) and explicit null hash/timestamps.
+ * Reject missing/wrongly typed fields as invalid-response; do not compute statistics.
+ * I/O types: none -> Promise<PublicOperationsStats>; rejection: ApiRequestError.
+ * refs: endpoints: GET /operations/stats; see: lib/api-client.ts::fetchJson
  */
-export async function fetchPublicOperationsStats():Promise<PublicOperationsStats>{const response=await fetch(`${API_BASE}/operations/stats`);const raw=await response.json().catch(()=>({}));if(!response.ok)throw new Error(typeof raw.error==="string"?raw.error:`Request failed (${response.status})`);const summary=raw.traffic?.summary??{},catalog=raw.catalog??{};return {generatedAt:String(raw.generated_at??""),release:{version:String(raw.release?.version??""),gitCommitShort:String(raw.release?.git_commit_short??""),deployedAt:raw.release?.deployed_at==null?null:String(raw.release.deployed_at)},traffic:{activeUsers:Number(summary.active_users??0),activeWindowSeconds:Number(summary.active_window_seconds??300),heartbeatSeconds:Number(summary.heartbeat_seconds??60),visitorsToday:Number(summary.visitors_today??0),viewsToday:Number(summary.views_today??0),visitorDays7d:Number(summary.visitor_days_7d??0),views7d:Number(summary.views_7d??0)},catalog:{matches:Number(catalog.matches??0),rankedMatches:Number(catalog.ranked_matches??0),casualMatches:Number(catalog.casual_matches??0),specialMatches:Number(catalog.special_matches??0),players:Number(catalog.players??0),registeredUsers:Number(catalog.registered_users??0),verifiedUsers:Number(catalog.verified_users??0),communityBuilds:Number(catalog.community_builds??0),tierLists:Number(catalog.tier_lists??0),communityPosts:Number(catalog.community_posts??0),recoveredMatches:Number(catalog.recovered_matches??0),incompleteMatches:Number(catalog.incomplete_matches??0),latestMatchAt:catalog.latest_match_at==null?null:String(catalog.latest_match_at)},ingestCoverage:{totalMatches:Number(raw.ingest_coverage?.total_matches??0),directMatches:Number(raw.ingest_coverage?.direct_matches??0),recoveredMatches:Number(raw.ingest_coverage?.recovered_matches??0),incompleteMatches:Number(raw.ingest_coverage?.incomplete_matches??0)}}}
+export async function fetchPublicOperationsStats(): Promise<PublicOperationsStats> {
+  const invalid = (): never => {
+    throw new ApiRequestError(API_ERROR_KEYS.genericFailure, undefined, {
+      kind: "invalid-response", code: "INVALID_OPERATIONS_STATS",
+      endpoint: "/operations/stats", method: "GET",
+    });
+  };
+  const object = (value: unknown): Record<string, unknown> => {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return invalid();
+    return value as Record<string, unknown>;
+  };
+  const number = (value: unknown): number =>
+    typeof value === "number" && Number.isFinite(value) ? value : invalid();
+  const string = (value: unknown): string => typeof value === "string" ? value : invalid();
+  const nullableString = (value: unknown): string | null => value === null ? null : string(value);
+  const raw = object(await fetchJson<unknown>("/operations/stats", { unwrapData: false }));
+  const release = object(raw.release);
+  const summary = object(object(raw.traffic).summary);
+  const catalog = object(raw.catalog);
+  const coverage = object(raw.ingest_coverage);
+  return {
+    generatedAt: string(raw.generated_at),
+    release: {
+      version: string(release.version),
+      gitCommitShort: nullableString(release.git_commit_short),
+      deployedAt: nullableString(release.deployed_at),
+    },
+    traffic: {
+      activeUsers: number(summary.active_users),
+      activeWindowSeconds: number(summary.active_window_seconds),
+      heartbeatSeconds: number(summary.heartbeat_seconds),
+      visitorsToday: number(summary.visitors_today),
+      viewsToday: number(summary.views_today),
+      visitorDays7d: number(summary.visitor_days_7d),
+      views7d: number(summary.views_7d),
+    },
+    catalog: {
+      matches: number(catalog.matches),
+      rankedMatches: number(catalog.ranked_matches),
+      casualMatches: number(catalog.casual_matches),
+      specialMatches: number(catalog.special_matches),
+      players: number(catalog.players),
+      registeredUsers: number(catalog.registered_users),
+      verifiedUsers: number(catalog.verified_users),
+      communityBuilds: number(catalog.community_builds),
+      tierLists: number(catalog.tier_lists),
+      communityPosts: number(catalog.community_posts),
+      recoveredMatches: number(catalog.recovered_matches),
+      incompleteMatches: number(catalog.incomplete_matches),
+      latestMatchAt: nullableString(catalog.latest_match_at),
+    },
+    ingestCoverage: {
+      totalMatches: number(coverage.total_matches),
+      directMatches: number(coverage.direct_matches),
+      recoveredMatches: number(coverage.recovered_matches),
+      incompleteMatches: number(coverage.incomplete_matches),
+    },
+  };
+}
 
 /**
  * Defines the  ticket type contract used by this module.
