@@ -132,6 +132,19 @@ export default function Nav() {
   const canAccessAdmin = user?.isAdmin === true;
   const projectsHref = "/operations/projects";
   const developerHref = "/operations/developer";
+  const levelAbbreviation = t("common.playerChampions.level", { level: "" }).trim();
+  const accountLevelLabel = [t("generated.players.account"), levelAbbreviation].join(" ");
+  const championLevelLabel = [t("generated.players.champion"), levelAbbreviation].join(" ");
+  const leaderboardLinks = [
+    { href: "/players/leaderboard", label: t("generated.players.ranked") },
+    { href: "/players/elo/account", label: t("generated.players.accountElo") },
+    { href: "/players/elo/champion", label: t("generated.players.championElo") },
+    { href: "/players/performance/account", label: t("stats.scope.performance", { mode: t("generated.players.account") }) },
+    { href: "/players/performance/champion", label: t("stats.scope.performance", { mode: t("generated.players.champion") }) },
+    { href: "/players/levels/account", label: accountLevelLabel },
+    { href: "/players/levels/champion", label: championLevelLabel },
+  ];
+
   const headerGroups = [
     {
       title: t("nav.game"),
@@ -172,7 +185,43 @@ export default function Nav() {
   // labels.
   const menuSections = [
     { title: t("menu.browse"), links: [{ href: "/", label: t("menu.home") }] },
-    ...headerGroups,
+    headerGroups[0],
+    {
+      title: t("nav.players"),
+      links: [
+        { href: "/players", label: t("menu.playerHub") },
+        { href: "/players/private-accounts", label: t("generated.players.privateAccounts") },
+        { href: "/players/parties", label: t("generated.players.rankedParties") },
+      ],
+    },
+    {
+      title: t("menu.leaderboards"),
+      links: leaderboardLinks,
+    },
+    {
+      title: t("generated.players.moderation"),
+      links: [
+        { href: "/players/cheaters", label: t("generated.players.cheaters") },
+        { href: "/evidence", label: t("moderation.evidencePortal") },
+        { href: "/players/boosted", label: t("moderation.boostedPlayers") },
+        { href: "/players/suspicious", label: t("generated.players.suspiciousPlayers") },
+        { href: "/players/droppers", label: t("moderation.droppersTitle") },
+        { href: "/players/afk-wintrade", label: t("moderation.afkWintradeTitle") },
+        { href: "/players/alt-accounts", label: t("moderation.altAccountsTitle") },
+      ],
+    },
+    {
+      title: t("menu.playerLabels"),
+      links: [
+        { href: "/players/weirdos", label: t("moderation.weirdoTitle") },
+        { href: "/players/hall-of-fame", label: t("moderation.hallOfFameTitle") },
+      ],
+    },
+    {
+      title: t("nav.stats"),
+      links: [{ href: "/stats", label: t("menu.globalStats") }],
+    },
+    ...headerGroups.slice(3),
     { title: t("menu.site"), links: [{ href: "/localization", label: t("nav.localization") }, { href: "/about", label: t("menu.about") }, { href: "/contact", label: t("menu.contact") }, { href: "/privacy", label: t("menu.privacy") }, { href: "/terms", label: t("menu.terms") }] },
   ];
 
@@ -256,6 +305,7 @@ export default function Nav() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
   const isMenuActive = (href: string) => {
+    if (href === "/" || href === "/stats" || href === "/players") return pathname === href;
     return pathname === href || pathname.startsWith(`${href}/`);
   };
   // Auth state is client-resolved. Keep the server and first client render on
