@@ -23,6 +23,7 @@ interface TablePaginationProps {
   totalItems: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: TablePageSize) => void;
+  fixedPageSize?: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export default function TablePagination({
   totalItems,
   onPageChange,
   onPageSizeChange,
+  fixedPageSize = false,
 }: TablePaginationProps) {
   const { t , formatNumber} = useLocalization();
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -51,7 +53,7 @@ export default function TablePagination({
         {t("skins.showingStatus", { start, end, total: formatNumber(totalItems) })}
       </span>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <label className="flex items-center gap-2 text-xs text-pc-text-secondary">
+        {!fixedPageSize && <label className="flex items-center gap-2 text-xs text-pc-text-secondary">
           {t("skins.rowsPerPage")}
           <select
             value={pageSize}
@@ -60,7 +62,7 @@ export default function TablePagination({
           >
             {TABLE_PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
           </select>
-        </label>
+        </label>}
         <span className="min-w-20 text-center text-xs text-pc-text-muted">
           {t("skins.pageStatus", { page, total: totalPages })}
         </span>

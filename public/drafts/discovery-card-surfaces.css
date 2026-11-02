@@ -1,0 +1,139 @@
+/* Dashboard surfaces share the footer's glass.
+   Keep route-specific geometry, artwork, semantic colors, and selection states. */
+.notification-popover,
+.workspace :is(
+  .surface:where(:not(.hero,.discovery-card)),
+  .dashboard-footer,
+  .leaderboard-preview,
+  .discovery-panel,
+  .players-panel,
+  .players-directory-card,
+  .players-cheater-entry,
+  .players-profile-shortcut,
+  .players-loadout-roster-card,
+  .players-loadout-deck,
+  .players-relationship-card,
+  .players-note,
+  .community-panel,
+  .community-selection,
+  .community-tier-editor-row,
+  .site-panel,
+  .stats-panel,
+  .stats-metric,
+  .reference-stat-panel,
+  .reference-detail-summary,
+  .map-stats-entity,
+  .match-build-entry,
+  .match-matchup-card,
+  .match-stat-card,
+  .match-rating-card,
+  .match-team-averages,
+  .champion-changelog-panel,
+  .champion-loadout-card-footer.has-card-metrics,
+  .discovery-skeleton-chart,
+  .search-input-shell,
+  .search-page-input-shell,
+  .search-page-submit,
+  .search-submit-preview,
+  .search-type-counts,
+  .search-page-result
+),
+.workspace .players-metrics > div,
+.workspace .stats-pro-source :is(.pc-card,.pc-card-flush,.pc-surface,.pc-mobile-panel),
+.workspace .stats-pro-source :is(a,div,section).border.bg-pc-bg-elevated:is(.rounded-xl,.rounded-2xl):where(:not(:is(.pc-card,.pc-card-flush,.pc-mobile-panel) *)),
+.workspace .leaderboard-pro-source :is(.pc-card,.pc-card-flush,.pc-surface,.pc-mobile-panel),
+.workspace .demo-pro-source :is(.pc-card,.pc-card-flush,.pc-surface,.pc-mobile-panel),
+.workspace .footer-pro-source :is(.pc-card,.pc-glass):where(:not(:is(.community-panel,.pc-card,.pc-glass) *)),
+.workspace .leaderboard-pro-source aside > .bg-pc-bg-elevated,
+.workspace #stats-activity-page .activity-source :is(.pc-card,.pc-surface),
+.workspace :is(.discovery-field,.players-field,.community-field,.site-field,.stats-field,.reference-stat-select,.map-stats-scope-control,.reference-search) :is(input:not([type="checkbox"],[type="radio"],[type="file"],[type="range"],[type="color"]),select,textarea),
+.workspace .stats-pro-source :is(.pc-input,.pc-select,.pc-btn-secondary):where(:not(.is-active,[aria-pressed="true"])),
+.workspace .leaderboard-pro-source :is(.pc-input,.pc-select,.pc-btn-secondary):where(:not(.is-active,[aria-pressed="true"])),
+.workspace .demo-pro-source :is(.pc-input,.pc-select,.pc-btn-secondary):where(:not(.is-active,[aria-pressed="true"])),
+.workspace .players-profile-toolbar > details > .players-controls,
+.workspace .discovery-skeleton-item:where(:not(:is(.surface,.discovery-panel,.players-panel,.community-panel,.site-panel,.stats-panel,.leaderboard-preview,.reference-stat-panel,.reference-detail-summary) *)),
+.workspace :is(.discovery-table-wrap,.players-table-wrap):where(:not(:is(
+  .discovery-panel,.players-panel,.community-panel,.site-panel,.stats-panel,
+  .leaderboard-preview,.reference-stat-panel,.reference-detail-summary,.surface
+) *)),
+.workspace :is(
+  .leaderboard-category,
+  .players-hub-card,
+  .community-content-card,
+  .site-post-card,
+  .stats-hub-card,
+  .champion-card,
+  .champion-reference-card,
+  .map-reference-card,
+  .item-reference-card,
+  .reference-filter,
+  .champion-role-button
+):where(:not(.is-active,[aria-pressed="true"])) {
+  background-color: var(--pc-glass-bg-subtle);
+  -webkit-backdrop-filter: var(--pc-glass-blur-subtle);
+  backdrop-filter: var(--pc-glass-blur-subtle);
+}
+
+.workspace .stats-pro-source :is(.pc-card,.pc-card-flush,.pc-mobile-panel,a.border.bg-pc-bg-elevated,div.border.bg-pc-bg-elevated,section.border.bg-pc-bg-elevated):where(:not(:hover,:focus-visible,[aria-pressed="true"])) {
+  border-color: var(--pc-glass-border);
+}
+
+/* Generated utility themes must inherit the dashboard font, including when
+   their own Tailwind theme declares a system-font fallback later in its CSS. */
+.workspace :is(.stats-pro-source,.leaderboard-pro-source,.demo-pro-source,.activity-source,.footer-pro-source),
+.workspace #stats-activity-page .activity-source {
+  --font-sans: var(--pc-dashboard-font);
+  font-family: var(--pc-dashboard-font);
+}
+
+/* The skin filters are controls, not an additional glass panel. */
+#stats-skins-page .stats-pro-source .grid.bg-pc-bg-elevated:has(> label > :is(input,select)) {
+  padding: 0; border: 0; background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+
+/* Pro components inherit the dashboard control reset without masking their
+   explicit selected, disabled, or semantic-color utilities. */
+.workspace :where(.leaderboard-pro-source,.stats-pro-source,.activity-source) :where(button) {
+  background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer;
+}
+.workspace :where(.leaderboard-pro-source,.stats-pro-source,.activity-source) svg:is(.lucide-arrow-up,.lucide-arrow-down)[width="16"][height="16"] {
+  width: 16px; height: 16px;
+}
+
+/* The ranked page keeps the Pro tier and sort behavior in the dashboard's
+   established unboxed filter row at every viewport width. */
+#leaderboard-ranked-page .leaderboard-pro-source > div > .grid { display: block; }
+#leaderboard-ranked-page .leaderboard-pro-source aside { display: none; }
+#leaderboard-ranked-page .leaderboard-pro-source section.pc-mobile-panel {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 12px;
+  margin: 18px 0; padding: 0; border: 0; background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+#leaderboard-ranked-page .leaderboard-pro-source section.pc-mobile-panel > div:first-child {
+  display: flex; flex-wrap: wrap; gap: 12px;
+}
+#leaderboard-ranked-page .leaderboard-pro-source section.pc-mobile-panel > div:last-child {
+  border: 0; padding: 0; align-self: center;
+}
+#leaderboard-ranked-page .leaderboard-pro-source section.pc-mobile-panel :is(.pc-select,.pc-input) {
+  min-height: 42px; border-color: var(--pc-glass-border); border-radius: 11px;
+}
+
+/* Tables and placeholders inside a framed panel share its surface, avoiding a
+   second translucent layer and a visibly darker result. */
+.workspace :is(
+  .discovery-panel,.players-panel,.community-panel,.site-panel,.stats-panel,
+  .leaderboard-preview,.reference-stat-panel,.reference-detail-summary,.surface
+) :is(.discovery-table-wrap,.players-table-wrap,.discovery-skeleton-item) {
+  background-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.workspace :is(.stats-pro-source,.leaderboard-pro-source,.demo-pro-source) :is(.pc-card,.pc-card-flush,.pc-mobile-panel) .pc-surface,
+.workspace .footer-pro-source :is(.pc-card,.pc-glass) :is(.pc-card,.pc-glass) {
+  background-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

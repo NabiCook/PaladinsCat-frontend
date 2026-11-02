@@ -1,0 +1,80 @@
+.discovery-page { width:min(100%,var(--pc-page-max-width)); min-width:0; margin:0 auto; padding:28px clamp(18px,3.5vw,52px) 54px; }
+.discovery-page[hidden] { display:none; }
+.discovery-page h1 { margin:0 0 20px; color:var(--text); font-size:clamp(34px,4vw,46px); font-weight:700; letter-spacing:-.045em; line-height:1.1; overflow-wrap:anywhere; }
+.discovery-page h2 { margin:0 0 16px; color:var(--text); font-size:20px; font-weight:600; }
+.discovery-copy { color:var(--secondary); font-size:14px; line-height:1.7; overflow-wrap:anywhere; }
+.discovery-panel { min-width:0; margin:20px 0; padding:20px; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg-subtle); -webkit-backdrop-filter:var(--pc-glass-blur-subtle); backdrop-filter:var(--pc-glass-blur-subtle); }
+.discovery-toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:18px 0; }
+.discovery-field { display:grid; min-width:0; gap:7px; color:var(--secondary); font-size:12px; }
+.discovery-field :is(input,select,textarea) { width:100%; min-width:0; min-height:40px; padding:9px 12px; border:1px solid var(--pc-glass-border); border-radius:10px; background:var(--pc-glass-bg); color:var(--text); font:inherit; font-size:14px; color-scheme:dark; }
+.discovery-field textarea { min-height:120px; }
+.discovery-table-wrap { max-width:100%; overflow:auto; border:1px solid var(--pc-glass-border); border-radius:14px; background:var(--pc-glass-bg-subtle); }
+.discovery-table { width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; }
+.discovery-table th,.discovery-table td { padding:12px 14px; border-bottom:1px solid var(--pc-glass-border); text-align:right; vertical-align:middle; white-space:nowrap; }
+.discovery-table th:first-child,.discovery-table td:first-child { text-align:left; }
+.discovery-table th { color:var(--secondary); font-size:12px; font-weight:600; }
+.discovery-table a { color:var(--accent); }
+.discovery-state { padding:24px 0; color:var(--secondary); font-size:14px; line-height:1.7; }
+.discovery-state button { margin-top:12px; }
+.dashboard-shell[data-dynamic-page="true"] .dashboard-grid { max-height:0; overflow:hidden; opacity:0; pointer-events:none; visibility:hidden; }
+.dashboard-shell[data-dynamic-page="true"] .rail .search-page-back { opacity:1; pointer-events:auto; transform:translateY(0) scale(1); visibility:visible; }
+@media(max-width:600px) { .discovery-page { padding:76px 14px 38px; } .discovery-panel { padding:16px; } .discovery-toolbar > .discovery-field { flex:1 1 140px; } }
+
+.stats-icon { width:32px; height:32px; border:0; border-radius:0; background:none; }
+.stats-icon .lucide { width:32px; height:32px; }
+.stats-hub-card[data-analytics-link] .stats-icon { color:hsl(265 62% 70%); }
+
+.stats-hub-card[data-section="performance"] .stats-icon { color:hsl(187 65% 66%); }
+.stats-hub-card[data-section="skins"] .stats-icon { color:hsl(265 62% 70%); }
+.stats-hub-card[data-section="compositions"] .stats-icon { color:hsl(152 55% 68%); }
+.stats-hub-card[data-section="ecpm"] .stats-icon { color:hsl(45 78% 68%); }
+.stats-hub-card[data-section="tiers"] .stats-icon { color:hsl(152 55% 68%); }
+.stats-hub-card[data-section="activity"] .stats-icon { color:hsl(205 70% 68%); }
+
+/* Shared dashboard fields retain the native 42px reference-control treatment. */
+:is(.discovery-field,.players-field,.community-field,.stats-field,.site-field,.reference-stat-select,.map-stats-scope-control,.reference-search) :is(select,input:is([type="search"],[type="text"],[type="number"],[type="date"],[type="datetime-local"],[type="time"],[type="email"],[type="url"],:not([type]))) { height:42px; min-height:42px; padding-block:0; border-radius:11px; }
+/* Standalone status text needs a readable surface; panels already provide one. */
+:is(.discovery-state,.players-state,.community-state,.site-state,.stats-state,.reference-status,.map-stats-message,.reference-stat-message):not(:empty):not(:is(.surface,.discovery-panel,.players-panel,.community-panel,.community-content-card,.site-panel,.stats-panel,.reference-stat-panel,.reference-detail-summary,.map-stats-entity,.map-reference-card,.item-reference-card,.reference-status) *) { padding:14px 16px; border:1px solid var(--pc-glass-border); border-radius:12px; background:var(--pc-glass-bg-subtle); }
+.champion-ai-context:not(:empty),.champion-card-metrics-context:not([hidden]) { padding:12px 14px; border:1px solid var(--pc-glass-border); border-radius:12px; background:var(--pc-glass-bg-subtle); }
+@media(max-width:600px) {
+  .discovery-page,.players-hub-page,.community-page,.site-page { padding-top:22px; }
+  .dashboard-shell[data-view="maps"] #maps-page,.dashboard-shell[data-view="map-detail"] #map-detail-page,.dashboard-shell[data-view="items"] #items-page,.dashboard-shell[data-view="item-detail"] #item-detail-page { padding-top:22px; }
+  .rail .rail-button { width:44px; min-width:44px; height:44px; flex-shrink:0; }
+  .reference-filter,.item-level-control .reference-filter,.map-stats-detail-toolbar .reference-filter,.champion-role-button { min-height:44px; }
+  :is(.discovery-field,.players-field,.community-field,.stats-field,.site-field,.reference-stat-select,.map-stats-scope-control,.reference-search) :is(select,input:is([type="search"],[type="text"],[type="number"],[type="date"],[type="datetime-local"],[type="time"],[type="email"],[type="url"],:not([type]))) { height:44px; min-height:44px; }
+  .champion-loadout-level-controls { gap:10px; }
+  .champion-loadout-stepper { position:relative; }
+  .champion-loadout-stepper::after { content:""; position:absolute; inset:-5px; }
+}
+
+/* Loading placeholders use the same rounded surfaces and respect reduced motion. */
+.discovery-skeleton { display:grid; gap:12px; min-width:0; }
+.discovery-skeleton--cards { grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); }
+.discovery-skeleton--rows,.discovery-skeleton--table { grid-template-columns:minmax(0,1fr); }
+.discovery-skeleton-item { min-width:0; padding:16px; border:1px solid var(--pc-glass-border); border-radius:14px; background:var(--pc-glass-bg-subtle); }
+.discovery-skeleton-line { display:block; height:12px; width:72%; margin:10px 0; border-radius:6px; background:color-mix(in srgb,var(--secondary) 20%,transparent); animation:discovery-skeleton-pulse 1.4s ease-in-out infinite; }
+.discovery-skeleton-line--short { width:36%; } .discovery-skeleton-line--long { width:90%; }
+.discovery-skeleton--table .discovery-skeleton-item { display:flex; gap:16px; align-items:center; padding:10px 16px; }
+.discovery-skeleton--table .discovery-skeleton-line { flex:1; margin:0; }
+:is(.community-card-grid,.players-card-grid,.browse-card-grid,.site-post-list) > :is(.discovery-skeleton,[role="status"]) { grid-column:1 / -1; }
+@keyframes discovery-skeleton-pulse { 50% { opacity:.45; } }
+@media(prefers-reduced-motion:reduce) { .discovery-skeleton-line { animation:none; } }
+
+.discovery-skeleton-item { pointer-events:none; cursor:default; }
+.discovery-state.discovery-state:has(> .discovery-skeleton):not(:empty) { padding:0; border:0; background:transparent; }
+.discovery-state:has(> .discovery-skeleton) > .discovery-copy { padding:12px 14px; border:1px solid var(--pc-glass-border); border-radius:12px; background:var(--pc-glass-bg-subtle); }
+
+:is(.surface,.site-panel,.community-panel) .discovery-skeleton-item { border:0; border-radius:0; border-bottom:1px solid var(--pc-glass-border); background:transparent; }
+
+.discovery-skeleton--dashboard { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.discovery-skeleton-chart { grid-column:1 / -1; min-height:180px; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg-subtle); }
+@media(max-width:600px) { .discovery-skeleton--dashboard { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* One entrance motion for native and dynamically created in-page views. */
+.page-view-stack > main[aria-hidden="false"],
+.dashboard-shell[data-view="dashboard"] .dashboard-footer {
+  animation: discovery-view-fade 150ms var(--pc-ease-standard) 160ms backwards, discovery-view-rise 180ms var(--pc-ease-standard) 160ms backwards;
+}
+@keyframes discovery-view-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes discovery-view-rise { from { transform:translateY(10px); } to { transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .page-view-stack > main[aria-hidden="false"], .dashboard-shell[data-view="dashboard"] .dashboard-footer { animation:none !important; } }

@@ -76,3 +76,8 @@ export function fallbackLocalImageUrl(src: string): string {
 export function getCanonicalTalentImageUrl(source: string | null | undefined): string | null {
   return source?.startsWith("/images/") ? preferredLocalImageUrl(source) : null;
 }
+
+/** Resolve the local item icon using the shared item artwork naming convention. */
+export function itemIconPath(name: string): string {
+  return `/images/items/${name.replace(/\s+/g, "_")}_Icon.avif`;
+}

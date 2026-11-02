@@ -1,0 +1,11 @@
+.champion-detail-tabs { gap:8px; overflow-x:auto; flex-wrap:nowrap; padding:2px; scrollbar-width:thin; }
+.champion-detail-tabs [role="tab"] { flex:none; min-height:40px; }
+.champion-tab-panel { display:flex; flex-direction:column; gap:24px; min-width:0; }
+.champion-tab-panel[hidden] { display:none; }
+.champion-tab-panel .stats-controls { margin-bottom:0; }
+.champion-tab-panel .stats-body { gap:24px; }
+.champion-tab-panel :is(button,select,input,.stats-table-wrap):focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+@media(max-width:600px){ .champion-tab-panel { gap:20px; } .champion-detail-tabs [role="tab"] { min-height:44px; } }
+
+.champion-tab-panel .map-stats-champion { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.champion-tab-panel .item-level-control { margin:0; }

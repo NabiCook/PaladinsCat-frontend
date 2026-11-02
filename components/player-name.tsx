@@ -39,6 +39,7 @@ const EMPTY_MODERATION: PlayerModeration = {
 };
 
 const PLAYER_TAG_CLASS = "player-status-tag shrink-0 rounded bg-[var(--pc-bg-secondary)] px-1.5 py-0.5 text-xs font-bold leading-none";
+export const PLAYER_NAME_UNCLIPPED_CLASS = "max-h-none! overflow-visible! [&>span:last-child]:max-h-none [&>span:last-child]:overflow-visible";
 const AUTOMATIC_TAG_ACCENT: Record<NonNullable<PlayerModerationTagProps["automaticTag"]>, string> = {
   TANK: "text-sky-300",
   SUP: "text-emerald-300",

@@ -1,0 +1,83 @@
+/* Additional dashboard pages reuse the existing glass surfaces and controls. */
+.site-page { width:min(100%,var(--pc-page-max-width)); margin:0 auto; padding:28px clamp(18px,3.5vw,52px) 54px; min-width:0; }
+.site-page[hidden] { display:none; }
+.site-header { margin:0 0 24px; }
+.site-header h1 { color:var(--text); font-size:clamp(34px,4vw,46px); font-weight:700; letter-spacing:-.045em; line-height:1.1; overflow-wrap:anywhere; }
+.site-copy { color:var(--secondary); font-size:14px; line-height:1.7; margin:0; overflow-wrap:anywhere; }
+.site-header .site-copy { margin-top:12px; }
+.site-panel { min-width:0; padding:20px; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg); -webkit-backdrop-filter:var(--pc-glass-blur); backdrop-filter:var(--pc-glass-blur); }
+.site-panel + .site-panel { margin-top:24px; }
+.site-panel h2 { margin:0 0 16px; color:var(--text); font-size:20px; font-weight:600; line-height:1.35; }
+.site-panel h3 { color:var(--text); font-size:16px; font-weight:600; }
+.site-panel > .site-copy + :is(button,a) { margin-top:16px; }
+.site-page > button + .site-panel { margin-top:24px; }
+.site-state { display:grid; justify-items:start; gap:14px; padding:20px 0; }
+.site-meta { display:block; color:var(--secondary); font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.site-link { color:var(--accent); font-size:14px; text-decoration:none; line-height:1.5; overflow-wrap:anywhere; }
+.site-link:hover { text-decoration:underline; }
+.site-filters { margin-bottom:20px; }
+.site-field { display:flex; flex-direction:column; gap:8px; max-width:440px; color:var(--secondary); font-size:12px; }
+.site-field input,.site-field select { min-width:0; width:100%; height:42px; border:1px solid var(--pc-glass-border); border-radius:11px; background:var(--pc-glass-bg); color:var(--text); padding:0 12px; font:inherit; font-size:14px; color-scheme:dark; }
+.site-search { margin-bottom:24px; }
+.site-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; margin:0 0 24px; }
+.site-settings-body { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); align-items:start; gap:24px; }
+.site-settings-body > * { min-width:0; }
+.site-settings-account { display:contents; }
+.site-settings-wallpaper > .community-panel { margin:0; }
+.site-settings-body > .site-panel { margin:0; }
+.site-setting-row { display:flex; gap:24px; align-items:center; justify-content:space-between; padding:16px 0; border-top:1px solid var(--pc-glass-border); cursor:pointer; }
+.site-setting-row:first-of-type { border-top:0; }
+.site-setting-row strong { display:block; margin-bottom:4px; color:var(--text); font-size:14px; font-weight:600; }
+.site-setting-row input { flex:0 0 22px; width:22px; height:22px; accent-color:var(--accent); cursor:pointer; }
+.site-post-list { display:grid; gap:16px; }
+.site-post-card { display:flex; min-width:0; flex-direction:column; align-items:start; gap:12px; width:100%; padding:24px; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg); color:var(--text); text-align:left; cursor:pointer; -webkit-backdrop-filter:var(--pc-glass-blur); backdrop-filter:var(--pc-glass-blur); }
+.site-post-card h2 { font-size:20px; font-weight:600; line-height:1.35; overflow-wrap:anywhere; }
+.site-post-card:hover,.site-community-card:hover { border-color:color-mix(in srgb,var(--accent) 50%,var(--pc-glass-border)); }
+.site-post-card .site-copy { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.site-community-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; }
+.site-community-grid > .site-panel { margin:0; }
+.site-community-card { display:flex; flex-direction:column; align-items:start; gap:10px; width:100%; padding:16px 0; border:0; border-top:1px solid var(--pc-glass-border); background:none; text-align:left; cursor:pointer; }
+.site-community-card .site-copy { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.site-post-body { margin:16px 0 0; color:var(--secondary); font-size:14px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
+.site-reply { padding:16px 0; border-top:1px solid var(--pc-glass-border); }
+.site-reply strong { font-size:14px; color:var(--text); }
+.site-reply .site-meta { margin-top:6px; }
+.site-stream { display:grid; gap:8px; padding:16px 0; border-top:1px solid var(--pc-glass-border); }
+.site-blog-update { display:block; width:100%; padding:18px 0; border:0; border-bottom:1px solid var(--pc-glass-border); background:none; color:var(--text); text-align:left; cursor:pointer; }
+.site-blog-update h3 { margin:6px 0; font-size:14px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.site-blog-update .site-copy { font-size:14px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.site-blog-updates .site-state { padding:18px 0; }
+.site-markdown { margin-top:24px; overflow-wrap:anywhere; }
+.site-markdown :is(h1,h2,h3,h4,h5,h6) { margin:24px 0 12px; line-height:1.35; color:var(--text); font-weight:600; }
+.site-markdown :is(h1,h2) { font-size:24px; }
+.site-markdown :is(h3,h4,h5,h6) { font-size:20px; }
+.site-markdown p { margin:14px 0; color:var(--secondary); font-size:14px; line-height:1.85; }
+.site-markdown :is(ul,ol) { padding-left:24px; margin:14px 0; color:var(--secondary); font-size:14px; line-height:1.8; }
+.site-markdown ul { list-style:disc; } .site-markdown ol { list-style:decimal; }
+.site-markdown a { color:var(--accent); text-decoration:underline; }
+.site-markdown img { display:block; max-width:100%; height:auto; border-radius:12px; margin:20px auto; }
+.site-markdown blockquote { margin:20px 0; padding:2px 16px; border-left:3px solid var(--accent); border-radius:0 12px 12px 0; background:color-mix(in srgb,var(--accent) 8%,transparent); }
+.site-markdown pre { max-width:100%; padding:16px; overflow-x:auto; background:var(--pc-glass-bg-subtle); border:1px solid var(--pc-glass-border); border-radius:12px; color:var(--text); font-size:14px; }
+.site-markdown code { font:14px/1.6 ui-monospace,monospace; }
+.site-markdown table { display:block; max-width:100%; overflow-x:auto; border-collapse:collapse; margin:20px 0; font-size:14px; }
+.site-markdown :is(th,td) { border:1px solid var(--pc-glass-border); padding:10px 12px; text-align:left; }
+.site-markdown hr { margin:24px 0; border:0; border-top:1px solid var(--pc-glass-border); }
+.dashboard-shell[data-view^="site-"] .dashboard-grid { max-height:0; overflow:hidden; opacity:0; pointer-events:none; visibility:hidden; }
+.dashboard-shell[data-view^="site-"] .rail { position:relative; z-index:5; }
+.dashboard-shell[data-view^="site-"] .rail .search-page-back { opacity:1; pointer-events:auto; transform:translateY(0) scale(1); visibility:visible; }
+body[data-site-wallpaper="false"] { background-image:none; background-color:#101216; }
+html.site-lite-mode *,html.site-lite-mode *::before,html.site-lite-mode *::after { transition:none!important; animation:none!important; scroll-behavior:auto!important; }
+@media(max-width:800px) { .site-community-grid { grid-template-columns:1fr; } }
+@media(max-width:600px) { .site-page { padding:76px 14px 38px; } .site-panel,.site-post-card { padding:16px; } .site-header { margin-bottom:20px; } .site-setting-row { gap:16px; } }
+
+/* Use the same compact switch form as the existing display preferences. */
+.site-setting-row input { appearance:none; flex-basis:38px; width:38px; height:22px; border:1px solid var(--pc-glass-border); border-radius:20px; background:var(--pc-glass-bg-subtle); position:relative; }
+.site-setting-row input::before { content:""; display:block; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--secondary); }
+.site-setting-row input:checked { background:var(--accent); }
+.site-setting-row input:checked::before { transform:translateX(16px); background:#fff; }
+
+@media(max-width:600px) {
+  /* These connected destinations stay reachable in the existing scrollable rail. */
+  .rail-main .rail-button[aria-controls="site-community-page"],
+  .rail-main .rail-button[aria-controls="site-blog-page"] { display:flex; }
+}

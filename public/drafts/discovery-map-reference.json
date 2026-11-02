@@ -1,0 +1,368 @@
+{
+  "_generated": "Derived from existing owning map sources for the standalone visual draft. Do not edit catalog entries independently.",
+  "sources": [
+    {
+      "path": "lib/map-tier-list.ts",
+      "sha256": "ae993cd87e4c5c674fb6e08de12e97fb0c838907a94e717e09710132edcfec89"
+    },
+    {
+      "path": "lib/map-images.ts",
+      "sha256": "b94e7dbe14051253d7bd800805f3d79c6037be1e1d64d85a20e926fa0a3356a6"
+    }
+  ],
+  "classifications": [
+    "Siege",
+    "Onslaught",
+    "King of the Hill",
+    "Team Deathmatch",
+    "Payload",
+    "Other"
+  ],
+  "maps": [
+    {
+      "name": "Frog Isle",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Frog_Isle.png",
+      "loadingArtwork": "/images/maps/Frog_Isle_Loading.png",
+      "overheadArtwork": "/images/maps/Frog_Isle_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Jaguar Falls",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Jaguar_Falls.png",
+      "loadingArtwork": "/images/maps/Jaguar_Falls_Loading.png",
+      "overheadArtwork": "/images/maps/Jaguar_Falls_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Serpent Beach",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Serpent_Beach.png",
+      "loadingArtwork": "/images/maps/Serpent_Beach_Loading.png",
+      "overheadArtwork": "/images/maps/Serpent_Beach_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Frozen Guard",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Frozen_Guard.png",
+      "loadingArtwork": "/images/maps/Frozen_Guard_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Ice Mines",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Ice_Mines.png",
+      "loadingArtwork": "/images/maps/Ice_Mines_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Fish Market",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Fish_Market.png",
+      "loadingArtwork": "/images/maps/Fish_Market_Loading.png",
+      "overheadArtwork": "/images/maps/Fish Market Overhead.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Timber Mill",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Timber_Mill.png",
+      "loadingArtwork": "/images/maps/Timber_Mill_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Stone Keep",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Stone_Keep.png",
+      "loadingArtwork": "/images/maps/Stone_Keep_Loading.png",
+      "overheadArtwork": "/images/maps/Stone_Keep_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Brightmarsh",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Brightmarsh.png",
+      "loadingArtwork": "/images/maps/Brightmarsh_Loading.png",
+      "overheadArtwork": "/images/maps/Brightmarsh_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Splitstone Quarry",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Splitstone_Quarry.png",
+      "loadingArtwork": "/images/maps/Splitstone_Quarry_Loading.png",
+      "overheadArtwork": "/images/maps/Splotstone_Quarry_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Ascension Peak",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Ascension_Peak.png",
+      "loadingArtwork": "/images/maps/Ascension_Peak_Loading.png",
+      "overheadArtwork": "/images/maps/Ascension_Peak_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Warder's Gate",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Warders_Gate.png",
+      "loadingArtwork": "/images/maps/Warders_Gate_Loading.png",
+      "overheadArtwork": "/images/maps/Warders_Gate_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Shattered Desert",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Shattered_Desert.png",
+      "loadingArtwork": "/images/maps/Shattered_Desert_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Bazaar",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Bazaar.png",
+      "loadingArtwork": "/images/maps/Bazaar_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Dawnforge",
+      "primaryClassification": "Siege",
+      "classifications": [
+        "Siege"
+      ],
+      "artwork": "/images/maps/Match_Dawnforge.png",
+      "loadingArtwork": "/images/maps/Dawnforge_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Primal Court",
+      "primaryClassification": "Onslaught",
+      "classifications": [
+        "Onslaught"
+      ],
+      "artwork": "/images/maps/Match_Primal_Court.png",
+      "loadingArtwork": "/images/maps/Primal_Court_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Foreman's Rise",
+      "primaryClassification": "Onslaught",
+      "classifications": [
+        "Onslaught"
+      ],
+      "artwork": "/images/maps/Match_Foremans_Rise.png",
+      "loadingArtwork": "/images/maps/Foremans_Rise_Loading.png",
+      "overheadArtwork": "/images/maps/Foremans_Rise_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Magistrate's Archives",
+      "primaryClassification": "Onslaught",
+      "classifications": [
+        "Onslaught",
+        "King of the Hill"
+      ],
+      "artwork": "/images/maps/Match_Magistrates_Archives.png",
+      "loadingArtwork": "/images/maps/Magistrates_Archives_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Marauder's Port",
+      "primaryClassification": "Onslaught",
+      "classifications": [
+        "Onslaught",
+        "King of the Hill"
+      ],
+      "artwork": "/images/maps/Match_Marauders_Port.png",
+      "loadingArtwork": "/images/maps/Marauders_Port_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Snowfall Junction",
+      "primaryClassification": "King of the Hill",
+      "classifications": [
+        "King of the Hill",
+        "Team Deathmatch"
+      ],
+      "artwork": "/images/maps/Match_Snowfall_Junction.png",
+      "loadingArtwork": "/images/maps/Snowfall_Junction_Loading.png",
+      "overheadArtwork": "/images/maps/Snowfall_Junction_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Trade District",
+      "primaryClassification": "King of the Hill",
+      "classifications": [
+        "King of the Hill",
+        "Team Deathmatch"
+      ],
+      "artwork": "/images/maps/Match_Trade_District.png",
+      "loadingArtwork": "/images/maps/Trade_District_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Abyss",
+      "primaryClassification": "Team Deathmatch",
+      "classifications": [
+        "Team Deathmatch"
+      ],
+      "artwork": "/images/maps/Match_Abyss.png",
+      "loadingArtwork": "/images/maps/Abyss_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Throne",
+      "primaryClassification": "Team Deathmatch",
+      "classifications": [
+        "Team Deathmatch"
+      ],
+      "artwork": "/images/maps/Match_Throne.png",
+      "loadingArtwork": "/images/maps/Throne_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Dragon Arena",
+      "primaryClassification": "Team Deathmatch",
+      "classifications": [
+        "Team Deathmatch"
+      ],
+      "artwork": "/images/maps/Match_Dragon_Arena.png",
+      "loadingArtwork": "/images/maps/Dragon_Arena_Loading.png",
+      "overheadArtwork": "/images/maps/Dragon_Arena_Overhead_Layout.png",
+      "hasArtwork": true
+    },
+    {
+      "name": "Greenwood Outpost",
+      "primaryClassification": "Payload",
+      "classifications": [
+        "Payload"
+      ],
+      "artwork": "/images/maps/Match_Greenwood_Outpost.png",
+      "loadingArtwork": "/images/maps/Greenwood_Outpost_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Hidden Temple",
+      "primaryClassification": "Payload",
+      "classifications": [
+        "Payload"
+      ],
+      "artwork": "/images/maps/Match_Hidden_Temple.png",
+      "loadingArtwork": "/images/maps/Hidden_Temple_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Frostbite Cavern",
+      "primaryClassification": "Payload",
+      "classifications": [
+        "Payload"
+      ],
+      "artwork": "/images/maps/Match_Frostbite_Cavern.png",
+      "loadingArtwork": "/images/maps/Frostbite_Cavern_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Shooting Range",
+      "primaryClassification": "Other",
+      "classifications": [
+        "Other"
+      ],
+      "artwork": "/images/maps/Match_Shooting_Range.png",
+      "loadingArtwork": "/images/maps/Shooting_Range_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Tutorial",
+      "primaryClassification": "Other",
+      "classifications": [
+        "Other"
+      ],
+      "artwork": "/images/maps/Match_Tutorial.png",
+      "loadingArtwork": "/images/maps/Tutorial_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": true
+    },
+    {
+      "name": "Hole",
+      "primaryClassification": "Other",
+      "classifications": [
+        "Other"
+      ],
+      "artwork": "/images/maps/Match_Test_Maps.png",
+      "loadingArtwork": "/images/maps/Test_Maps_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": false
+    },
+    {
+      "name": "Sniper Haven",
+      "primaryClassification": "Other",
+      "classifications": [
+        "Other"
+      ],
+      "artwork": "/images/maps/Match_Test_Maps.png",
+      "loadingArtwork": "/images/maps/Test_Maps_Loading.png",
+      "overheadArtwork": null,
+      "hasArtwork": false
+    }
+  ]
+}

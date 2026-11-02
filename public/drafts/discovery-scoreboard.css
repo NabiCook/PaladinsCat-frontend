@@ -1,0 +1,258 @@
+/* Source: app/globals.css, scoreboard HUD SHA256: 64db3c082d04c0a85ea12f7dd42e5cfedfa7444c95a20fcb709a59fdc9f323f4 */
+#browser-scoreboard {
+  color-scheme: dark;
+  --bg: #161618;
+  --panel: rgba(12, 18, 27, .94);
+  --line: rgba(148, 163, 184, .14);
+  --text: #f4f7fb;
+  --muted: #8c99ab;
+  --teal: #37d6c0;
+  --blue: #0c4493;
+  --rose: #a52b2b;
+  --score-blue: #3488f0;
+  --score-rose: #ef4444;
+  --team-one-row-a: #0d3387;
+  --team-one-row-b: #001342;
+  --team-two-row-a: #801414;
+  --team-two-row-b: #420000;
+  --police-light: #221111;
+  --cheater-pattern: url('/images/patterns/cheater-police-line.svg');
+  --moderation-tag-bg: #161618;
+  --cheater-tag-text: #ff0f0f;
+  --suspicious-tag-text: #ffc124;
+  --gold: #f9c95f;
+  --heal: #66e3a4;
+  --shield: #87a8ff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: normal;
+}
+#browser-scoreboard * { box-sizing: border-box; }
+#browser-scoreboard .viewport { width: 2048px; max-width: 100%; }
+#browser-scoreboard .scoreboard-canvas { width: 2048px; height: 1152px; transform-origin: top left; }
+#browser-scoreboard .scoreboard { position: relative; display: grid; grid-template-rows: 26px 275px 29px 86px 275px 29px; width: 1280px; height: 720px; overflow: hidden; border: 1px solid rgba(111, 130, 153, .35); border-radius: 20px; background: var(--bg); box-shadow: none; transform-origin: top left; transform: scale(1.6); }
+#browser-scoreboard .scoreboard > * { position: relative; z-index: 1; }
+#browser-scoreboard .scoreboard-map-preview { display: block; position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(1.15); opacity: .7; }
+#browser-scoreboard .scoreboard-map { display: none; }
+#browser-scoreboard .scoreboard[data-image-export="true"] > .scoreboard-map-preview { display: none; }
+#browser-scoreboard .scoreboard[data-image-export="true"] > .scoreboard-map { display: block; position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(1.15); opacity: .7; }
+#browser-scoreboard .hero { position: relative; grid-row: 4; height: 86px; padding: 7px 38px 9px; display: grid; grid-template-columns: 285px 590px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); align-items: center; background: rgba(5, 9, 15, .58); border-bottom: 1px solid rgba(72, 211, 190, .22); }
+#browser-scoreboard .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); -webkit-mask-image: linear-gradient(90deg, #000, transparent 20%, transparent 80%, #000); mask-image: linear-gradient(90deg, #000, transparent 20%, transparent 80%, #000); }
+#browser-scoreboard .hero > * { position: relative; z-index: 1; }
+#browser-scoreboard .hero::after { content: none; }
+#browser-scoreboard .match-identity { align-self: stretch; display: flex; min-width: 0; flex-direction: column; justify-content: space-between; padding: 1px 0 3px; }
+#browser-scoreboard .brand-line { display: flex; align-items: center; gap: 9px; color: var(--text); font-size: 13px; font-weight: 750; }
+#browser-scoreboard .brand-name { display: inline-flex; align-items: center; gap: 9px; flex: 0 0 auto; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+#browser-scoreboard .brand-line img { width: 24px; height: 24px; object-fit: contain; }
+#browser-scoreboard .status-tags { display: flex; min-width: 0; align-items: center; gap: 5px; }
+#browser-scoreboard .status-tag { display: inline-flex; height: 17px; align-items: center; padding: 0 7px; border: 1px solid rgba(148, 163, 184, .28); border-radius: 999px; color: #cbd5e1; background: rgba(71, 85, 105, .28); font-size: 8px; font-weight: 760; line-height: 1; letter-spacing: .035em; white-space: nowrap; }
+#browser-scoreboard .status-tag.ranked { color: #f7d877; border-color: rgba(234, 179, 8, .36); background: rgba(161, 98, 7, .25); }
+#browser-scoreboard .status-tag.casual { color: #d1d5db; border-color: rgba(156, 163, 175, .32); background: rgba(75, 85, 99, .3); }
+#browser-scoreboard .status-tag.custom { color: #99f6e4; border-color: rgba(45, 212, 191, .36); background: rgba(15, 118, 110, .26); }
+#browser-scoreboard .status-tag.recovered { color: #86efac; border-color: rgba(34, 197, 94, .34); background: rgba(21, 128, 61, .25); }
+#browser-scoreboard .status-tag.broken { color: #fda4af; border-color: rgba(244, 63, 94, .34); background: rgba(159, 18, 57, .25); }
+#browser-scoreboard .status-tag.limited { color: #fcd34d; border-color: rgba(245, 158, 11, .4); background: rgba(146, 64, 14, .28); }
+#browser-scoreboard .status-tag.private { color: #d8b4fe; border-color: rgba(168, 85, 247, .34); background: rgba(107, 33, 168, .25); }
+#browser-scoreboard .map-line { display: flex; align-items: center; margin-top: 0; white-space: nowrap; }
+#browser-scoreboard .map-name { color: var(--text); font-size: 23px; line-height: 1; font-weight: 760; letter-spacing: -.02em; }
+#browser-scoreboard .map-name.long { max-width: 285px; font-size: 19px; letter-spacing: -.035em; }
+#browser-scoreboard .match-context { display: flex; align-items: center; gap: 7px; color: #bdc8d6; font-size: 10px; line-height: 1; font-weight: 740; text-transform: uppercase; letter-spacing: .14em; }
+#browser-scoreboard .match-context span + span::before { content: "·"; margin-right: 6px; color: #667386; }
+#browser-scoreboard .score { grid-column: 2; justify-self: stretch; display: grid; width: 100%; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; gap: 8px; }
+#browser-scoreboard .score-number { font-size: 41px; line-height: 1; font-weight: 820; letter-spacing: -.05em; }
+#browser-scoreboard .score-number.team-one-score { color: var(--score-blue); text-shadow: 0 0 12px rgba(52, 136, 240, .38); transform: translate(-10px, -5px); }
+#browser-scoreboard .score-number.team-two-score { color: var(--score-rose); text-shadow: 0 0 12px rgba(239, 68, 68, .38); transform: translate(10px, 5px); }
+#browser-scoreboard .score-separator { color: #607086; font-size: 17px; font-weight: 600; }
+#browser-scoreboard .score.casual { width: auto; justify-self: center; grid-template-columns: auto auto auto; gap: 14px; }
+#browser-scoreboard .score-bans { display: flex; min-width: 0; flex-direction: column; gap: 7px; transform: translateY(-4px); }
+#browser-scoreboard .score-bans.left, #browser-scoreboard .score-bans.right { align-items: center; }
+#browser-scoreboard .score-bans .ban-label { color: #d3dbe5; font-size: 9px; line-height: 1; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+#browser-scoreboard .ban-picks { display: grid; grid-auto-flow: column; grid-auto-columns: 49px; align-items: start; justify-content: center; gap: 3px; }
+#browser-scoreboard .score-bans .ban-pick { flex-direction: column; min-width: 0; overflow: hidden; font-size: 0; line-height: 0; text-align: center; white-space: nowrap; }
+#browser-scoreboard .score-bans .ban-pick img { width: 48px; height: 48px; }
+#browser-scoreboard .match-meta { grid-column: 3; align-self: center; justify-self: stretch; display: grid; height: 100%; grid-template-columns: 135px minmax(0, 1fr); grid-template-areas: "tier timestamp" "duration match"; column-gap: 20px; row-gap: 7px; align-items: end; text-align: right; transform: translateY(-3px); }
+#browser-scoreboard .match-meta.casual-meta .tier-meta { visibility: hidden; }
+#browser-scoreboard .tier-meta { grid-area: tier; display: flex; align-items: center; justify-content: flex-end; gap: 7px; text-align: right; }
+#browser-scoreboard .tier-meta .meta-value { white-space: nowrap; }
+#browser-scoreboard .timestamp-meta { grid-area: timestamp; align-self: center; color: var(--text); font-size: 11px; font-weight: 690; line-height: 1; white-space: nowrap; }
+#browser-scoreboard .duration-meta { grid-area: duration; }
+#browser-scoreboard .match-id-meta { grid-area: match; }
+#browser-scoreboard .tier-meta > div, #browser-scoreboard .duration-meta, #browser-scoreboard .match-id-meta { display: flex; flex-direction: column; }
+#browser-scoreboard .tier-meta img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
+#browser-scoreboard .meta-value { color: var(--text); font-size: 14px; font-weight: 690; font-variant-numeric: tabular-nums; }
+#browser-scoreboard .meta-label { order: -1; margin: 0 0 3px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .13em; }
+#browser-scoreboard .grid-row { display: grid; grid-template-columns: 52px 44px 58px 210px 56px 50px 102px 108px 64px repeat(4, 100px); column-gap: 8px; align-items: center; padding: 0 20px; }
+#browser-scoreboard .columns { grid-row: 1; height: 26px; color: #758397; background: color-mix(in srgb, #161618 80%, transparent); border-bottom: 1px solid var(--line); font-size: 8.5px; font-weight: 760; letter-spacing: .12em; text-transform: uppercase; }
+#browser-scoreboard .columns > :not(:nth-child(3)) { text-align: center; }
+#browser-scoreboard .team-bar { height: 29px; padding: 0 20px; display: grid; align-items: center; background: color-mix(in srgb, #161618 80%, transparent); border-bottom: 1px solid var(--line); }
+#browser-scoreboard #team-one { grid-row: 2; }
+#browser-scoreboard #team-one-summary { grid-row: 3; }
+#browser-scoreboard #team-two { grid-row: 5; }
+#browser-scoreboard #team-two-summary { grid-row: 6; }
+#browser-scoreboard .team-name { display: flex; align-items: center; gap: 6px; font-size: 9px; font-weight: 780; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+#browser-scoreboard .team-name::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; box-shadow: 0 0 12px currentColor; }
+#browser-scoreboard .team-one .team-name { color: var(--blue); }
+#browser-scoreboard .team-two .team-name { color: var(--rose); }
+#browser-scoreboard .result { color: #a9b4c2; font-size: 8px; letter-spacing: .08em; }
+#browser-scoreboard .team-two .result { color: #ff9caf; }
+#browser-scoreboard .team-heading { grid-column: 1 / 3; display: flex; align-items: center; min-width: 0; }
+#browser-scoreboard .ban-pick { display: flex; align-items: center; gap: 4px; color: #8f9caf; }
+#browser-scoreboard .ban-pick img { width: 24px; height: 24px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,.14); filter: saturate(.72); }
+#browser-scoreboard .team-total { color: #d7dee7; text-align: center; font-size: 12.5px; font-weight: 760; font-variant-numeric: tabular-nums; }
+#browser-scoreboard .average-total { display: flex; align-items: baseline; justify-content: center; gap: 2px; }
+#browser-scoreboard .team-average-label { color: var(--muted); font-size: 6.5px; font-weight: 760; letter-spacing: .04em; }
+#browser-scoreboard .team-total b { color: #c5ced9; font-weight: 740; }
+#browser-scoreboard .team-total.level-total { grid-column: 3; }
+#browser-scoreboard .team-total.elo-total { grid-column: 5; }
+#browser-scoreboard .team-total.credits-total { grid-column: 7; }
+#browser-scoreboard .team-total.kda-total { grid-column: 8; }
+#browser-scoreboard .team-total.objective-total { grid-column: 9; }
+#browser-scoreboard .team-total.damage-total { grid-column: 10; }
+#browser-scoreboard .team-total.taken-total { grid-column: 11; }
+#browser-scoreboard .team-total.shield-total { grid-column: 12; }
+#browser-scoreboard .team-total.healing-total { grid-column: 13; }
+#browser-scoreboard .player-row { position: relative; height: 55px; background: color-mix(in srgb, var(--team-one-row-a) 80%, transparent); border-bottom: 1px solid rgba(148, 163, 184, .18); font-variant-numeric: tabular-nums; }
+#browser-scoreboard .player-row > * { position: relative; z-index: 3; }
+#browser-scoreboard .player-row > .cheater-banner { position: absolute; z-index: 1; inset: 0; overflow: hidden; background-color: var(--police-light); background-image: var(--cheater-pattern); background-position: 0 0; background-repeat: repeat-x; background-size: 90.51px 55px; pointer-events: none; }
+#browser-scoreboard .player-row::after { content: ""; position: absolute; z-index: 2; inset: 5px 20px; pointer-events: none; opacity: .55; background: linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 56px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 108px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 174px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 392px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 456px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 514px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 624px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 740px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 812px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 920px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 1028px 0 / 1px 100% no-repeat, linear-gradient(to bottom, transparent, rgba(148, 163, 184, .28) 28%, rgba(148, 163, 184, .28) 72%, transparent) 1136px 0 / 1px 100% no-repeat; }
+#browser-scoreboard #team-one .player-row:nth-child(even) { background: color-mix(in srgb, var(--team-one-row-b) 80%, transparent); }
+#browser-scoreboard #team-two .player-row { background: color-mix(in srgb, var(--team-two-row-a) 80%, transparent); }
+#browser-scoreboard #team-two .player-row:nth-child(even) { background: color-mix(in srgb, var(--team-two-row-b) 80%, transparent); }
+#browser-scoreboard .champion-wrap { position: relative; width: 52px; height: 52px; justify-self: center; }
+#browser-scoreboard .champion-icon { width: 52px; height: 52px; object-fit: cover; border-radius: 9px; border: 1px solid rgba(255,255,255,.16); }
+#browser-scoreboard .player { min-width: 0; padding-left: 8px; }
+#browser-scoreboard .player-name-line { display: flex; min-width: 0; align-items: center; gap: 5px; }
+#browser-scoreboard .player-platform-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; align-items: center; justify-content: center; opacity: .88; }
+.player-platform-icon img { filter: invert(1); }
+#browser-scoreboard .player-platform-icon picture, #browser-scoreboard .player-platform-icon img { display: block; width: 18px; height: 18px; }
+#browser-scoreboard .player-platform-icon img { object-fit: contain; filter: invert(1); }
+#browser-scoreboard .player-name { display: flex; min-width: 0; align-items: center; gap: 5px; overflow: hidden; color: var(--text); font-size: 18px; font-weight: 720; line-height: 1.04; letter-spacing: -.01em; white-space: nowrap; }
+#browser-scoreboard .player-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#browser-scoreboard .verified-player-icon { width: 14px; height: 14px; flex: 0 0 auto; object-fit: contain; }
+#browser-scoreboard .player-status-tag { display: inline-flex; flex: 0 0 auto; align-items: center; border-radius: 3px; padding: 2px 5px; font-size: 8px; font-weight: 800; line-height: 1; letter-spacing: .02em; }
+#browser-scoreboard .player-status-tag.cheater { color: var(--cheater-tag-text); background: var(--moderation-tag-bg); }
+#browser-scoreboard .player-status-tag.suspicious { color: var(--suspicious-tag-text); background: var(--moderation-tag-bg); }
+#browser-scoreboard .player-elo { color: #dbe2eb; text-align: center; font-size: 16.5px; font-weight: 680; letter-spacing: .01em; white-space: nowrap; }
+#browser-scoreboard .player-sub { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 12.5px; font-weight: 550; letter-spacing: .035em; text-overflow: ellipsis; white-space: nowrap; }
+#browser-scoreboard .talent-icon { width: 50px; height: 50px; justify-self: center; object-fit: contain; }
+#browser-scoreboard .talent-link { display: block; width: 50px; height: 50px; justify-self: center; }
+#browser-scoreboard .talent-link .talent-icon { display: block; width: 100%; height: 100%; }
+#browser-scoreboard .level { color: #c8d1dc; text-align: center; font-size: 16.5px; font-weight: 680; }
+#browser-scoreboard .party-badge { position: absolute; right: -4px; top: -4px; display: grid; min-width: 21px; height: 17px; place-items: center; padding: 0 5px; border: 1px solid rgba(148, 240, 226, .98); border-radius: 99px; color: #f5fffd; background: rgba(15, 118, 110, .9); font-size: 9px; font-weight: 850; box-shadow: 0 2px 7px rgba(0, 0, 0, .45); }
+#browser-scoreboard .rank { display: grid; place-items: center; }
+#browser-scoreboard .rank img { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.4)); }
+#browser-scoreboard .metric { justify-self: stretch; padding: 5px 0; color: #dbe2eb; text-align: center; font-size: 22px; font-weight: 720; line-height: 1; letter-spacing: -.025em; }
+#browser-scoreboard .metric.kda { color: #f5f7fb; font-size: 18px; }
+#browser-scoreboard .metric.damage { --accent: #ff6675; }
+#browser-scoreboard .metric.taken { --accent: #c94f60; }
+#browser-scoreboard .metric.shield { --accent: var(--shield); }
+#browser-scoreboard .metric.heal { --accent: var(--heal); }
+#browser-scoreboard .metric.obj { --accent: #f4b974; }
+#browser-scoreboard .metric.credits { --accent: var(--gold); }
+#browser-scoreboard .credits, #browser-scoreboard .credits-header, #browser-scoreboard .credits-total { display: flex; align-items: center; justify-content: center; gap: 4px; }
+#browser-scoreboard .credits img { width: 15px; height: 15px; object-fit: contain; }
+#browser-scoreboard .credits-header img, #browser-scoreboard .credits-total img { width: 12px; height: 12px; object-fit: contain; }
+#browser-scoreboard .metric.peak { position: relative; font-weight: 820; }
+#browser-scoreboard .metric.peak::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 2px; border-radius: 99px; background: linear-gradient(90deg, transparent, var(--accent) 28%, var(--accent) 72%, transparent); box-shadow: 0 -4px 8px var(--accent); opacity: .6; }
+#browser-scoreboard[data-theme="light"] { --bg: #f5f7f9; --panel: rgba(255, 255, 255, .96); --line: rgba(66, 79, 92, .22); --text: #11161d; --muted: #596675; --team-one-row-a: #6689bb; --team-one-row-b: #3a68a8; --team-two-row-a: #c67a7a; --team-two-row-b: #b65353; --gold: #976700; --heal: #087a4d; --shield: #315eb8; }
+#browser-scoreboard[data-theme="light"] .brand-line img { filter: brightness(0); opacity: .9; }
+#browser-scoreboard[data-theme="light"] .player-platform-icon img { filter: none; }
+#browser-scoreboard[data-theme="light"] .rank img, #browser-scoreboard[data-theme="light"] .tier-meta img { filter: none; }
+#browser-scoreboard[data-theme="light"] .party-badge { box-shadow: none; }
+#browser-scoreboard[data-theme="light"] .credits img, #browser-scoreboard[data-theme="light"] .credits-total img { filter: brightness(0); opacity: .82; }
+#browser-scoreboard[data-theme="light"] .metric.damage { --accent: #ff3158; }
+#browser-scoreboard[data-theme="light"] .metric.taken { --accent: #e1254b; }
+#browser-scoreboard[data-theme="light"] .metric.shield { --accent: #346dff; }
+#browser-scoreboard[data-theme="light"] .metric.heal { --accent: #00a96b; }
+#browser-scoreboard[data-theme="light"] .metric.obj { --accent: #ee8b16; }
+#browser-scoreboard[data-theme="light"] .metric.credits { --accent: #b87800; }
+#browser-scoreboard[data-theme="light"] .metric.peak::after { height: 3px; box-shadow: 0 -5px 11px var(--accent); opacity: .5; }
+#browser-scoreboard[data-theme="light"] .scoreboard { border-color: rgba(67, 83, 99, .38); }
+#browser-scoreboard[data-theme="light"] .scoreboard-map-preview { filter: saturate(1.4); opacity: .6; }
+#browser-scoreboard[data-theme="light"] .columns, #browser-scoreboard[data-theme="light"] .team-bar { color: #000; background: color-mix(in srgb, #e9edf1 80%, transparent); }
+#browser-scoreboard[data-theme="light"] .columns { border-bottom-color: rgba(57, 69, 81, .28); }
+#browser-scoreboard[data-theme="light"] .player-row { border-bottom-color: rgba(63, 76, 90, .25); }
+#browser-scoreboard[data-theme="light"] .player-row::after { opacity: .72; filter: brightness(.62); }
+#browser-scoreboard[data-theme="light"] .player-row, #browser-scoreboard[data-theme="light"] .player-name, #browser-scoreboard[data-theme="light"] .metric.kda, #browser-scoreboard[data-theme="light"] .meta-value, #browser-scoreboard[data-theme="light"] .brand-line, #browser-scoreboard[data-theme="light"] .map-name { color: #000; }
+#browser-scoreboard[data-theme="light"] .player-elo, #browser-scoreboard[data-theme="light"] .level, #browser-scoreboard[data-theme="light"] .metric, #browser-scoreboard[data-theme="light"] .team-total { color: #000; }
+#browser-scoreboard[data-theme="light"] .player-sub, #browser-scoreboard[data-theme="light"] .meta-label, #browser-scoreboard[data-theme="light"] .timestamp-meta { color: #000; }
+#browser-scoreboard[data-theme="light"] .match-context, #browser-scoreboard[data-theme="light"] .score-bans .ban-label { color: #1f2933; }
+#browser-scoreboard[data-theme="light"] .hero { background-image: none; background-color: rgba(232, 237, 241, .16); border-bottom-color: rgba(20, 115, 108, .3); }
+#browser-scoreboard[data-theme="light"] .hero .brand-line, #browser-scoreboard[data-theme="light"] .hero .map-name, #browser-scoreboard[data-theme="light"] .hero .match-context, #browser-scoreboard[data-theme="light"] .hero .score-bans, #browser-scoreboard[data-theme="light"] .hero .meta-value, #browser-scoreboard[data-theme="light"] .hero .meta-label { text-shadow: none; }
+#browser-scoreboard[data-theme="light"] .score-separator { color: #667382; }
+#browser-scoreboard[data-theme="light"] .result { color: #56616e; }
+#browser-scoreboard[data-theme="light"] .team-two .result { color: #9f2944; }
+#browser-scoreboard[data-theme="light"] .team-bar .team-name, #browser-scoreboard[data-theme="light"] .team-bar .result, #browser-scoreboard[data-theme="light"] .team-average-label, #browser-scoreboard[data-theme="light"] .team-total b, #browser-scoreboard[data-theme="light"] .party-badge { color: #000; }
+#browser-scoreboard[data-theme="light"] .team-one .team-name, #browser-scoreboard[data-theme="light"] .team-one .result { color: var(--blue); }
+#browser-scoreboard[data-theme="light"] .team-two .team-name, #browser-scoreboard[data-theme="light"] .team-two .result { color: var(--rose); }
+
+/* Self-hosted so browsers that block third-party font requests still render Inter. */
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-greek-ext.woff2") format("woff2");
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Scoreboard Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+/* Dashboard shell integration; the scoreboard HUD above is the owning frontend's CSS. */
+#browser-scoreboard { font-size:16px; font-family:"Scoreboard Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+#browser-scoreboard *::before, #browser-scoreboard *::after { box-sizing:border-box; }
+#browser-scoreboard a { color:inherit; text-decoration:inherit; }
+#browser-scoreboard .player-name [role="img"] { display:inline-flex; flex-shrink:0; }
+#browser-scoreboard .player-row { flex-wrap:nowrap; row-gap:normal; }
+#browser-scoreboard > .mb-2 { display:flex; justify-content:flex-end; margin-bottom:8px; }
+#browser-scoreboard > .mb-2 > div { display:flex; align-items:center; gap:8px; }
+#browser-scoreboard > .mb-2 button { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid var(--pc-glass-border); border-radius:11px; background:var(--pc-glass-bg-subtle); color:var(--secondary); font-family:inherit; font-size:12px; font-weight:600; line-height:1.4; cursor:pointer; }
+#browser-scoreboard > .mb-2 button:hover { color:var(--accent); border-color:var(--accent); }
+#browser-scoreboard > .mb-2 button:disabled { opacity:.6; cursor:wait; }
+#browser-scoreboard > .relative { position:relative; width:100%; overflow:hidden; }
+#browser-scoreboard .player-sub { display:block; }
+#browser-scoreboard .player-name > span { display:inline-flex; max-height:2.5rem; max-width:100%; min-width:0; flex-wrap:wrap; align-items:center; gap:.25rem; overflow:hidden; vertical-align:middle; }
+#browser-scoreboard .player-name > span > span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#browser-scoreboard .player-name > span > span:nth-child(2) { display:inline-flex; max-height:2.5rem; min-width:0; flex-wrap:wrap; align-items:center; gap:.25rem; overflow:hidden; }
+#browser-scoreboard a.player-name, #browser-scoreboard a.player-sub { text-decoration:none; }
+#browser-scoreboard .player-platform-icon { display:inline-flex; width:18px; height:18px; flex-shrink:0; align-items:center; justify-content:center; }
+.dashboard-match-heading { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+#browser-scoreboard .hero { min-height:0; }

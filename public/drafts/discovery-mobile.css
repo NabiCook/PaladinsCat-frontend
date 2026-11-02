@@ -1,0 +1,76 @@
+/* Mobile keeps the existing navigation and surfaces, with room for the fixed rail. */
+.discovery-scroll-top { display: none; }
+@media (max-width: 600px) {
+  html { scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  .dashboard-shell[data-view] > .rail {
+    position: fixed; z-index: 100; inset: auto 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: row; align-items: center; gap: 4px; padding: 6px;
+    width: auto; max-width: none; overflow: visible; border: 1px solid var(--pc-glass-border);
+    border-radius: 15px; background: var(--pc-glass-bg);
+    -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur);
+    transition: transform var(--pc-motion-base) var(--pc-ease-standard);
+  }
+  .dashboard-shell[data-view] > .rail.is-mobile-hidden { transform: translateY(calc(100% + 16px + env(safe-area-inset-bottom, 0px))); }
+  .rail .rail-brand, .rail .rail-size-toggle { display: none; }
+  .rail .rail-main { display: flex; flex: 1 1 auto; min-width: 0; width: auto; justify-content: flex-start; gap: 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .rail .rail-main .rail-button:nth-child(n) { display: flex; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .rail .rail-main .rail-button[hidden] { display: none; }
+  .rail .rail-bottom { display: flex; flex: 0 0 auto; width: auto; flex-direction: row; gap: 2px; margin: 0; padding: 0; }
+  .rail .rail-bottom > .rail-button:not([hidden]) { display: flex; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .rail .rail-bottom .rail-divider, .rail .rail-label { display: none; }
+  .rail .rail-button .lucide { width: 20px; height: 20px; }
+  .rail .search-page-back { top: auto; bottom: calc(100% + 8px); left: 0; width: 44px; height: 44px; }
+  .rail .notification i { left: auto; right: 7px; top: 7px; }
+  .discovery-scroll-top:not([hidden]) { position: fixed; z-index: 101; right: 12px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--pc-glass-border); border-radius: 50%; background: var(--pc-glass-bg); color: var(--secondary); -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur); cursor: pointer; }
+  .discovery-scroll-top svg { width: 20px; height: 20px; }
+  .discovery-scroll-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .dashboard-shell .page-view-stack > main[aria-hidden="false"] { max-height: none; }
+  #players-cheaters-page .players-hub-header, .players-view:not(#players-hub-page) .players-hub-header { padding-top: 0; }
+  .players-view .players-profile-hero { margin-top: 0; }
+
+  /* Let user-provided names and localized headings wrap instead of clipping. */
+  :is(.search-result-title,.search-result-subtitle,.leaderboard-player strong) { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+  :is(.players-cheater-reason,.players-directory-subline,.players-saved-deck:not([data-image-export="true"]) .players-saved-deck-player) { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+  :is(.players-hub-header,.community-header,.site-header,.stats-header) h1 { overflow-wrap: anywhere; }
+  :is(.card-heading h2,.panel-heading h2) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+  .hero h1, .home-banner-demo h2 { font-size: clamp(32px, 10vw, 46px); overflow-wrap: anywhere; }
+  .community-list-toolbar-search { grid-template-columns: minmax(0, 1fr); }
+  .community-create { white-space: normal; }
+  .community-metrics { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+  :is(.discovery-table-wrap,.players-table-wrap,.stats-table-wrap,.leaderboard-table-wrap) { max-width: 100%; overscroll-behavior-x: contain; }
+
+  /* Keep each card's established face proportional while fitting two per row. */
+  #champion-detail-page .champion-loadout-card-grid { grid-template-columns: repeat(2, minmax(0, 240px)); gap: 8px; overflow: visible; }
+  #champion-detail-page .champion-loadout-card { width: min(100%, 240px); min-width: 0; container-type: inline-size; }
+  #champion-detail-page .champion-loadout-card-footer.has-card-metrics { padding-inline: 6px; }
+  #champion-detail-page .champion-loadout-metrics th:first-child { width: 30px; }
+  #champion-detail-page .champion-loadout-metric-label { font-size: 11px; }
+  #champion-detail-page .champion-loadout-metric-value { font-size: 12px; }
+  #champion-detail-page .champion-loadout-level-trend { gap: 2px; }
+}
+@media (min-width: 601px) {
+  #champion-detail-page .champion-loadout-card { container-type: inline-size; }
+  @container (min-width: 600px) and (max-width: 971px) {
+    #champion-detail-page .champion-loadout-card-grid { grid-template-columns: repeat(4, minmax(0, 240px)); }
+  }
+}
+@container (max-width: 210px) {
+  #champion-detail-page .champion-loadout-card-footer.has-card-metrics { padding-inline: 6px; }
+  #champion-detail-page .champion-loadout-metrics th:first-child { width: 30px; }
+  #champion-detail-page .champion-loadout-metric-label { font-size: 11px; }
+  #champion-detail-page .champion-loadout-metric-value { font-size: 12px; }
+  #champion-detail-page .champion-loadout-level-trend { gap: 2px; }
+}
+@supports (zoom: calc(100cqi / 240px)) {
+  #champion-detail-page .champion-loadout-face { width: 240px; zoom: calc(100cqi / 240px); }
+}
+@supports not (zoom: calc(100cqi / 240px)) {
+  #champion-detail-page :is(.champion-loadout-name,.champion-loadout-description) { font-size: clamp(8px, 5.833cqi, 14px); }
+  #champion-detail-page .champion-loadout-cooldown { font-size: clamp(10px, 7.5cqi, 18px); }
+  #champion-detail-page .champion-loadout-cooldown-icon { width: clamp(10px, 7.5cqi, 18px); height: clamp(10px, 7.5cqi, 18px); }
+  #champion-detail-page .champion-loadout-level { font-size: clamp(14px, 10cqi, 24px); }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .dashboard-shell[data-view] > .rail { transition: none; }
+}

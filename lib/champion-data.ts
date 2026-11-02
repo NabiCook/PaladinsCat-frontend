@@ -110,6 +110,15 @@ export async function getChampionData(slug: string): Promise<ChampionData | unde
   return data[championSlug(slug)];
 }
 
+/** Resolve artwork from the champion's exact slot/name reference, never a guessed filename. */
+export function getChampionSkillIcon(champion: ChampionData | undefined, slot: string, ability: string | null): string | null {
+  const candidates = champion?.skills.filter(skill => skill.key.trim().toUpperCase() === slot) ?? [];
+  const normalize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const exact = ability ? candidates.filter(skill => normalize(skill.name) === normalize(ability)) : [];
+  const skill = exact.length === 1 ? exact[0] : candidates.length === 1 ? candidates[0] : undefined;
+  return skill?.iconUrl?.startsWith("/images/skills/") ? skill.iconUrl : null;
+}
+
 /** Describe the ultimate ability used by an ultimate tier list entry.
  *
  * refs: none

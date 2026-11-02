@@ -1,0 +1,103 @@
+{
+  "source": "https://paladins.fandom.com/wiki/Cards",
+  "retrievedAt": "2026-10-26T03:06:46.015Z",
+  "cooldowns": {
+    "ash": {},
+    "barik": {
+      "Failsafe": "30-18"
+    },
+    "atlas": {},
+    "azaan": {},
+    "androxus": {
+      "Abyssal Touch": "5",
+      "Sleight of Hand": "5"
+    },
+    "bettylabomba": {},
+    "buck": {
+      "Exhilarate": "5"
+    },
+    "cassie": {
+      "Somersault": "15"
+    },
+    "caspian": {},
+    "dredge": {},
+    "fernando": {},
+    "corvus": {},
+    "grohk": {
+      "Totemic Rescue": "45"
+    },
+    "bombking": {},
+    "drogoz": {},
+    "imani": {
+      "Affinity": "3",
+      "Discipline": "3",
+      "Draconic Will": "3",
+      "Elemental Barrier": "3",
+      "Elemental Grace": "30"
+    },
+    "furia": {},
+    "evie": {},
+    "io": {
+      "Crescent": "15"
+    },
+    "kasumi": {
+      "Surrounded by Fear": "30-10"
+    },
+    "grover": {},
+    "khan": {},
+    "jenos": {},
+    "inara": {},
+    "lex": {},
+    "koga": {},
+    "lillith": {},
+    "kinessa": {},
+    "lian": {},
+    "makoa": {},
+    "maeve": {},
+    "nyx": {},
+    "octavia": {
+      "Getting Jumpy": "20"
+    },
+    "pip": {
+      "Reload": "5"
+    },
+    "moji": {},
+    "maldamba": {},
+    "ruckus": {
+      "Countermeasure": "45"
+    },
+    "omen": {},
+    "rei": {},
+    "raum": {},
+    "saati": {},
+    "skye": {
+      "Emergency Exit": "25-5"
+    },
+    "shalin": {},
+    "talus": {},
+    "tiberius": {},
+    "seris": {},
+    "strix": {},
+    "terminus": {},
+    "torvald": {},
+    "vatu": {},
+    "vora": {
+      "False Idol": "15",
+      "Otherworldly Tether": "8",
+      "What May Come": "6"
+    },
+    "vii": {},
+    "willo": {},
+    "yagorath": {
+      "Violent Birth": "8"
+    },
+    "zhin": {},
+    "ying": {
+      "Disappear": "30-10"
+    },
+    "viktor": {},
+    "tyra": {},
+    "vivian": {}
+  },
+  "cooldownIconSource": "https://static.wikia.nocookie.net/paladins_gamepedia/images/4/46/Cooldown_Icon2.png/revision/latest?cb=20230128210952"
+}

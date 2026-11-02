@@ -1,0 +1,7 @@
+/* Variable-height card grids share this packing behavior; their columns and surfaces remain owned by each page. */
+.discovery-card-flow {
+  align-items:start;
+  grid-auto-flow:row dense;
+  grid-auto-rows:2px;
+  row-gap:0;
+}
