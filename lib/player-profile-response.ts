@@ -5,13 +5,25 @@
  */
 import type { PlayerResponse } from "./player-profile-types";
 
+/** A player profile with the queue/champion rating arrays made non-optional.
+ *
+ * refs: none
+ */
 export type NormalizedPlayerProfile = PlayerResponse & {
   queueRatings: NonNullable<PlayerResponse["queueRatings"]>;
   championRatings: NonNullable<PlayerResponse["championRatings"]>;
 };
 type FailureCode = "INVALID_PLAYER_PROFILE" | "INVALID_PLAYER_LIVE_MATCH";
+/** Discriminated result of a profile decode (a value or a coded failure).
+ *
+ * refs: none
+ */
 export type PlayerResponseDecodeResult<T> = { ok: true; value: T }
   | { ok: false; error: { code: FailureCode; field: string } };
+/** A live-match player response (match detail plus optional roster rows).
+ *
+ * refs: none
+ */
 export interface PlayerLiveMatchResponse {
   match: Record<string, unknown> & { match_id: string };
   players?: Array<Record<string, unknown>> | null;
@@ -78,7 +90,12 @@ function ratings(value: unknown, name: "queueRatings" | "championRatings"): { va
   return { value: rows };
 }
 
-/** Safely decode profile JSON from either SSR or browser acquisition. */
+/** Safely decode profile JSON from either SSR or browser acquisition.
+ *
+ * I/O: in (input: unknown) -> out PlayerResponseDecodeResult<NormalizedPlayerProfile>
+ *
+ * refs: none
+ */
 export function decodePlayerProfileResponse(input: unknown): PlayerResponseDecodeResult<NormalizedPlayerProfile> {
   const code = "INVALID_PLAYER_PROFILE";
   try {
@@ -127,7 +144,12 @@ export function decodePlayerProfileResponse(input: unknown): PlayerResponseDecod
   }
 }
 
-/** Decode a populated live-match response; missing rosters stay unavailable. */
+/** Decode a populated live-match response; missing rosters stay unavailable.
+ *
+ * I/O: in (input: unknown) -> out PlayerResponseDecodeResult<PlayerLiveMatchResponse>
+ *
+ * refs: none
+ */
 export function decodePlayerLiveMatchResponse(input: unknown): PlayerResponseDecodeResult<PlayerLiveMatchResponse> {
   const code = "INVALID_PLAYER_LIVE_MATCH";
   try {

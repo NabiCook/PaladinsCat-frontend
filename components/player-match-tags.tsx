@@ -1,3 +1,11 @@
+/**
+ * Player match tags — render every contribution earned by a match.
+ *
+ * Owns the `PlayerMatchTags` component. Maps performance match tags to
+ * moderation badges; no player lookup, no aggregate threshold.
+ *
+ * refs: none
+ */
 "use client";
 
 import { PlayerModerationTag } from "@/components/player-name";
@@ -8,7 +16,12 @@ const AUTOMATIC_TAG: Partial<Record<PerformanceMatchTag, "TANK" | "SUP" | "DPS" 
   flank_diff: "FLANK", noob: "NOOB", hypercarry: "CARRY",
 };
 
-/** Show every contribution earned by this match; no badge-count threshold. */
+/**
+ * Show every contribution earned by this match; no badge-count threshold.
+ * I/O: in `{ tags: readonly PerformanceMatchTag[] }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function PlayerMatchTags({ tags }: { tags: readonly PerformanceMatchTag[] }) {
   return <span className="inline-flex flex-wrap items-center gap-1">
     {tags.map((tag) => <span key={tag} data-performance-tag={tag}>

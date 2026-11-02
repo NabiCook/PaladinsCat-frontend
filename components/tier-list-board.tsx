@@ -39,7 +39,7 @@ export function tierTone(tier: TierName): string {
 /**
  * Render tier list board.
  * refs: none
- * I/O types: `{ entries, compact = false, mode = "champion" }: TierListBoardProps -> JSX.Element`.
+ * I/O types: `{ entries: TierListEntry[], compact?: boolean, mode?: TierListMode, boardRef?: RefObject<HTMLDivElement | null> }` -> JSX.Element.
  */
 export default function TierListBoard({
   entries,

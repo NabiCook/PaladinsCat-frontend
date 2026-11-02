@@ -71,7 +71,7 @@ export type {
 
 /**
  * Pair a champion numeric ID with its display name.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionNameOnly {
   id: number;
@@ -80,7 +80,7 @@ export interface ChampionNameOnly {
 
 /**
  * Record weekly champion win rate and play count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PatchTrend {
   trendWeek: string;
@@ -90,7 +90,7 @@ export interface PatchTrend {
 
 /**
  * Group favorable and unfavorable champion matchups with wins, plays, and win rates.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CounterStats {
   strongAgainst: Array<{ opponentChampionName: string; opponentChampionId: number; wins: number; totalMatches: number; winRate: number }>;
@@ -99,7 +99,7 @@ export interface CounterStats {
 
 /**
  * Describe a player match result, combat totals, queue/tier, and source authority.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchRecord {
   matchId: string;
@@ -121,7 +121,7 @@ export interface MatchRecord {
 
 /**
  * Rank a champion by nullable win rate and play count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TopWinrateEntry {
   id: number;
@@ -133,7 +133,7 @@ export interface TopWinrateEntry {
 
 /**
  * Carry champion leaderboard rank metrics and nullable rating.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface LeaderboardEntry {
   championId: number;
@@ -145,7 +145,7 @@ export interface LeaderboardEntry {
 
 /**
  * Carry ranked placement, tier points, movement, and optional win/leave totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface RankedPlayer {
   rank: number;
@@ -200,7 +200,7 @@ export async function fetchRankedLeaderboard(params?: { tier?: string; top?: num
 
 /**
  * Describe a moderated player with community tags, performance totals, and report reasons.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CheaterPlayer {
   id: string;
@@ -231,7 +231,7 @@ export interface CheaterPlayer {
 
 /**
  * Identify a public or private cheater subject with nullable profile and observation data.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CheaterPortalEntry {
   kind: "player" | "private";
@@ -251,7 +251,7 @@ export interface CheaterPortalEntry {
 
 /**
  * Summarize active, inactive, and evidence counts with latest cheater records.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CheaterPortal {
   activeCount: number;
@@ -260,7 +260,10 @@ export interface CheaterPortal {
   latest: CheaterPortalEntry[];
 }
 
-/** Distinct flagged-player activity; UTC buckets and match-server regions. */
+/** Distinct flagged-player activity; UTC buckets and match-server regions.
+ *
+ * refs: none
+ */
 export interface CheaterActivitySeries {
   total24h: number;
   regions: Array<{ region: string; total24h: number }>;
@@ -270,7 +273,10 @@ export interface CheaterActivitySeries {
   }>;
 }
 
-/** All-queue and per-queue series from the read-only cheater activity endpoint. */
+/** All-queue and per-queue series from the read-only cheater activity endpoint.
+ *
+ * refs: none
+ */
 export interface CheaterActivity {
   windowHours: number;
   observedAt: string;
@@ -280,7 +286,10 @@ export interface CheaterActivity {
   breakdown: PresenceBreakdownStats;
 }
 
-/** Shared player breakdown inputs; uncertainty metadata is optional for exact tagged-player counts. */
+/** Shared player breakdown inputs; uncertainty metadata is optional for exact tagged-player counts.
+ *
+ * refs: none
+ */
 export type PresenceBreakdownStats = Pick<PresenceStats, "public_players" | "public_by_platform" | "public_by_region"> & {
   public_by_queue: Array<{ queue_id: number; queue_name: string; players: number }>;
   profile_coverage?: Pick<PresenceStats["profile_coverage"], "total" | "platform_known">;
@@ -293,7 +302,7 @@ export type PresenceBreakdownStats = Pick<PresenceStats, "public_players" | "pub
 
 /**
  * Page historical cheater records with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface InactiveCheaterPage {
   items: CheaterPortalEntry[];
@@ -302,7 +311,7 @@ export interface InactiveCheaterPage {
 
 /**
  * Page recently active cheater records with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ActiveCheaterPage {
   items: CheaterPortalEntry[];
@@ -311,7 +320,7 @@ export interface ActiveCheaterPage {
 
 /**
  * Describe published cheater evidence, its subject, source/embed provider, and image attachments.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CheaterEvidence {
   id: string;
@@ -331,13 +340,17 @@ export interface CheaterEvidence {
 
 /**
  * Page published evidence with its total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface CheaterEvidencePage {
   items: CheaterEvidence[];
   total: number;
 }
 
+/** The provenance of a published cheater-evidence item.
+ *
+ * refs: none
+ */
 export type EvidenceOrigin = "player_submitted" | "automated" | "unknown";
 
 /**
@@ -359,7 +372,7 @@ export interface CheaterDetail {
 
 /**
  * Extend the moderated player with automatic AFK observation counts and economy-per-minute extrema.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticAfkPlayer extends CheaterPlayer {
   automaticMatchCount: number;
@@ -371,7 +384,7 @@ export interface AutomaticAfkPlayer extends CheaterPlayer {
 
 /**
  * Page automatic AFK players with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticAfkPlayerPage {
   players: AutomaticAfkPlayer[];
@@ -380,7 +393,7 @@ export interface AutomaticAfkPlayerPage {
 
 /**
  * Extend the moderated player with wall-shooter observation counts and time bounds.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticWallShooterPlayer extends CheaterPlayer {
   wallShooterCount: number;
@@ -390,7 +403,7 @@ export interface AutomaticWallShooterPlayer extends CheaterPlayer {
 
 /**
  * Page automatic wall-shooter players with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticWallShooterPlayerPage {
   players: AutomaticWallShooterPlayer[];
@@ -399,7 +412,7 @@ export interface AutomaticWallShooterPlayerPage {
 
 /**
  * Extend the moderated player with master-feeding observation counts and time bounds.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticMasterFeedingPlayer extends CheaterPlayer {
   masterFeedingCount: number;
@@ -409,7 +422,7 @@ export interface AutomaticMasterFeedingPlayer extends CheaterPlayer {
 
 /**
  * Page automatic master-feeding players with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticMasterFeedingPlayerPage {
   players: AutomaticMasterFeedingPlayer[];
@@ -418,13 +431,13 @@ export interface AutomaticMasterFeedingPlayerPage {
 
 /**
  * Select the automatic role-difference or noob/hypercarry metric.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type PerformanceDiffMetric = "tank-diff" | "support-diff" | "dps-diff" | "flank-diff" | "the-noob" | "hypercarry";
 
 /**
  * Extend the moderated player with a selected performance-metric count and time bounds.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticPerformanceDiffPlayer extends CheaterPlayer {
   metricCount: number;
@@ -434,7 +447,7 @@ export interface AutomaticPerformanceDiffPlayer extends CheaterPlayer {
 
 /**
  * Page automatic performance-metric players with their total count.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticPerformanceDiffPlayerPage {
   players: AutomaticPerformanceDiffPlayer[];
@@ -443,7 +456,7 @@ export interface AutomaticPerformanceDiffPlayerPage {
 
 /**
  * Carry the match context and economy-per-minute evidence behind an automatic AFK observation.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticAfkMatchSummary {
   matchId: number;
@@ -466,7 +479,7 @@ export interface AutomaticAfkMatchSummary {
 
 /**
  * Combine an automatic AFK player summary with supporting matches.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AutomaticAfkPlayerDetail {
   player: {
@@ -486,7 +499,7 @@ export interface AutomaticAfkPlayerDetail {
 
 /**
  * Extend the moderated player with party-match totals and associated cheaters.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BoostedPlayer extends CheaterPlayer {
   partyMatchCount: number;
@@ -503,7 +516,7 @@ export interface BoostedPlayer extends CheaterPlayer {
 
 /**
  * Carry a boosting-evidence match with scores, player performance, and associated cheaters.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BoostedMatchSummary {
   matchId: number;
@@ -529,7 +542,7 @@ export interface BoostedMatchSummary {
 
 /**
  * Combine a boosted player summary with supporting matches.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BoostedPlayerDetail {
   player: BoostedPlayer;
@@ -538,7 +551,7 @@ export interface BoostedPlayerDetail {
 
 /**
  * Describe an exploiter evidence match, including population, scope, and selected talent.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ExploiterEvidenceMatch {
   matchId: number;
@@ -578,7 +591,7 @@ export interface CosmeticEvidence {
  * Describe a stored evidence record from the evidence portal or an
  * operator/system flag (e.g. win-trade). Unlike computed cosmetic evidence,
  * these are concrete, match-linked records.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ExploiterFlagEvidence {
   id: number;
@@ -594,7 +607,7 @@ export interface ExploiterFlagEvidence {
  * Describe a moderation flag (vote) recorded against an exploiter. The reason
  * string is free-form and extensible — new flag types surface without a code
  * change.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ExploiterFlag {
   voteType: string;
@@ -604,7 +617,7 @@ export interface ExploiterFlag {
 
 /**
  * Combine exploiter identity and moderation flags with supporting matches.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ExploiterEvidenceDetail {
   player: Pick<CheaterPlayer, "id" | "name" | "platform" | "region" | "cheater" | "exploiter">;
@@ -701,7 +714,7 @@ function normalizeCheaterPortalEntry(row: any): CheaterPortalEntry {
 /**
  * Fetch the single cached read used by the Cheater Portal landing page.
  * I/O types: `none -> Promise<CheaterPortal>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchCheaterPortal(): Promise<CheaterPortal> {
   const response = await fetchJson<any>("/cheaters/portal");
@@ -716,9 +729,12 @@ export async function fetchCheaterPortal(): Promise<CheaterPortal> {
   };
 }
 
-/** Fetch all queue variants together; switching queues needs no extra request.
+/** Fetch all queue variants together; switching queues needs no extra request
  * Contract: no inputs -> Promise<CheaterActivity>; network failures reject.
- * refs: GET /cheaters/activity
+ *
+ * I/O: in () -> out Promise<CheaterActivity>
+ *
+ * refs: endpoints: GET /cheaters/activity
  */
 export async function fetchCheaterActivity(): Promise<CheaterActivity> {
   return fetchJson<CheaterActivity>("/cheaters/activity", { retries: 0 });
@@ -728,7 +744,7 @@ export async function fetchCheaterActivity(): Promise<CheaterActivity> {
  * Fetch the paginated inactive-cheater directory with optional search, limit, and offset filters. Return the backend items and total; network/API failures reject the promise.
  * Fetch paginated historical cheaters without scanning the legacy directory client-side.
  * I/O types: `params: { q?: string; limit?: number; offset?: number } -> Promise<InactiveCheaterPage>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchInactiveCheaters(params: { q?: string; limit?: number; offset?: number } = {}): Promise<InactiveCheaterPage> {
   const query = new URLSearchParams();
@@ -745,7 +761,7 @@ export async function fetchInactiveCheaters(params: { q?: string; limit?: number
 /**
  * Fetch paginated recent cheaters without expanding the landing-page preview.
  * I/O types: `params: { q?: string; limit?: number; offset?: number } -> Promise<ActiveCheaterPage>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchActiveCheaters(params: { q?: string; limit?: number; offset?: number } = {}): Promise<ActiveCheaterPage> {
   const query = new URLSearchParams();
@@ -762,6 +778,9 @@ export async function fetchActiveCheaters(params: { q?: string; limit?: number; 
 /**
  * Fetch the paginated recent-exploiter directory. Ordering and the rolling
  * 30-day boundary are owned by the backend directory endpoint.
+ *
+ * I/O: in (params: { q?: string; limit?: number; offset?: number }) -> out Promise<ActiveCheaterPage>
+ *
  * refs: endpoints: GET /players/exploiters/active
  */
 export async function fetchActiveExploiters(params: { q?: string; limit?: number; offset?: number } = {}): Promise<ActiveCheaterPage> {
@@ -779,6 +798,9 @@ export async function fetchActiveExploiters(params: { q?: string; limit?: number
 /**
  * Fetch the paginated historical-exploiter directory. Ordering and the
  * rolling 30-day boundary are owned by the backend directory endpoint.
+ *
+ * I/O: in (params: { q?: string; limit?: number; offset?: number }) -> out Promise<InactiveCheaterPage>
+ *
  * refs: endpoints: GET /players/exploiters/inactive
  */
 export async function fetchInactiveExploiters(params: { q?: string; limit?: number; offset?: number } = {}): Promise<InactiveCheaterPage> {
@@ -828,7 +850,7 @@ function normalizeCheaterEvidence(row: any): CheaterEvidence {
 /**
  * Fetch the newest approved evidence records, including provider-safe embed URLs.
  * I/O types: `params: { limit?: number; offset?: number } -> Promise<CheaterEvidencePage>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchCheaterEvidence(params: { limit?: number; offset?: number } = {}): Promise<CheaterEvidencePage> {
   const query = new URLSearchParams({
@@ -867,7 +889,7 @@ export async function submitCheaterEvidence(form: FormData): Promise<{ evidence:
 /**
  * Fetch one approved evidence post for the SNS-style detail view.
  * I/O types: `id: string -> Promise<CheaterEvidence>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchCheaterEvidenceDetail(id: string): Promise<CheaterEvidence> {
   const raw = await fetchJson<{ evidence: any }>(`/cheaters/evidence/${encodeURIComponent(id)}`);
@@ -879,7 +901,7 @@ export async function fetchCheaterEvidenceDetail(id: string): Promise<CheaterEvi
 /**
  * Fetch pending evidence reserved for administrator review.
  * I/O types: `params: { limit?: number; offset?: number } -> Promise<{ items: CheaterEvidenceReviewItem[]; total: number }>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchCheaterEvidenceReview(params: { limit?: number; offset?: number } = {}): Promise<{ items: CheaterEvidenceReviewItem[]; total: number }> {
   const query = new URLSearchParams({ limit: String(params.limit ?? 20), offset: String(params.offset ?? 0) });
@@ -911,7 +933,7 @@ export async function fetchCheaterEvidenceReviewImage(id: string, position: numb
 /**
  * Apply an administrator's evidence review decision without retrying a state transition.
  * I/O types: `id: string; decision: "approve" | "deny"; tag?: "cheater" | "exploit" | "suspicious" -> Promise<void>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function reviewCheaterEvidence(
   id: string,
@@ -931,7 +953,7 @@ export async function reviewCheaterEvidence(
 /**
  * Fetch the confirmed-cheater detail feed and its evidence-linked match rows.
  * I/O types: `id: string -> Promise<CheaterDetail>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchCheaterDetail(id: string): Promise<CheaterDetail> {
   const raw = await fetchJson<{ player: any; evidence?: any[]; supportingMatches?: any[] }>(`/cheaters/${encodeURIComponent(id)}`);
@@ -1185,7 +1207,7 @@ export async function fetchAutomaticAfkPlayerDetail(playerId: string): Promise<A
 
 /**
  * Carry class ranking, rating uncertainty, and player win/match totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ClassLeaderboardEntry {
   rank: number;
@@ -1245,7 +1267,7 @@ export async function fetchClassLeaderboard(params: { role: string; limit?: numb
 
 /**
  * Carry champion Elo ranking, class, uncertainty, and match totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionEloEntry {
   rank: number;
@@ -1309,7 +1331,7 @@ export async function fetchChampionElo(params: {
 
 /**
  * Rank a player performance value with nullable match, champion, and coverage context.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PerformanceLeaderboardEntry {
   rank: number;
@@ -1377,7 +1399,7 @@ export async function fetchPerformanceLeaderboard(params: {
 
 /**
  * Rank account or champion level and XP with class/champion placements and nullable performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerLevelLeaderboardEntry {
   rank: number;
@@ -1400,7 +1422,7 @@ export interface PlayerLevelLeaderboardEntry {
 
 /**
  * Filter level leaderboards by player, role, or champion.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerLevelLeaderboardFilters {
   playerId?: number;
@@ -1451,7 +1473,7 @@ export async function fetchPlayerLevelLeaderboard(mode: 'account' | 'champion', 
 
 /**
  * Summarize a performance metric distribution with extrema and statistical aggregates.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PerformanceMetricSummary {
   min: number;
@@ -1474,10 +1496,14 @@ export type PerformanceMetricKey = 'dpm' | 'wpm' | 'apm' | 'hpm' | 'shpm' | 'gpm
 
 /**
  * Group performance metric summaries returned for the selected population.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type PerformanceMetricsResponse = Partial<Record<PerformanceMetricKey, PerformanceMetricSummary>>;
 
+/** The full performance-page payload (dashboard, comparison, and population scope).
+ *
+ * refs: none
+ */
 export type PerformancePageData = {
   scope: PerformanceScope;
   queueId: number;
@@ -1491,6 +1517,10 @@ export type PerformancePageData = {
   };
 };
 
+/** The performance-dashboard subset of the full performance-page payload.
+ *
+ * refs: none
+ */
 export type PerformanceDashboardPageData = Pick<PerformancePageData, "scope" | "queueId" | "metric" | "dashboard">;
 
 function mapMetricSummary(raw: any): PerformanceMetricSummary {
@@ -1546,7 +1576,7 @@ export async function fetchPerformanceMetrics(params?: {
  * Fetch the global and each class's summary in one cacheable API response.
  * The metrics page used to make five nearly identical requests per tab.
  * refs: none
- * I/O types: `metric: PerformanceMetricKey; scope: 'ranked' | 'casual' -> Promise<{ summary: PerformanceMetricSummary; roles: Record<string, PerformanceMetricSummary>; }>`.
+ * I/O types: `metric: PerformanceMetricKey; scope: 'ranked' | 'casual'; queueId: number -> Promise<{ summary: PerformanceMetricSummary; roles: Record<string, PerformanceMetricSummary>; }>`.
  */
 export async function fetchPerformanceMetricDashboard(metric: PerformanceMetricKey, scope: 'ranked' | 'casual' = 'ranked', queueId: number = scope === 'ranked' ? 486 : 424): Promise<{
   summary: PerformanceMetricSummary;
@@ -1565,7 +1595,7 @@ export async function fetchPerformanceMetricDashboard(metric: PerformanceMetricK
 
 /**
  * Describe one champion performance distribution and its sample coverage.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionPerformanceDistribution {
   championId: number;
@@ -1596,7 +1626,12 @@ type ChampionPerformanceRow = {
   total_matches: number;
 };
 
-/** Fetch the stats owner's complete comparison in one cached request. */
+/** Fetch the stats owner's complete comparison in one cached request.
+ *
+ * I/O: in (params: { queueId: number; scope: string }) -> out Promise<Array<{ metric: PerformanceMetricKey; rows: ChampionPerformanceDistribution[] }>>
+ *
+ * refs: none
+ */
 export async function fetchChampionPerformanceComparison(params: {
   queueId: number; scope: 'ranked' | 'casual';
 }): Promise<Array<{ metric: PerformanceMetricKey; rows: ChampionPerformanceDistribution[] }>> {
@@ -1607,6 +1642,12 @@ export async function fetchChampionPerformanceComparison(params: {
   return groups.map(group => ({ metric: group.metric, rows: mapChampionPerformanceRows(group.rows) }));
 }
 
+/** Fetch per-champion performance distributions for a selected metric.
+ *
+ * I/O: in (params: { metric: PerformanceMetricKey; championId?: number; queueId?: number; scope?: string }) -> out Promise<ChampionPerformanceDistribution[]>
+ *
+ * refs: none
+ */
 export async function fetchChampionPerformanceDistributions(params: {
   metric: PerformanceMetricKey;
   championId?: number;
@@ -1641,7 +1682,7 @@ function mapChampionPerformanceRows(raw: ChampionPerformanceRow[]): ChampionPerf
 
 /**
  * Associate a baseline value with its population dimensions.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BaselineEntry {
   role: string;
@@ -1722,7 +1763,7 @@ export async function fetchBaselines(params?: { role?: string; queueId?: number;
 
 /**
  * Summarize match activity for a region.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface RegionStat {
   regionCode: string;
@@ -1734,7 +1775,7 @@ export interface RegionStat {
 
 /**
  * Summarize observed champion loadout performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface LoadoutStat {
   deckHash: string;
@@ -1760,7 +1801,7 @@ export interface LoadoutStat {
 
 /**
  * Summarize an item selection and its match performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ItemStat {
   itemId: number;
@@ -1775,7 +1816,7 @@ export interface ItemStat {
 
 /**
  * Combine player-directory overview totals and featured player groups.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayersOverview {
   championEloPlayers: ChampionEloEntry[];
@@ -1862,7 +1903,7 @@ export async function fetchBoostedPlayers({ name, limit = 100, offset = 0 }: { n
 
 /**
  * Summarize a frequent co-play partner and shared match performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BestDuoSummary {
   sourcePlayerId: string;
@@ -1878,7 +1919,7 @@ export interface BestDuoSummary {
 
 /**
  * Describe one co-play partner with match coverage, performance, and role/champion counts.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerRelationshipRow {
   otherPlayerId: string;
@@ -1900,10 +1941,14 @@ export interface PlayerRelationshipRow {
 
 /**
  * Aggregate a player co-play network and relationship groups.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type RelationshipScope = "ranked" | "casual";
 
+/** A player's aggregate co-play network (teammates, opponents, party partners).
+ *
+ * refs: none
+ */
 export interface PlayerRelationshipSummary {
   playerId: string;
   scope?: RelationshipScope;
@@ -2129,6 +2174,9 @@ export async function fetchPlayerEvidence(playerId: string): Promise<ExploiterEv
  * Fetch the shared player evidence dashboard. Exploiters use the rich
  * evidence payload; cheaters fall back to published user and automated
  * evidence while preserving each server-owned source.
+ *
+ * I/O: in (playerId: string) -> out Promise<ExploiterEvidenceDetail>
+ *
  * refs: endpoints: GET /players/exploiters/:id · GET /cheaters/:id
  */
 export async function fetchPlayerEvidenceDashboard(playerId: string): Promise<ExploiterEvidenceDetail> {
@@ -2226,7 +2274,7 @@ export interface PrivateAccountDetail {
 
 /**
  * Summarize a recurring pair of players and their shared matches.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PartyPairSummary {
   sourcePlayerId: number;
@@ -2240,7 +2288,7 @@ export interface PartyPairSummary {
 
 /**
  * Summarize a recurring multi-player stack and its shared matches.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PartyStackSummary {
   groupKey: string;
@@ -2253,7 +2301,7 @@ export interface PartyStackSummary {
 
 /**
  * Combine a pair/stack identity, optional party summary, and paginated match history.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PartyDetail {
   kind: "pairs" | "stacks";
@@ -2271,7 +2319,7 @@ export interface PartyDetail {
 
 /**
  * Page player-directory records with pagination totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerDirectoryPage<T> {
   items: T[];
@@ -2432,7 +2480,7 @@ export async function fetchPartyStacksDirectory(params: { page?: number; pageSiz
 /**
  * Fetch pair or stack match history with an encoded party key. Clamp the requested page to at least one and page size to 1-100; normalize response IDs and metrics and return null for an absent party. Network/API failures reject the promise.
  * I/O types: `kind: "pairs" | "stacks"; key: string; params: { page?: number; pageSize?: number } -> Promise<PartyDetail>`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export async function fetchPartyDetail(
   kind: "pairs" | "stacks",
@@ -2622,7 +2670,7 @@ export async function fetchPlayersOverview(): Promise<PlayersOverview> {
 
 /**
  * Summarize match counts and performance for a map.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapStat {
   name: string;
@@ -2633,7 +2681,7 @@ export interface MapStat {
 
 /**
  * Summarize champion performance on a map.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapChampionStat {
   championId: number;
@@ -2649,7 +2697,7 @@ export interface MapChampionStat {
 
 /**
  * Summarize a champion performance across maps.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionMapStat {
   name: string;
@@ -2662,7 +2710,7 @@ export interface ChampionMapStat {
 
 /**
  * Summarize talent performance on a map.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapTalentStat {
   talentId: number;
@@ -2678,7 +2726,7 @@ export interface MapTalentStat {
 
 /**
  * Summarize item performance on a map.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapItemStat {
   itemId: number;
@@ -2692,7 +2740,7 @@ export interface MapItemStat {
 
 /**
  * Combine map totals with champion, talent, and item breakdowns.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapDetailStats {
   map: MapStat;
@@ -2854,13 +2902,13 @@ export async function clearMyAltAccountRelation(playerId: string | number, other
 
 /**
  * Select the map comparison dimension.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type MapComparisonSection = 'champions' | 'talents' | 'items' | 'compositions';
 
 /**
  * Compare map performance within a selected category.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MapCategoryComparisonStat {
   entityKey: string;
@@ -2876,7 +2924,7 @@ export interface MapCategoryComparisonStat {
 
 /**
  * Count observed matches in one hourly bucket.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface HourlyMatchCount {
   date: string;
@@ -2897,7 +2945,7 @@ export interface HourlyMatchCount {
 
 /**
  * Describe backend database and stored-record totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DatabaseStats {
   tables: Array<{ name: string; rowCount: number }>;
@@ -2906,7 +2954,7 @@ export interface DatabaseStats {
 
 /**
  * Describe service status reported by the backend.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface SystemStatus {
   matches: number;
@@ -2918,7 +2966,7 @@ export interface SystemStatus {
 
 /**
  * Describe one upstream Hi-Rez outage observation.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface HirezOutageItem {
   serviceKey: string;
@@ -2937,7 +2985,7 @@ export interface HirezOutageItem {
 
 /**
  * Summarize the current upstream outage signal.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface HirezOutageSignal {
   source: string;
@@ -2952,7 +3000,7 @@ export interface HirezOutageSignal {
 
 /**
  * Describe Hi-Rez service availability and outage context.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface HirezServiceStatus {
   status: "ok" | "degraded" | "outage";
@@ -2971,7 +3019,7 @@ export interface HirezServiceStatus {
 
 /**
  * Describe a site notification with its display and lifecycle fields.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface Notification {
   id: number;
@@ -2985,7 +3033,7 @@ export interface Notification {
 
 /**
  * Supply editable site-notification fields.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface NotificationInput {
   timestamp?: string;
@@ -2995,7 +3043,7 @@ export interface NotificationInput {
 
 /**
  * Describe the site activity banner payload.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ActivityBanner {
   enabled: boolean;
@@ -3006,7 +3054,7 @@ export interface ActivityBanner {
 
 /**
  * Describe a published changelog entry and its display metadata.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChangelogEntry {
   id: number;
@@ -3026,7 +3074,7 @@ export interface ChangelogEntry {
 
 /**
  * Page changelog entries with pagination metadata.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChangelogPage {
   data: ChangelogEntry[];
@@ -3038,7 +3086,7 @@ export interface ChangelogPage {
 
 /**
  * Supply editable fields for an administrator changelog operation.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface AdminChangelogInput {
   changelog: string;
@@ -3046,7 +3094,7 @@ export interface AdminChangelogInput {
 
 /**
  * Identify a component in the site-version payload.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface SiteVersionComponent {
   id: number;
@@ -3066,7 +3114,7 @@ export interface SiteVersionComponent {
 
 /**
  * Describe the current frontend-visible site version and components.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface SiteVersion extends SiteVersionComponent {
   timestamp: string | null;
@@ -3076,7 +3124,7 @@ export interface SiteVersion extends SiteVersionComponent {
 
 /**
  * Summarize players or activity within one ranked tier.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TierStat {
   tier: string;
@@ -3088,7 +3136,7 @@ export interface TierStat {
 
 /**
  * Combine ranked-tier distribution summaries.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TierSummary {
   profilePlayers: number;
@@ -3590,6 +3638,10 @@ export async function deleteAdminNotification(id: number): Promise<void> {
   });
 }
 
+/** One admin-mailbox email message (metadata + optional body).
+ *
+ * refs: none
+ */
 export interface AdminEmailMessage {
   id: number;
   address: string;
@@ -3604,6 +3656,10 @@ export interface AdminEmailMessage {
   body?: string;
 }
 
+/** Result of an IMAP mailbox poll (configured flag + inserted count).
+ *
+ * refs: none
+ */
 export interface AdminEmailPollResult {
   configured: boolean;
   inserted: number;
@@ -3679,6 +3735,10 @@ export async function pollAdminEmail(): Promise<AdminEmailPollResult> {
   });
 }
 
+/** One exploit-exception record (grant, expiry, and revocation audit fields).
+ *
+ * refs: none
+ */
 export interface ExploitExceptionRow {
   playerId: string;
   playerName: string | null;
@@ -3924,7 +3984,7 @@ export async function fetchSiteVersion(): Promise<SiteVersion | null> {
 
 /**
  * Represent raw champion-overview data before client normalization.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type ChampionOverviewRaw = {
   champions?: Array<{
@@ -3977,7 +4037,7 @@ export function mapChampionsOverview(raw: ChampionOverviewRaw): Champion[] {
 
 /**
  * Select the public match population scope.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type PublicStatsScope =
   | 'ranked'
@@ -4171,7 +4231,7 @@ export interface PlayerChampionCumulativeMetrics {
 
 /**
  * Summarize a player champion experience and performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerChampionStat {
   championId: number;
@@ -4202,6 +4262,10 @@ export interface PlayerChampionStat {
   lastUpdated: string | null;
 }
 
+/** The population scope for player champion stats (ranked vs casual).
+ *
+ * refs: none
+ */
 export type PlayerChampionScope = "ranked" | "casual";
 
 /**
@@ -4329,7 +4393,7 @@ export async function fetchPlayerChampionStats(playerId: string | number, scope:
 
 /**
  * Describe the outcome of requesting player champion-stat refresh.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerChampionStatsRefreshResponse {
   refreshed: boolean;
@@ -4351,7 +4415,7 @@ export async function refreshPlayerChampionStats(playerId: string | number): Pro
 
 /**
  * Summarize item performance for a breakdown dimension.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ItemDimensionStat {
   slot?: number;
@@ -4365,7 +4429,7 @@ export interface ItemDimensionStat {
 
 /**
  * Combine item totals with dimension breakdowns.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ItemDetailStats {
   itemId: number;
@@ -4407,18 +4471,18 @@ export async function fetchPlayerSearch(query: string): Promise<PlayerSearchResu
 
 /**
  * Select a universal-search entity category.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type UniversalSearchType = "player" | "match" | "champion" | "item" | "card" | "talent";
 /**
  * Describe a remote target eligible for universal search.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type UniversalSearchRemoteTarget = "player-id" | "player-name" | "match-id";
 
 /**
  * Describe a navigable universal-search result.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface UniversalSearchResult {
   type: UniversalSearchType;
@@ -4432,7 +4496,7 @@ export interface UniversalSearchResult {
 
 /**
  * Group universal-search results and response metadata.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface UniversalSearchResponse {
   query: string;
@@ -4532,7 +4596,7 @@ export async function fetchPlayerMatches(id: string, params?: { limit?: string; 
 
 /**
  * Describe the freshness and refresh state of player loadout data.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerLoadoutFreshness {
   ttlSeconds: number;
@@ -4546,7 +4610,7 @@ export interface PlayerLoadoutFreshness {
 
 /**
  * Describe a named player champion loadout and its card selections.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerLoadout {
   id: number;
@@ -4564,7 +4628,7 @@ export interface PlayerLoadout {
 
 /**
  * Combine player loadouts with their freshness state.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PlayerLoadoutsResponse {
   loadouts: PlayerLoadout[];
@@ -4684,7 +4748,7 @@ export async function fetchLeaderboard(params?: { tier?: string; region?: string
 
 /**
  * Describe a champion row used by aggregate statistics.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface StatsChampion {
   wins?: number;
@@ -4752,7 +4816,12 @@ function isPerformanceSummary(value: unknown): boolean {
     && Number.isFinite(Number(value.sample_size ?? value.sampleSize));
 }
 
-/** Validate and map the complete page bundle; partial 200 responses must be retried, not rendered as empty charts. */
+/** Validate and map the complete page bundle; partial 200 responses must be retried, not rendered as empty charts.
+ *
+ * I/O: in (raw: unknown, scope: PerformanceScope, metric: GamePerformanceMetric, queueId: number) -> out PerformanceDashboardPageData
+ *
+ * refs: none
+ */
 export function mapPerformanceDashboardPageData(raw: unknown, scope: PerformanceScope, metric: GamePerformanceMetric, queueId: number): PerformanceDashboardPageData {
   const dashboard = unwrapPerformanceRecord(raw);
   const roles = dashboard && isRecord(dashboard.roles) ? dashboard.roles : null;
@@ -4775,6 +4844,12 @@ export function mapPerformanceDashboardPageData(raw: unknown, scope: Performance
   };
 }
 
+/** Validate and map the complete performance-page bundle into a renderable payload.
+ *
+ * I/O: in (raw: unknown, scope: PerformanceScope, metric: GamePerformanceMetric, queueId: number) -> out PerformancePageData
+ *
+ * refs: none
+ */
 export function mapPerformancePageData(raw: unknown, scope: PerformanceScope, metric: GamePerformanceMetric, queueId: number): PerformancePageData {
   if (!isRecord(raw)) throw new Error("Invalid performance page data");
   const dashboard = unwrapPerformanceRecord(raw.dashboard);
@@ -4841,7 +4916,12 @@ export function mapPerformancePageData(raw: unknown, scope: PerformanceScope, me
   };
 }
 
-/** Make one bounded retry for a transient or incomplete page-data response. */
+/** Make one bounded retry for a transient or incomplete page-data response.
+ *
+ * I/O: in (scope: PerformanceScope, metric: GamePerformanceMetric, queueId: number, signal?: AbortSignal) -> out Promise<PerformancePageData>
+ *
+ * refs: none
+ */
 export async function fetchPerformancePageData(
   scope: PerformanceScope,
   metric: GamePerformanceMetric,
@@ -5241,7 +5321,7 @@ export async function fetchMapCategoryComparison(
 
 /**
  * Summarize observed skin selection and match performance.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface SkinStat {
   skinId: number;
@@ -5289,7 +5369,7 @@ export async function fetchSkinStats(params?: { championId?: number; tierMin?: n
 
 /**
  * Describe a skin reference requiring repair or missing authoritative detail.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BrokenSkinStat {
   skinId: number;
@@ -5337,7 +5417,7 @@ export async function fetchBrokenSkinStats(params?: { championId?: number; tierM
 
 /**
  * Summarize team role composition and win/loss totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchCompositionStat {
   composition: string;
@@ -5385,7 +5465,7 @@ export async function fetchMatchCompositions(params?: { tierMin?: number; tierMa
 
 /**
  * Rank players for one champion using rating and match totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionLeaderboardEntry {
   rank: number;
@@ -5421,7 +5501,7 @@ export async function fetchChampionLeaderboard(championId: number, limit = 25): 
 
 /**
  * Summarize one champion talent play count and win/loss record.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionTalentStat {
   talentId: number;
@@ -5434,7 +5514,7 @@ export interface ChampionTalentStat {
 
 /**
  * Combine talent statistics with coverage and disconnected-player counts.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionTalentStatsResponse {
   totalMatches: number;
@@ -5514,7 +5594,7 @@ export async function fetchChampionTalentStats(
 
 /**
  * Summarize card selections and win rate at one card level.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionCardLevelStat {
   level: number;
@@ -5524,7 +5604,7 @@ export interface ChampionCardLevelStat {
 
 /**
  * Summarize card performance with level breakdowns.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionCardStat {
   cardId: number;
@@ -5538,7 +5618,7 @@ export interface ChampionCardStat {
 
 /**
  * Combine champion card statistics with total match coverage.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionCardStatsResponse {
   totalMatches: number;
@@ -5590,7 +5670,7 @@ export function normalizeChampionCardStatsResponse(raw: any): ChampionCardStatsR
 }
 /**
  * Summarize card performance for one selected talent.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionCardTalentStat {
   talentId: number;
@@ -5603,7 +5683,7 @@ export interface ChampionCardTalentStat {
 
 /**
  * Describe ranked card detail with champion, optional talent filter, and level/talent breakdowns.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ChampionCardDetailResponse {
   cardId: number;
@@ -5626,7 +5706,7 @@ export interface ChampionCardDetailResponse {
  *
  * refs: none
  * Request `GET '/stats/cards/${championId}/${cardId}?mode=${mode}${talentId ? '&talentId=${talentId}' : ''}'` through the shared API transport. Propagate request failures so the caller can report the actual cause.
- * I/O types: champion/card IDs, optional talent and tier bounds -> ranked card detail.
+ * I/O types: `championId: number; cardId: number; mode?: string; talentId?: number | null; tier?: { tierMin?: number; tierMax?: number } -> Promise<ChampionCardDetailResponse>`.
  */
 export async function fetchChampionCardDetail(
   championId: number,
@@ -5782,7 +5862,7 @@ export async function fetchTiers(params?: { source?: 'profiles' | 'matches' }): 
 
 /**
  * Combine performance metrics with champion, item, map, and tier statistics.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface StatsOverview {
   metrics: PerformanceMetricsResponse;
@@ -5838,7 +5918,7 @@ function mapBaselineRows(rows: any[]): BaselineEntry[] {
 
 /**
  * Combine the statistics overview with baselines, skins, compositions, and broken-skin records.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface StatsPageData {
   overview: StatsOverview;
@@ -5864,7 +5944,12 @@ export async function fetchStatsPageData(params?: { tierMin?: number; tierMax?: 
   return mapStatsPageData(raw);
 }
 
-/** Shared normalization for the full stats bundle and its public preview subset. */
+/** Shared normalization for the full stats bundle and its public preview subset.
+ *
+ * I/O: in (raw: any) -> out StatsPageData
+ *
+ * refs: none
+ */
 export function mapStatsPageData(raw: any): StatsPageData {
   const skinRows = (rows: any[]): SkinStat[] => rows.map((row) => ({
     skinId: Number(row.skin_id), skinName: String(row.skin_name ?? 'Unknown Skin'), championId: Number(row.champion_id), championName: String(row.champion_name ?? 'Unknown Champion'),
@@ -5969,7 +6054,7 @@ export async function fetchTierSummary(): Promise<TierSummary> {
  *
  * refs: none
  * Request `GET '/stats/talents'` through the shared API transport. Uncaught network/API errors reject the returned promise.
- * I/O types: optional ranked tier bounds -> champion talent rows.
+ * I/O types: `tier?: { tierMin?: number; tierMax?: number } -> Promise<Array<{ talentId: number; talentName: string }>>`.
  */
 export async function fetchTalents(tier?: { tierMin?: number; tierMax?: number }): Promise<Array<{
   talentId: number;
@@ -6005,6 +6090,10 @@ export async function fetchTalents(tier?: { tierMin?: number; tierMax?: number }
 
 // ── Auth Types ──
 
+/** A backend account access restriction (code + optional localized label/detail).
+ *
+ * refs: none
+ */
 export interface AccessRestriction {
   code: string;
   label?: string;
@@ -6455,24 +6544,53 @@ export async function getAccountDetails(): Promise<AccountDetails> {
   };
 }
 
-/** Only identity candidates needed to link an account are exposed here. */
+/** Only identity candidates needed to link an account are exposed here.
+ *
+ * I/O: in (query: string) -> out Promise<PlayerSearchResult[]>
+ *
+ * refs: none
+ */
 export async function fetchLinkPlayerSearch(query: string): Promise<PlayerSearchResult[]> {
   return fetchJson(`/auth/account/player-search?q=${encodeURIComponent(query)}`, { headers: accountAuthHeaders() });
 }
 
+/** The global invitation rollout policy (enabled flag).
+ *
+ * refs: none
+ */
 export interface InvitationPolicy { enabled: boolean }
+/** Fetch the global invitation rollout policy.
+ *
+ * I/O: in () -> out Promise<InvitationPolicy>
+ *
+ * refs: none
+ */
 export async function getInvitationPolicy(): Promise<InvitationPolicy> {
   return fetchJson("/admin/invitations/policy", { headers: accountAuthHeaders() });
 }
+/** Set the global invitation rollout policy (enable or disable).
+ *
+ * I/O: in (enabled: boolean) -> out Promise<InvitationPolicy>
+ *
+ * refs: none
+ */
 export async function setInvitationPolicy(enabled: boolean): Promise<InvitationPolicy> {
   return fetchJson("/admin/invitations/policy", { method: "PUT", headers: accountAuthHeaders(), body: JSON.stringify({ enabled }) });
 }
+/** The invitation status for an account (required/active/state/expiry).
+ *
+ * refs: none
+ */
 export interface InvitationStatus {
   required: boolean;
   active: boolean;
   status: "none" | "active" | "expired" | "revoked";
   expires_at: string | null;
 }
+/** One administrator-issued invitation record (issuance and redemption audit).
+ *
+ * refs: none
+ */
 export interface AdminInvitation {
   id: number;
   issued_at: string;
@@ -6483,18 +6601,48 @@ export interface AdminInvitation {
   revoked_at: string | null;
   status: "unused" | "active" | "expired" | "revoked";
 }
+/** Fetch the invitation status for the authenticated account.
+ *
+ * I/O: in () -> out Promise<InvitationStatus>
+ *
+ * refs: none
+ */
 export async function getInvitationStatus(): Promise<InvitationStatus> {
   return fetchJson("/auth/account/invitation", { headers: accountAuthHeaders() });
 }
+/** Redeem an invitation code for the authenticated account.
+ *
+ * I/O: in (code: string) -> out Promise<InvitationStatus>
+ *
+ * refs: none
+ */
 export async function redeemInvitation(code: string): Promise<InvitationStatus> {
   return fetchJson("/auth/account/invitation", { method: "POST", headers: { "Content-Type": "application/json", ...accountAuthHeaders() }, body: JSON.stringify({ code }) });
 }
+/** Fetch a page of administrator-issued invitations.
+ *
+ * I/O: in (page: number) -> out Promise<{ items: AdminInvitation[]; has_more: boolean }>
+ *
+ * refs: none
+ */
 export async function getAdminInvitations(page: number): Promise<{ items: AdminInvitation[]; has_more: boolean }> {
   return fetchJson(`/admin/invitations?page=${page}`, { headers: accountAuthHeaders() });
 }
+/** Issue a new administrator invitation code.
+ *
+ * I/O: in () -> out Promise<{ code: string }>
+ *
+ * refs: none
+ */
 export async function issueAdminInvitation(): Promise<{ code: string }> {
   return fetchJson("/admin/invitations", { method: "POST", headers: accountAuthHeaders() });
 }
+/** Expire an administrator invitation by id.
+ *
+ * I/O: in (id: number) -> out Promise<void>
+ *
+ * refs: none
+ */
 export async function expireAdminInvitation(id: number): Promise<void> {
   await fetchJson(`/admin/invitations/${id}/expire`, { method: "POST", headers: accountAuthHeaders() });
 }
@@ -6617,13 +6765,13 @@ export async function updateProfile(data: { avatar_url?: string | null; bio?: st
 
 /**
  * Select the supported community player-report action.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type ReportType = 'suspicious' | 'cheater' | 'exploiter' | 'approve' | 'weirdo' | 'hall_of_fame' | 'dropper' | 'afk_wintrade';
 
 /**
  * Supply a player-report action and optional reason.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface ReportOptions {
   type: ReportType;
@@ -6674,7 +6822,7 @@ export async function reportPrivateAccount(privateId: string | number, opts: Rep
 
 /**
  * Select a moderation tag that can be cleared.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type ClearablePlayerTag = 'cheater' | 'exploiter' | 'suspicious' | 'dropper' | 'afk_wintrade' | 'alt_account';
 
@@ -6703,6 +6851,7 @@ export async function clearPlayerTag(playerId: string | number, tag: ClearablePl
  * The 8 automatic cosmetic performance tags a verified player may hide.
  * These are the `automatic_player_metric_flags` metrics. `automatic_afk` is
  * intentionally excluded (not self-toggleable).
+ * refs: none
  */
 export type CosmeticTagKey =
   | "wall_shooter"
@@ -6714,14 +6863,20 @@ export type CosmeticTagKey =
   | "noob"
   | "hypercarry";
 
-/** A single owned tag with its current public visibility. */
+/**
+ * A single owned tag with its current public visibility.
+ * refs: none
+ */
 export interface PlayerTagVisibility {
   tag: CosmeticTagKey;
   count: number | null;
   visible: boolean;
 }
 
-/** The custom-tag request lifecycle for a player. */
+/**
+ * The custom-tag request lifecycle for a player.
+ * refs: none
+ */
 export interface PlayerCustomTag {
   status: "pending" | "approved" | "rejected";
   tagText: string | null;
@@ -6735,6 +6890,9 @@ export interface PlayerCustomTag {
  *
  * Returns only the cosmetic tags the player currently owns, each with its
  * `hidden` flag, plus the player's custom-tag request (if any).
+ *
+ * I/O: in (playerId: string | number) -> out Promise<{ tags: PlayerTagVisibility[]; customTag: PlayerCustomTag | null }>
+ *
  * refs: endpoints: GET /players/:id/tag-visibility
  */
 export async function fetchTagVisibility(playerId: string | number): Promise<{
@@ -6753,6 +6911,9 @@ export async function fetchTagVisibility(playerId: string | number): Promise<{
 
 /**
  * Set the visibility of an owned cosmetic tag or approved custom tag.
+ *
+ * I/O: in (playerId: string | number, tag: CosmeticTagKey, hidden: boolean) -> out Promise<{ success: boolean; message: string }>
+ *
  * refs: endpoints: POST /players/:id/tag-visibility
  */
 export async function setTagVisibility(playerId: string | number, tag: CosmeticTagKey | "custom", hidden: boolean): Promise<{ success: boolean; message: string }> {
@@ -6769,6 +6930,9 @@ export async function setTagVisibility(playerId: string | number, tag: CosmeticT
 
 /**
  * Submit a custom-tag request for admin approval (max one per player).
+ *
+ * I/O: in (playerId: string | number, tagText: string, reason: string, tagColor: string) -> out Promise<{ success: boolean; message: string; status: string }>
+ *
  * refs: endpoints: POST /players/:id/custom-tag
  */
 export async function submitCustomTag(playerId: string | number, tagText: string, reason?: string, tagColor?: string): Promise<{ success: boolean; message: string; status: string }> {
@@ -6783,7 +6947,13 @@ export async function submitCustomTag(playerId: string | number, tagText: string
   });
 }
 
-/** Save the verified owner's active tag color without changing approval. */
+/**
+ * Save the verified owner's active tag color without changing approval.
+ *
+ * I/O: in (playerId: string | number, tagColor: string) -> out Promise<{ tagColor: string }>
+ *
+ * refs: endpoints: PUT /players/:id/custom-tag
+ */
 export async function setCustomTagColor(playerId: string | number, tagColor: string): Promise<{ tagColor: string }> {
   const token = getAuthToken();
   if (!token && !hasCookieAuthSession()) throw new Error(API_ERROR_KEYS.authenticationRequired);
@@ -6798,6 +6968,9 @@ export async function setCustomTagColor(playerId: string | number, tagColor: str
 
 /**
  * Remove the player's own approved custom tag or cancel a pending request.
+ *
+ * I/O: in (playerId: string | number) -> out Promise<{ success: boolean; message: string }>
+ *
  * refs: endpoints: DELETE /players/:id/custom-tag
  */
 export async function cancelCustomTag(playerId: string | number): Promise<{ success: boolean; message: string }> {
@@ -6811,7 +6984,10 @@ export async function cancelCustomTag(playerId: string | number): Promise<{ succ
   });
 }
 
-/** An admin-facing custom-tag request row. */
+/**
+ * An admin-facing custom-tag request row.
+ * refs: none
+ */
 export interface AdminCustomTagRow {
   id: number;
   player_id: number;
@@ -6831,6 +7007,9 @@ export interface AdminCustomTagRow {
 
 /**
  * List custom-tag requests for the admin portal.
+ *
+ * I/O: in () -> out Promise<{ items: AdminCustomTagRow[]; count: number }>
+ *
  * refs: endpoints: GET /admin/custom-tags
  */
 export async function fetchAdminCustomTags(): Promise<{ items: AdminCustomTagRow[]; count: number }> {
@@ -6846,6 +7025,9 @@ export async function fetchAdminCustomTags(): Promise<{ items: AdminCustomTagRow
 
 /**
  * Approve or reject a custom-tag request.
+ *
+ * I/O: in (id: number, status: string, reviewNote: string) -> out Promise<{ id: number; status: string }>
+ *
  * refs: endpoints: POST /admin/custom-tags/:id/review
  */
 export async function reviewAdminCustomTag(
@@ -6868,7 +7050,7 @@ export async function reviewAdminCustomTag(
 
 /**
  * Describe a community post, author, linked build/tier list, and engagement totals.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface Post {
   id: number;
@@ -6890,7 +7072,7 @@ export interface Post {
 
 /**
  * Describe a community reply with its author, parent, and creation time.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface Comment {
   id: number;
@@ -6905,7 +7087,7 @@ export interface Comment {
 
 /**
  * Combine a community post with its comments.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PostDetail {
   post: Post;
@@ -6914,7 +7096,7 @@ export interface PostDetail {
 
 /**
  * Describe a live Twitch channel, viewer count, language, tags, and links.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TwitchStream {
   userLogin: string;
@@ -6929,7 +7111,7 @@ export interface TwitchStream {
 
 /**
  * Pair Twitch configuration availability with live stream results.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TwitchStreamsResponse {
   configured: boolean;
@@ -7188,7 +7370,7 @@ export async function togglePostLike(postId: number, userId: number, token: stri
 
 /**
  * Pair a selected loadout card ID with its level.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface BuildCardSelection {
   cardId: number;
@@ -7197,7 +7379,7 @@ export interface BuildCardSelection {
 
 /**
  * Describe a community champion build with item/card/talent choices and publication metadata.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface Build {
   id: number;
@@ -7371,7 +7553,7 @@ export async function toggleBuildLike(buildId: number, userId: number, token: st
 
 /**
  * Record daily kills, deaths, and assists.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface KdaHistoryEntry {
   date: string;
@@ -7382,7 +7564,7 @@ export interface KdaHistoryEntry {
 
 /**
  * Compare a player daily damage-per-minute with the population average.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DpmHistoryEntry {
   date: string;
@@ -7392,7 +7574,7 @@ export interface DpmHistoryEntry {
 
 /**
  * Record a dated rating value.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface GlickoHistoryEntry {
   date: string;
@@ -7491,7 +7673,13 @@ function mapGlickoHistory(raw: PlayerChartRow[]): GlickoHistoryEntry[] {
 
 // ── Match Types ──
 
-/** Load all player chart series from the same response and time window. */
+/**
+ * Load all player chart series from the same response and time window.
+ *
+ * I/O: in (playerId: string, days: number, limit: number) -> out Promise<{ kda, dpm, glicko }>
+ *
+ * refs: none
+ */
 export async function fetchPlayerChartHistory(playerId: string, days: number = 30, limit: number = 50) {
   const raw = await fetchJson<PlayerChartRow[]>(playerChartPath(playerId, days, limit));
   return { kda: mapKdaHistory(raw), dpm: mapDpmHistory(raw), glicko: mapGlickoHistory(raw) };
@@ -7573,7 +7761,7 @@ export interface MatchPlayerDetail {
 
 /**
  * Preserve nullable profile/rating fields and moderation flags captured for a match participant.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchPlayerProfileSnapshot {
   captured_at: string | null;
@@ -7600,7 +7788,7 @@ export interface MatchPlayerProfileSnapshot {
 
 /**
  * Identify a banned champion and optional ban slot/display name.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchBan {
   ban_slot?: number;
@@ -7610,7 +7798,7 @@ export interface MatchBan {
 
 /**
  * Describe match identity, queue, scores, storage provenance, and visibility/quality flags.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchData {
   match_id: number;
@@ -7665,7 +7853,10 @@ export interface MatchDetailWithBans {
   access?: MatchDetailAccess;
 }
 
-/** Describe the server-enforced match-detail tier and remaining daily quota. */
+/**
+ * Describe the server-enforced match-detail tier and remaining daily quota.
+ * refs: none
+ */
 export interface MatchDetailAccess {
   tier: MatchAccessTier;
   limit: number | null;
@@ -7675,13 +7866,13 @@ export interface MatchDetailAccess {
 
 /**
  * Select hot or cold match storage.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type MatchStorageStatus = "hot" | "cold";
 
 /**
  * Describe match storage tier, source, historical state, and optional retrieval time.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchDataStatus {
   tier: MatchStorageStatus;
@@ -7722,7 +7913,7 @@ export function deriveMissingMatchCreditRates(detail: MatchDetailWithBans): Matc
 
 /**
  * Describe a participant factual item, card, and talent selections with reference assets.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchFactPlayer {
   player_id: number;
@@ -7760,7 +7951,7 @@ export interface MatchFactPlayer {
 
 /**
  * Group factual participant selections under one match ID.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchFact {
   match_id: number;
@@ -7769,7 +7960,7 @@ export interface MatchFact {
 
 /**
  * Record player rating and uncertainty before and after one match.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface RatingSnapshot {
   player_id: number;
@@ -7785,7 +7976,7 @@ export interface RatingSnapshot {
 
 /**
  * Describe a match-directory result with player combat and queue context.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchSearchResult {
   match_id: number;
@@ -7807,7 +7998,7 @@ export interface MatchSearchResult {
 
 /**
  * Summarize daily/hourly match activity and optional queue/weekly coverage.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchHourlyStats {
   totalToday: number;
@@ -7829,7 +8020,7 @@ export interface MatchHourlyStats {
 
 /**
  * Summarize 24-hour queue activity with regional and hourly breakdowns.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchQueueActivity {
   queueId: number;
@@ -7853,7 +8044,7 @@ export async function fetchMatchHourlyStats(): Promise<MatchHourlyStats> {
 
 /**
  * Bound observed public/private player counts and unresolved coverage within a time window.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceStats {
   window_hours: number;
@@ -7888,7 +8079,7 @@ export interface PresenceStats {
 
 /**
  * Summarize hourly observed players by region and platform for an optional queue.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceHourlyStats {
   window_hours: number;
@@ -7939,7 +8130,7 @@ export async function fetchPresenceHourlyStats(queueId?: number): Promise<Presen
 
 /**
  * Page match identifiers supporting observed player presence.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceMatchIdsResponse {
   window_hours: number;
@@ -7985,13 +8176,13 @@ export async function fetchPresenceMatchIds(options: {
 
 /**
  * Select presence-player ordering by matches or name.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type PresencePlayerSort = 'matches' | 'alphabetical';
 
 /**
  * Page observed players with participation coverage and unresolved-player bounds.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresencePlayersResponse {
   window_hours: number;
@@ -8045,7 +8236,7 @@ export async function fetchPresencePlayers(options: {
 
 /**
  * Describe an observed participant identity, platform, kind, and evidence source.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceDetailPlayer {
   player_id: string;
@@ -8057,7 +8248,7 @@ export interface PresenceDetailPlayer {
 
 /**
  * Describe one presence-supporting match with lifecycle quality and observed participants.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceDetailMatch {
   match_id: string;
@@ -8075,7 +8266,7 @@ export interface PresenceDetailMatch {
 
 /**
  * Page presence-supporting match details using an optional next cursor.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface PresenceDetailsResponse {
   window_hours: number;
@@ -8112,7 +8303,7 @@ export async function fetchPresenceDetails(options: {
 
 /**
  * Summarize dropped-match lifecycle counts and failure categories for one hour.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DroppedMatchHourlySummary {
   hour: number;
@@ -8133,7 +8324,7 @@ export interface DroppedMatchHourlySummary {
 
 /**
  * Group hourly dropped-match summaries for a requested date and queue.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DroppedMatchSummaryResponse {
   date: string;
@@ -8160,7 +8351,7 @@ export async function fetchDroppedMatchSummary(params: { date: string; queueId?:
 
 /**
  * Describe a dropped match lifecycle status, category, retry count, and observations.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DroppedMatchRecord {
   match_id: string;
@@ -8177,7 +8368,7 @@ export interface DroppedMatchRecord {
 
 /**
  * Combine filtered dropped-match records and hourly summaries.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface DroppedMatchListResponse {
   date: string;
@@ -8219,7 +8410,7 @@ export async function fetchDroppedMatches(params: {
 
 /**
  * Describe a nonranked dropped-match terminal outcome and recovery coverage.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface NonrankedDroppedMatchRecord {
   match_id: string;
@@ -8240,7 +8431,7 @@ export interface NonrankedDroppedMatchRecord {
 
 /**
  * Group filtered nonranked dropped matches with hourly scope summaries.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface NonrankedDroppedMatchResponse {
   date: string | null;
@@ -8391,7 +8582,7 @@ export async function fetchRecentMatches(limit?: number): Promise<MatchData[]> {
 
 /**
  * Combine hourly match activity, recent matches, and dropped-match counts/IDs.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface MatchesOverview {
   hourly: MatchHourlyStats | null;

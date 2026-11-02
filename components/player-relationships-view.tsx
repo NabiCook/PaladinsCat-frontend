@@ -1,4 +1,8 @@
-/** Shared relationships card view; accepts data without fetching it. */
+/**
+ * Shared relationships card view; accepts data without fetching it.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useState } from "react";
@@ -13,6 +17,12 @@ import { getPercentageColor } from "@/lib/stat-quality";
 
 type Mode = "teammates" | "opponents" | "party";
 
+/**
+ * Render the relationships card view (teammates/opponents/party) from a summary.
+ * I/O: in `{ summary: PlayerRelationshipSummary }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function PlayerRelationshipsView({ summary }: { summary: PlayerRelationshipSummary }) {
   const { t, formatNumber, formatPercent } = useLocalization();
   const [mode, setMode] = useState<Mode>("teammates");

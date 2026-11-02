@@ -1,4 +1,8 @@
-/** Loopback-only inspection of the actual player-frame component and full asset catalog. */
+/**
+ * Loopback-only inspection of the actual player-frame component and full asset catalog.
+ *
+ * refs: none
+ */
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import PlayerLoadingFrame from "@/components/player-loading-frame";
@@ -6,6 +10,12 @@ import { localPreviewAccessAllowed } from "@/lib/local-preview-access";
 import { getServerLocalization } from "@/lib/server-localization";
 import manifest from "@/public/images/loading-frames/manifest.json";
 
+/**
+ * Render the loopback-only loading-frame preview grid.
+ * I/O: in () -> out `Promise<JSX.Element>`.
+ *
+ * refs: none
+ */
 export default async function LoadingFramePreview() {
   const { t } = await getServerLocalization();
   const host = (await headers()).get("host") ?? "";

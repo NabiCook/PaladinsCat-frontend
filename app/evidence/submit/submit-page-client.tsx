@@ -2,11 +2,8 @@
  * Submit one player-linked cheater-evidence report for moderation review.
  *
  * Public report flow: profile -> report -> submit -> back to the profile page.
- * The route reuses the database player-search API and never exposes pending
- * evidence in the public feed. After a successful submission it redirects back
- * to the reported player's profile page rather than an evidence listing that
- * no longer exists on the public surface.
- *
+ * Reuses the database player-search API and never exposes pending evidence in
+ * the public feed; after success it redirects to the reported player's profile.
  * refs: endpoints: GET /players/search · endpoints: POST /cheaters/evidence
  */
 "use client";

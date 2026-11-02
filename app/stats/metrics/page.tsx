@@ -48,7 +48,11 @@ const COLUMNS = [
   { key: "sampleSize", labelKey: "generated.stats.samples" },
 ] as const;
 
-/** Reuse the complete cached page bundle for the dashboard and comparison. */
+/**
+ * Reuse the complete cached page bundle for the dashboard and comparison.
+ *
+ * refs: none
+ */
 export type MetricsInitialData = PerformancePageData;
 
 function PerformanceData({ scope, metric, dashboard }: {

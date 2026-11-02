@@ -1,4 +1,14 @@
-/** Admission for the exact anonymous endpoint only; no cookie or identity lookup. */
+/** Admission for the exact anonymous endpoint only; no cookie or identity lookup.
+ *
+ * refs: none
+ */
+
+/** Allow only the exact anonymous presence endpoint; reject any identity-bearing header.
+ *
+ * I/O: in (request: Request, publicOrigin: string) -> out boolean
+ *
+ * refs: none
+ */
 export function anonymousPresenceRequestAllowed(request: Request, publicOrigin: string): boolean {
   const url = new URL(request.url);
   return url.pathname === "/api/analytics/presence"

@@ -1,8 +1,8 @@
-import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 /**
  * Validate the form logout token against the configured issuer and client before forwarding it to backend session revocation. Return 503 for missing configuration, 400 for malformed or missing form data, 401 for invalid tokens, 204 on successful revocation, or 502 when backend revocation fails.
  * refs: none
  */
+import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { normalizedHttpsIssuer, resolveInternalIssuer, validateLogoutToken } from "@/lib/oidc-security";
 import { oidcBffServiceHeaders } from "@/lib/oidc-bff-service";

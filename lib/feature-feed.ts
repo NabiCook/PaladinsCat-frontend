@@ -5,10 +5,26 @@
  */
 import matter from "gray-matter";
 
+/** Feature feed entry kind (new, improved, or fixed).
+ *
+ * refs: none
+ */
 export type NewFeatureKind = "new" | "improved" | "fixed";
+/** Feature feed category grouping (which product area a feature belongs to).
+ *
+ * refs: none
+ */
 export type NewFeatureCategory = "analytics" | "players" | "champions" | "stats" | "community" | "experience";
+/** Feature feed publication status (upcoming vs released).
+ *
+ * refs: none
+ */
 export type NewFeatureStatus = "upcoming" | "released";
 
+/** One validated New Features feed entry (public contract fields).
+ *
+ * refs: none
+ */
 export interface NewFeatureEntry {
   id: string;
   kind: NewFeatureKind;
@@ -22,6 +38,10 @@ export interface NewFeatureEntry {
   href?: string;
 }
 
+/** Parsed New Features document: the validated feed entry list.
+ *
+ * refs: none
+ */
 export interface NewFeaturesDocument {
   entries: NewFeatureEntry[];
 }
@@ -76,6 +96,7 @@ function parseEntry(value: unknown): NewFeatureEntry | null {
 /**
  * Parse the repository-owned YAML feed and discard malformed or duplicate entries.
  * I/O types: `rawContent: string -> NewFeaturesDocument`.
+ * refs: none
  */
 export function parseNewFeaturesDocument(rawContent: string): NewFeaturesDocument {
   const { data } = matter(rawContent);
@@ -94,6 +115,7 @@ export function parseNewFeaturesDocument(rawContent: string): NewFeaturesDocumen
 /**
  * Return dated announcements inside the seven-day visibility window, newest first.
  * I/O types: `entries: NewFeatureEntry[]; now?: Date -> NewFeatureEntry[]`.
+ * refs: none
  */
 export function activeNewFeatures(entries: NewFeatureEntry[], now = new Date()): NewFeatureEntry[] {
   const nowMs = now.getTime();

@@ -1,8 +1,8 @@
-import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 /**
  * Start OIDC login or registration from a same-origin form. Return 403 for a foreign origin, 415 for unsupported media, and 400 for malformed forms or unsupported intent; store a transaction and submit PAR before setting the secure transaction cookie on a 303 redirect. Configuration or PAR failures return 503.
  * refs: none
  */
+import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { buildParAuthorizationUrl, buildPushedAuthorizationRequest, createTransaction, normalizedHttpsIssuer, parsePushedAuthorizationResponse, requireSameOrigin, resolveInternalIssuer, safeReturnPath } from "@/lib/oidc-security";
 import { oidcBffServiceHeaders } from "@/lib/oidc-bff-service";

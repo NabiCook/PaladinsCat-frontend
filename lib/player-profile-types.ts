@@ -90,6 +90,10 @@ export interface PlayerStatus {
   [field: string]: unknown;
 }
 
+/** The raw player-profile API response shape (presence, access, player, ratings).
+ *
+ * refs: none
+ */
 export interface PlayerResponse {
   presence?: PlayerStatus | null;
   statusRefresh?: { refreshed: boolean; cached?: boolean; refreshed_at?: string | null; error?: string | null };

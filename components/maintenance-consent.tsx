@@ -1,3 +1,11 @@
+/**
+ * Maintenance privacy consent — non-modal banner and settings panel.
+ *
+ * Owns `MaintenanceConsentPanel` (configurable) and `MaintenanceConsentBanner`
+ * (login-page overlay). Reads consent choice from context; no data fetch.
+ *
+ * refs: none
+ */
 "use client";
 
 import Link from "next/link";
@@ -7,7 +15,12 @@ import { useLocalization } from "@/lib/localization-context";
 
 const button = "min-h-11 flex-1 rounded-lg border border-pc-border bg-pc-bg-elevated px-4 py-2 text-sm font-medium text-pc-text hover:bg-pc-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pc-accent disabled:opacity-50";
 
-/** Non-modal, equally weighted choices. Dismissal/navigation never grants consent. */
+/**
+ * Non-modal, equally weighted choices. Dismissal/navigation never grants consent.
+ * I/O: in `{ settings?: boolean }` -> out `JSX.Element | null`.
+ *
+ * refs: none
+ */
 export function MaintenanceConsentPanel({ settings = false }: { settings?: boolean }) {
   const { t } = useLocalization();
   const { choice, ready, saving, error, choose, reload } = useMaintenanceConsent();
@@ -38,6 +51,12 @@ export function MaintenanceConsentPanel({ settings = false }: { settings?: boole
   </section>;
 }
 
+/**
+ * Render the fixed login-page consent banner; hidden once a choice is recorded.
+ * I/O: in () -> out `JSX.Element | null`.
+ *
+ * refs: none
+ */
 export function MaintenanceConsentBanner() {
   const { choice, ready } = useMaintenanceConsent();
   if (!ready || choice?.decision !== "unset") return null;

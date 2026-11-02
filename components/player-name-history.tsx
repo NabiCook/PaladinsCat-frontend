@@ -1,3 +1,11 @@
+/**
+ * Player name history — latest previous name plus observed history intervals.
+ *
+ * Owns the `PlayerNameHistory` component. Fetches paginated name-history
+ * intervals from the API; display only, restricted history stays hidden.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -14,7 +22,12 @@ interface NameInterval {
 const PAGE_SIZE = 20;
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-/** Show the latest previous name and the API's observed history intervals. */
+/**
+ * Show the latest previous name and the API's observed history intervals.
+ * I/O: in `{ playerId: string | number }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function PlayerNameHistory({ playerId }: { playerId: string | number }) {
   const { t, formatDateTime } = useLocalization();
   const dialog = useRef<HTMLDialogElement>(null);

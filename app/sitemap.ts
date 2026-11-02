@@ -55,7 +55,6 @@ const staticRoutes: Array<{
   { path: "/community/diminishing-returns", changeFrequency: "weekly", priority: 0.8 },
   { path: "/tierlists", changeFrequency: "daily", priority: 0.8 },
   { path: "/blog", changeFrequency: "daily", priority: 0.8 },
-  { path: "/features", changeFrequency: "monthly", priority: 0.75 },
   { path: "/about", changeFrequency: "monthly", priority: 0.45 },
 ];
 

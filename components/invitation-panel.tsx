@@ -1,4 +1,8 @@
-/** Account invitation entry and server-authoritative access status. */
+/**
+ * Account invitation entry and server-authoritative access status.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -9,6 +13,12 @@ import { useAuth } from "@/lib/auth-context";
 import { ApiRequestError, getInvitationStatus, redeemInvitation, type InvitationStatus } from "@/lib/api-client";
 import { useLocalization } from "@/lib/localization-context";
 
+/**
+ * Render the invitation redemption panel with live status and code entry.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export function InvitationPanel() {
   const { t, formatDateTime } = useLocalization();
   const { user, refresh } = useAuth();

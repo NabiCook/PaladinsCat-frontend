@@ -48,6 +48,11 @@ type ChampionMeasures = Partial<Record<ComparisonMetric, number>> & { matches?: 
 type Averages = Map<number, ChampionMeasures>;
 type SortKey = "name" | ComparisonMetric;
 
+/**
+ * Server-hydrated initial data for the champion performance comparison table.
+ *
+ * refs: none
+ */
 export type ChampionPerformanceInitialData = {
   results: Array<{ metric: PerformanceMetricKey; rows: ChampionPerformanceDistribution[] }>;
   details: StatsChampion[];
@@ -57,7 +62,7 @@ export type ChampionPerformanceInitialData = {
 
 /**
  * Render champion performance comparison with `ErrorState`, `SegmentedControl`, `LoadingIndicator`.
- * I/O types: `none -> JSX.Element`.
+ * I/O types: `{ scope?: "ranked" | "casual", queueId?: number, initialData?: ChampionPerformanceInitialData | null } -> JSX.Element`.
  * refs: none
  */
 export default function ChampionPerformanceComparison({ scope = "ranked", queueId = 486, initialData = null }: { scope?: "ranked" | "casual"; queueId?: number; initialData?: ChampionPerformanceInitialData | null }) {

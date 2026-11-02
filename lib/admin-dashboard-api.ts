@@ -6,7 +6,7 @@ import { accountAuthHeaders, fetchJson } from "./api-client";
 
 /**
  * Define admin daily traffic as `{ date: string; pageViews: number; matches: number }`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type AdminDailyTraffic = { date: string; pageViews: number; matches: number };
 /**
@@ -28,7 +28,7 @@ export type AdminMaintenance = {
 };
 /**
  * Define admin api key as `{ devId: string; status: string; used: number; dailyLimit: number; remaining: number; callsTotal: number; consecutiveFailures: number; lastUsed: string | null; lastSyncAt: string | null; lastSyncError: string | null; }`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type AdminApiKey = {
   devId: string;
@@ -45,7 +45,7 @@ export type AdminApiKey = {
 
 /**
  * Define admin dashboard as `{ generatedAt: string; traffic: { summary: { viewsToday: number; views7d: number }; daily: AdminDailyTraffic[]; topPages: Array<{ path: string; pageViews: number }>; }; maintenance: AdminMaintenance; site: ...; hirez: ... }`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type AdminDashboard = {
   generatedAt: string;

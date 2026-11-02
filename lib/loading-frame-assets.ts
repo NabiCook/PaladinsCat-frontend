@@ -11,8 +11,18 @@ import manifest from "@/public/images/loading-frames/manifest.json";
  */
 export type LoadingFrameAsset = (typeof manifest.frames)[number];
 
+/** Default loading-frame display name (the generic ally team frame).
+ *
+ * refs: none
+ */
 export const DEFAULT_ALLY_TEAM_FRAME = "Default Ally Team";
 
+/** Return a trimmed loading-frame display name, falling back to the default.
+ *
+ * I/O: in (value: string | null | undefined) -> out string
+ *
+ * refs: none
+ */
 export function displayLoadingFrameName(value: string | null | undefined): string {
   return value?.trim() || DEFAULT_ALLY_TEAM_FRAME;
 }

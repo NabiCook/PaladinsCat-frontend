@@ -1,4 +1,8 @@
-/** Enforce signed-in account access for Community-menu routes. */
+/**
+ * Enforce signed-in account access for Community-menu routes.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useEffect, type ReactNode } from "react";
@@ -8,7 +12,12 @@ import { useAuth } from "@/lib/auth-context";
 import { accountDestination, isAccountOnlyPath } from "@/lib/verified-access";
 import { localPreviewAccessEnabled, useLocalPreviewAccess } from "@/lib/use-local-preview-access";
 
-/** Preserve self-service and enforce the global policy on protected data. */
+/**
+ * Preserve self-service and enforce the global policy on protected data.
+ * I/O: in `{ children: ReactNode }` -> out `ReactNode` (children, or a RouteSkeleton).
+ *
+ * refs: none
+ */
 export function AccountAccess({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();

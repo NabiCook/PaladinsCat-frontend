@@ -1,4 +1,7 @@
-/** Server-side provider transport. Private Keycloak trust never changes global TLS roots. */
+/** Server-side provider transport. Private Keycloak trust never changes global TLS roots.
+ *
+ * refs: none
+ */
 import { X509Certificate, createHash } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import { Agent } from "undici";
@@ -48,7 +51,12 @@ function keycloakAgent(): Agent {
   return privateAgent.agent;
 }
 
-/** Require authenticated HTTPS and reject redirects before sending any provider credential. */
+/** Require authenticated HTTPS and reject redirects before sending any provider credential.
+ *
+ * I/O: in (input: string | URL, init: RequestInit) -> out Promise<Response>
+ *
+ * refs: none
+ */
 export async function oidcFetch(input: string | URL, init: RequestInit = {}): Promise<Response> {
   const url = new URL(input);
   if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash

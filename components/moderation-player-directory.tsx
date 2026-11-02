@@ -62,6 +62,9 @@ function entryHref(entry: CheaterPortalEntry): string {
  * Render one database-ordered active or inactive moderation directory. The
  * component deliberately renders the response order as received; sorting is
  * a backend contract and must not be recreated from incomplete client data.
+ * I/O: in `{ title: ReactNode, searchLabel: string, countLabel: (total: number) => string, errorLabel: string, emptyLabel: string, fallbackReason: string, fetchPage: DirectoryFetcher, accent: Accent, inactive?: boolean }` -> out `JSX.Element`.
+ *
+ * refs: none
  */
 export default function ModerationPlayerDirectory({
   title,

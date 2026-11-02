@@ -1,4 +1,14 @@
-/** Storage carries session transitions, not an instruction to echo display caches. */
+/** Storage carries session transitions, not an instruction to echo display caches.
+ *
+ * refs: none
+ */
+
+/** Decide whether a storage session event forces a display-cache revalidation.
+ *
+ * I/O: in (event: { key, oldValue, newValue: string | null }, confirmedUserId: number | null) -> out boolean
+ *
+ * refs: none
+ */
 export function shouldRevalidateStoredSession(
   event: { key: string | null; oldValue: string | null; newValue: string | null },
   confirmedUserId: number | null,

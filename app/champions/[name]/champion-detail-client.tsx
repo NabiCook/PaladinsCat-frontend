@@ -1,4 +1,8 @@
-/** Render one champion's reference information without match statistics. */
+/**
+ * Render one champion's reference information without match statistics.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,7 +27,12 @@ const ROLE_ICONS: Record<string, string> = {
   Support: "/images/icons/Class_Support_Icon.avif",
 };
 
-/** Keep champion pages limited to stable catalog data: profile, skills, talents, and cards. */
+/**
+ * Keep champion pages limited to stable catalog data: profile, skills, talents, and cards.
+ * I/O: in `{ initialChampionData?: ChampionData | null, initialChampionChangelog?: ChampionChangelogData | null }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function ChampionDetailPage({
   initialChampionData = null,
   initialChampionChangelog = null,

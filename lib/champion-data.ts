@@ -110,13 +110,21 @@ export async function getChampionData(slug: string): Promise<ChampionData | unde
   return data[championSlug(slug)];
 }
 
-/** Describe the ultimate ability used by an ultimate tier list entry. */
+/** Describe the ultimate ability used by an ultimate tier list entry.
+ *
+ * refs: none
+ */
 export interface ChampionUltimate {
   name: string;
   iconUrl: string;
 }
 
-/** Resolve the canonical ultimate ability for a champion by its game data. */
+/** Resolve the canonical ultimate ability for a champion by its game data.
+ *
+ * I/O: in (name: string) -> out Promise<ChampionUltimate | undefined>
+ *
+ * refs: none
+ */
 export async function getChampionUltimate(name: string): Promise<ChampionUltimate | undefined> {
   const champion = await getChampionData(name);
   // E is the canonical ultimate slot. Keep the cooldown marker only as a

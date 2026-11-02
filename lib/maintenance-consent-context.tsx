@@ -1,3 +1,7 @@
+/** Client-side maintenance-consent provider: one account-wide presence permission.
+ *
+ * refs: none
+ */
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
@@ -12,13 +16,24 @@ type ConsentContext = {
 };
 const Context = createContext<ConsentContext | null>(null);
 
+/** Read the shared maintenance-consent state; throws when used outside the provider.
+ *
+ * I/O: in () -> out ConsentContext
+ *
+ * refs: none
+ */
 export function useMaintenanceConsent(): ConsentContext {
   const value = useContext(Context);
   if (!value) throw new Error("MaintenanceConsentProvider is required");
   return value;
 }
 
-/** One account-wide permission owner for the banner, settings, and pulse lifecycle. */
+/** One account-wide permission owner for the banner, settings, and pulse lifecycle.
+ *
+ * I/O: in ({ children }: { children: ReactNode }) -> out JSX provider element
+ *
+ * refs: none
+ */
 export function MaintenanceConsentProvider({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   const userId = user?.id ?? null;

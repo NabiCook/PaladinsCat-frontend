@@ -1,4 +1,8 @@
-/** Render community-post media returned by the shared submission pipeline. */
+/**
+ * Render community-post media returned by the shared submission pipeline.
+ *
+ * refs: none
+ */
 "use client";
 
 import { ExternalLink } from "lucide-react";
@@ -10,6 +14,12 @@ function imageUrl(url: string, format: "avif" | "original") {
   return `${url}${url.includes("?") ? "&" : "?"}format=${format}`;
 }
 
+/**
+ * Render a community post's images, embedded video, and source link.
+ * I/O: in `{ post: Post }` -> out `JSX.Element | null`.
+ *
+ * refs: none
+ */
 export default function CommunityPostMedia({ post }: { post: Post }) {
   const { formatNumber, t } = useLocalization();
   if (post.imageUrls.length === 0 && !post.embedUrl && !post.sourceUrl) return null;

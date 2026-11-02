@@ -1,4 +1,7 @@
-/** Match exports must spend the caller's backend grant before consulting the renderer. */
+/** Match exports must spend the caller's backend grant before consulting the renderer.
+ *
+ * refs: none
+ */
 import { serverApiBase } from "./server-api";
 import { readBodyWithinLimit } from "./bounded-response-body";
 
@@ -49,7 +52,12 @@ function admittedMatch(payload: unknown, id: string): boolean {
     && typeof access.resetAtMs === "number" && Number.isSafeInteger(access.resetAtMs) && access.resetAtMs > 0;
 }
 
-/** Authorize every export, including renderer cache hits, through the existing match owner. */
+/** Authorize every export, including renderer cache hits, through the existing match owner.
+ *
+ * I/O: in (request: Request, context: { params: Promise<{ id: string }> }) -> out Promise<Response>
+ *
+ * refs: none
+ */
 export async function matchImage(request: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   const { id } = await context.params;
   if (!/^\d{6,20}$/.test(id)) return errorResponse(400, "INVALID_MATCH_ID");

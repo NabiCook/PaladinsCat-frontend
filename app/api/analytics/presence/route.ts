@@ -1,4 +1,8 @@
-/** Privacy boundary: forward only a fixed URL and method, never browser headers or bodies. */
+/**
+ * Privacy boundary: forward only a fixed URL and method, never browser headers or bodies.
+ *
+ * refs: none
+ */
 import { serverApiBase } from "@/lib/server-api";
 import { anonymousPresenceRequestAllowed } from "@/lib/anonymous-presence-gate";
 
@@ -20,4 +24,5 @@ async function presence(request: Request): Promise<Response> {
   return new Response(null, { status: 503, headers });
 }
 
+/** GET: forward the anonymous-presence aggregate to the backend. refs: none */
 export const GET = presence;

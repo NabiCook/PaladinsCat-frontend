@@ -1,4 +1,8 @@
-/** Render an external video only after the viewer explicitly chooses to contact its provider. */
+/**
+ * Render an external video only after the viewer explicitly chooses to contact its provider.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useState } from "react";
@@ -27,7 +31,9 @@ function resolvedEmbedUrl(src: string, provider: string): string {
 
 /**
  * Render a click-to-load external iframe or direct provider-hosted video.
- * I/O types: props -> JSX.Element.
+ * I/O types: `{ provider: string, src: string, title: string, directVideo?: boolean } -> JSX.Element`.
+ *
+ * refs: none
  */
 export default function ExternalVideoConsent({
   provider,

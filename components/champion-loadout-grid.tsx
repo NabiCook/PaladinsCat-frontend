@@ -18,7 +18,7 @@ function statNameKey(value: string | null | undefined): string {
 /**
  * Render champion loadout grid.
  * refs: none
- * I/O types: champion reference cards with optional ranked statistics and detail navigation.
+ * I/O types: `{ championSlug: string, loadouts: ChampionLoadout[], cardStats?: ChampionCardStatsResponse, talentId?: number | null, returnTo?: string, detailBasePath?: string } -> JSX.Element`.
  */
 export default function ChampionLoadoutGrid({
   championSlug,

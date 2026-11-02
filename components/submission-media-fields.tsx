@@ -3,11 +3,19 @@
  *
  * Routes keep their own form state and domain fields; this component keeps the
  * same bounded media UI for community posts and moderation evidence.
+ *
+ * refs: none
  */
 "use client";
 
 import { useLocalization } from "@/lib/localization-context";
 
+/**
+ * Render the bounded image-upload and source-link controls for a submission.
+ * I/O: in `{ files: File[], sourceUrl: string, onFilesChange: (files: File[]) => void, onSourceUrlChange: (value: string) => void, onValidationError: (message: string) => void }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function SubmissionMediaFields({
   files,
   sourceUrl,

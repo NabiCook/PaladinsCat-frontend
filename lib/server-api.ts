@@ -1,3 +1,7 @@
+/** Server-side backend JSON access: session forwarding, caching, and error handling.
+ *
+ * refs: none
+ */
 import { operatorBackendFetch } from "./operator-transport.mjs";
 /**
  * Fetches JSON from the backend with server-side caching, revalidation, and error handling.
@@ -12,7 +16,12 @@ type ServerFetchOptions = Omit<RequestInit, "signal"> & {
   timeoutMs?: number;
 };
 
-/** Forward the caller's session for protected SSR reads; never share account responses. */
+/** Forward the caller's session for protected SSR reads; never share account responses.
+ *
+ * I/O: in (path: string, options: ServerFetchOptions) -> out Promise<T>
+ *
+ * refs: none
+ */
 export async function fetchAccountServerJson<T>(path: string, options: ServerFetchOptions = {}): Promise<T> {
   const session = (await cookies()).get(accountSessionCookie())?.value;
   if (!session) throw new Error("Login required");
@@ -21,7 +30,12 @@ export async function fetchAccountServerJson<T>(path: string, options: ServerFet
   });
 }
 
-/** Resolve the absolute internal backend origin used by server-owned requests. */
+/** Resolve the absolute internal backend origin used by server-owned requests.
+ *
+ * I/O: in () -> out string
+ *
+ * refs: none
+ */
 export function serverApiBase(): string {
   const value = (
     process.env.NEXT_SERVER_API_URL

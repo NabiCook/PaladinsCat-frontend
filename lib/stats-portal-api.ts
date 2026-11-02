@@ -1,4 +1,7 @@
-/** Read the bounded, public directory contract; never request protected detail as a fallback. */
+/** Read the bounded, public directory contract; never request protected detail as a fallback.
+ *
+ * refs: none
+ */
 import { fetchJson, mapStatsPageData, type MatchHourlyStats } from "@/lib/api-client";
 import { mapChampionMatchupPreviews, type RawChampionMatchupPreviews } from "@/lib/champion-matchups-api";
 
@@ -12,6 +15,12 @@ interface RawPortalPreview {
   activity: MatchHourlyStats | null;
 }
 
+/** Fetch the bounded public stats-portal preview (directory data, not protected detail).
+ *
+ * I/O: in (tier: { tierMin?: number; tierMax?: number }, signal: AbortSignal) -> out stats portal preview
+ *
+ * refs: none
+ */
 export async function fetchStatsPortalPreview(tier: { tierMin?: number; tierMax?: number }, signal: AbortSignal) {
   const query = new URLSearchParams();
   if (tier.tierMin != null) query.set("tierMin", String(tier.tierMin));

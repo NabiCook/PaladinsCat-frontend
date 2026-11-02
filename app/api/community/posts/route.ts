@@ -8,9 +8,15 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-/** Select the Node.js runtime for the streaming proxy. */
+/**
+ * Select the Node.js runtime for the streaming proxy.
+ * refs: none
+ */
 export const runtime = "nodejs";
-/** Allow synchronous image conversion to complete before the proxy expires. */
+/**
+ * Allow synchronous image conversion to complete before the proxy expires.
+ * refs: none
+ */
 export const maxDuration = 180;
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "authorization", "content-type", "x-csrf-token", "origin", "x-forwarded-proto"] as const;
@@ -62,12 +68,22 @@ async function forwardCommunityPosts(request: NextRequest): Promise<NextResponse
   }
 }
 
-/** Proxy community post listing reads to the backend. */
+/**
+ * Proxy community post listing reads to the backend.
+ * I/O: in `request: NextRequest` -> out `Promise<NextResponse>`.
+ *
+ * refs: endpoints: GET /community/posts
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   return forwardCommunityPosts(request);
 }
 
-/** Proxy community post creation, including multipart image bodies. */
+/**
+ * Proxy community post creation, including multipart image bodies.
+ * I/O: in `request: NextRequest` -> out `Promise<NextResponse>`.
+ *
+ * refs: endpoints: POST /community/posts
+ */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   return forwardCommunityPosts(request);
 }

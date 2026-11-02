@@ -1,10 +1,15 @@
-/** Local-only relationships mockup; never reads or changes player records. */
+/**
+ * Local-only relationships mockup; never reads or changes player records.
+ *
+ * refs: none
+ */
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import PlayerRelationshipsView from "@/components/player-relationships-view";
 import type { PlayerRelationshipRow, PlayerRelationshipSummary } from "@/lib/api-client";
 import { getServerLocalization } from "@/lib/server-localization";
 
+/** Next.js route data mode: always resolve fresh per request. refs: none */
 export const dynamic = "force-dynamic";
 
 function partner(index: number, name: string, matches: number, wins: number): PlayerRelationshipRow {
@@ -27,6 +32,12 @@ const summary: PlayerRelationshipSummary = {
     partyPartners: 2, partyMatches: 146, partyMetricMatches: 146, partyWins: 94, partyLosses: 52 },
 };
 
+/**
+ * Render the local-only relationships mockup view.
+ * I/O: in () -> out `Promise<JSX.Element>`.
+ *
+ * refs: none
+ */
 export default async function RelationshipsMockup() {
   if (process.env.NODE_ENV !== "development") notFound();
   const host = (await headers()).get("host") ?? "";

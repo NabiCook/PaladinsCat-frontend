@@ -1,7 +1,23 @@
-/** Presence scheduling only. Authenticated consent enforcement belongs to the account owner. */
+/** Presence scheduling only. Authenticated consent enforcement belongs to the account owner.
+ *
+ * refs: none
+ */
+
+/** Presence heartbeat endpoint path (the single anonymous route read).
+ *
+ * refs: none
+ */
 export const PRESENCE_ENDPOINT = "/api/analytics/presence";
+/** Pulse cadence in milliseconds (one empty pulse per interval while visible).
+ *
+ * refs: none
+ */
 export const PULSE_INTERVAL_MS = 30_000;
 
+/** Aggregate anonymous presence contract returned by the presence endpoint.
+ *
+ * refs: none
+ */
 export interface AnonymousPresence {
   status: "warming_up" | "suppressed" | "available" | "unavailable";
   estimated_active_pages: number | null;
@@ -23,7 +39,12 @@ function maySend(): boolean {
   } catch { return false; }
 }
 
-/** One empty pulse per 30 seconds while visible. No arrival/departure events or retries. */
+/** One empty pulse per 30 seconds while visible. No arrival/departure events or retries.
+ *
+ * I/O: in (send: (signal: AbortSignal) => Promise<unknown>, hasConsent: () => boolean) -> out () => void
+ *
+ * refs: none
+ */
 export function startAnonymousPresence(send: (signal: AbortSignal) => Promise<unknown>, hasConsent: () => boolean): () => void {
   let pending: AbortController | null = null;
   const pulse = () => {
@@ -48,7 +69,12 @@ export function startAnonymousPresence(send: (signal: AbortSignal) => Promise<un
   };
 }
 
-/** Read only the aggregate owner contract. Failure is unavailable, never zero. */
+/** Read only the aggregate owner contract. Failure is unavailable, never zero.
+ *
+ * I/O: in () -> out Promise<AnonymousPresence>
+ *
+ * refs: none
+ */
 export async function fetchAnonymousPresence(): Promise<AnonymousPresence> {
   const response = await fetch(PRESENCE_ENDPOINT, { ...anonymousRequest, signal: AbortSignal.timeout(5_000) });
   if (!response.ok) throw new Error("Presence unavailable");

@@ -38,6 +38,8 @@ export const DEFAULT_WALLPAPERS: BuiltInWallpaper[] = WALLPAPER_IDS.map((id) => 
 
 /**
  * Randomize built-in wallpapers while ensuring the client does not start on the SSR fallback.
+ *
+ * I/O: in (wallpapers: readonly BuiltInWallpaper[], random: () => number) -> out BuiltInWallpaper[]
  * refs: none
  */
 export function randomizeWallpaperOrder(

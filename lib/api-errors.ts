@@ -1,4 +1,12 @@
-/** Error types and safe diagnostics shared by API requests and UI error states. */
+/** Error types and safe diagnostics shared by API requests and UI error states.
+ *
+ * refs: none
+ */
+
+/** Stable i18n keys for the API error catalogue (the closed set of known failure keys).
+ *
+ * refs: none
+ */
 export const API_ERROR_KEYS = {
   genericFailure: "generated.api.genericFailure",
   unexpectedFetchFailure: "generated.api.unexpectedFetchFailure",
@@ -6,13 +14,27 @@ export const API_ERROR_KEYS = {
   authenticationRequired: "generated.api.authenticationRequired",
 } as const;
 
+/** Union of the known API error keys (the keys of API_ERROR_KEYS).
+ *
+ * refs: none
+ */
 export type ApiErrorKey = (typeof API_ERROR_KEYS)[keyof typeof API_ERROR_KEYS];
 
+/** Type-guard: report whether a value is one of the known API error keys.
+ *
+ * I/O: in (value: unknown) -> out value is ApiErrorKey (boolean predicate)
+ *
+ * refs: none
+ */
 export function isApiErrorKey(value: unknown): value is ApiErrorKey {
   return typeof value === "string"
     && (Object.values(API_ERROR_KEYS) as string[]).includes(value);
 }
 
+/** Failure categories a rejected API request can be classified into.
+ *
+ * refs: none
+ */
 export type ApiRequestFailureKind = "http" | "network" | "timeout" | "edge-challenge" | "session-required" | "invalid-response" | "retry-exhausted";
 
 interface ApiRequestErrorDetails {
@@ -24,6 +46,10 @@ interface ApiRequestErrorDetails {
   requestId?: string;
 }
 
+/** Typed error for a failed API request, carrying status, failure kind, and safe diagnostics.
+ *
+ * refs: none
+ */
 export class ApiRequestError extends Error {
   readonly status?: number;
   readonly kind?: ApiRequestFailureKind;
@@ -46,7 +72,12 @@ export class ApiRequestError extends Error {
   }
 }
 
-/** Translate API keys and add safe status, cause, code, and route details. */
+/** Translate API keys and add safe status, cause, code, and route details.
+ *
+ * I/O: in (error: unknown, translate: (key: ApiErrorKey) => string, fallback?: string) -> out string
+ *
+ * refs: none
+ */
 export function formatApiErrorMessage(
   error: unknown,
   translate: (key: ApiErrorKey) => string,

@@ -5,6 +5,10 @@
  * refs: https://paladins.fandom.com/wiki/Maps
  */
 
+/** The fixed set of community map-tier classifications (display order).
+ *
+ * refs: none
+ */
 export const MAP_TIER_CLASSIFICATIONS = [
   "Siege",
   "Onslaught",
@@ -14,15 +18,26 @@ export const MAP_TIER_CLASSIFICATIONS = [
   "Other",
 ] as const;
 
+/** A single community map-tier classification name.
+ *
+ * refs: none
+ */
 export type MapTierClassification = (typeof MAP_TIER_CLASSIFICATIONS)[number];
 
+/** One draggable map tier-list item (name + classification set).
+ *
+ * refs: none
+ */
 export interface MapTierItem {
   name: string;
   primaryClassification: MapTierClassification;
   classifications: readonly MapTierClassification[];
 }
 
-/** Keep this list in the same grouped order as the Fandom Maps page. */
+/** Keep this list in the same grouped order as the Fandom Maps page.
+ *
+ * refs: none
+ */
 export const MAP_TIER_ITEMS = [
   { name: "Frog Isle", primaryClassification: "Siege", classifications: ["Siege"] },
   { name: "Jaguar Falls", primaryClassification: "Siege", classifications: ["Siege"] },
@@ -59,7 +74,12 @@ export const MAP_TIER_ITEMS = [
 
 const MAP_TIER_ITEMS_BY_NAME = new Map<string, MapTierItem>(MAP_TIER_ITEMS.map((item) => [item.name, item]));
 
-/** Return the canonical map-tier item for an API or saved-list name. */
+/** Return the canonical map-tier item for an API or saved-list name.
+ *
+ * I/O: in (name: string) -> out MapTierItem | undefined
+ *
+ * refs: none
+ */
 export function getMapTierItem(name: string): MapTierItem | undefined {
   return MAP_TIER_ITEMS_BY_NAME.get(name) ?? MAP_TIER_ITEMS.find(
     (item) => item.name.localeCompare(name, undefined, { sensitivity: "base" }) === 0,

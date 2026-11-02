@@ -36,6 +36,7 @@ import { parsePlayerTitle, parsePlayerTitleSegments } from "@/lib/player-title";
 import { useRouteSettledLoading } from "@/lib/route-transition-context";
 import { csrfHeader } from "@/lib/csrf";
 import { playerAvatarProxyPath } from "@/lib/player-avatar-proxy";
+import { hasMctsPrivateProfile } from "@/lib/mcts-profile-probe";
 import { getPercentageColor } from "@/lib/stat-quality";
 import type { PlayerResponse } from "@/lib/player-profile-types";
 import { decodePlayerProfileResponse, decodePlayerLiveMatchResponse, type NormalizedPlayerProfile } from "@/lib/player-profile-response";
@@ -196,7 +197,7 @@ export const PLAYER_PROFILE_ERROR_KEYS = {
 /**
  * Render the PlayerProfileClient view for the player id player-profile-client route.
  * refs: none
- * I/O types: `{ id, initialResponse, }: { id: string; initialResponse: PlayerResponse | null; } -> JSX.Element`.
+ * I/O types: `{ id: string, initialResponse: PlayerResponse | null, isPro?: boolean }` -> `JSX.Element`.
  */
 export default function PlayerProfileClient({
   id,
@@ -364,13 +365,18 @@ export default function PlayerProfileClient({
         if (res.status === 401 && !localPreviewAccessEnabled()) router.replace(`/auth/login?redirect=${encodeURIComponent(`/players/${id}`)}`);
         if (res.status === 403 && data?.error?.code === "VERIFICATION_REQUIRED") router.replace("/link-account");
         if (res.status === 403 && data?.error?.code === "INVITATION_REQUIRED") router.replace("/account#invitation");
+        if (res.status === 404 && await hasMctsPrivateProfile(id)) {
+          // The Hi-Rez API hides this account; its capture page is the real profile.
+          if (!cancelled) router.replace(`/players/${id}/private`);
+          return null;
+        }
         if (!res.ok) throw new Error(data?.error?.message || PLAYER_PROFILE_ERROR_KEYS.failedToLoadProfile);
         const decoded = decodePlayerProfileResponse(data);
         if (!decoded.ok) throw new Error(PLAYER_PROFILE_ERROR_KEYS.failedToLoadProfile);
         return decoded.value;
       })
       .then((data) => {
-        if (!cancelled) {
+        if (!cancelled && data) {
           const now = Date.now();
           setResponse(data);
           setRefreshClock(now);

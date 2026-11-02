@@ -1,4 +1,8 @@
-/** Own one champion's ranked talent and loadout-card analysis UI. */
+/**
+ * Own one champion's ranked talent and loadout-card analysis UI.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -36,7 +40,12 @@ function identifyStatsRequest<T>(request: "talent" | "card", promise: Promise<T>
   return promise.catch((cause: unknown) => { throw new ChampionStatsRequestFailure(request, cause); });
 }
 
-/** Load and render ranked card statistics, optionally filtered by one talent. */
+/**
+ * Load and render ranked card statistics, optionally filtered by one talent.
+ * I/O: in `{ championId: number, championData: ChampionData }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function ChampionLoadoutStats({ championId, championData }: { championId: number; championData: ChampionData }) {
   const { t } = useLocalization();
   const { definition: lobbyTier, ready: lobbyTierReady } = useLobbyTier();

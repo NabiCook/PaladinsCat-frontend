@@ -1,4 +1,8 @@
-/** Role-authorized invitation issuance and revocation. */
+/**
+ * Role-authorized invitation issuance and revocation.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -9,6 +13,12 @@ import { useAuth } from "@/lib/auth-context";
 import { expireAdminInvitation, getAdminInvitations, getInvitationPolicy, setInvitationPolicy, issueAdminInvitation, type AdminInvitation, type InvitationPolicy } from "@/lib/api-client";
 import { useLocalization } from "@/lib/localization-context";
 
+/**
+ * Render the admin invitation issuance/revocation page.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function InvitationsAdminPage() {
   const { t, formatDateTime } = useLocalization();
   const { isLoading, isAdmin, refresh } = useAuth();

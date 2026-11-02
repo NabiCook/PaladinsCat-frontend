@@ -31,7 +31,12 @@ const ROLES = [
   { value: "Support", labelKey: "common.roles.support", icon: "/images/icons/Class_Support_Icon.avif" },
 ] as const;
 
-/** Render every opposing-champion relationship from cumulative ranked facts. */
+/**
+ * Render every opposing-champion relationship from cumulative ranked facts.
+ * I/O: in `{ initialSlug?: string }` -> out `React.JSX.Element`.
+ *
+ * refs: none
+ */
 export default function ChampionMatchups({ initialSlug }: { initialSlug?: string }): React.JSX.Element {
   const router = useRouter();
   const { t, formatNumber, formatPercent } = useLocalization();

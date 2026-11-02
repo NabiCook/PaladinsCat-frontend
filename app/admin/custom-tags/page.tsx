@@ -1,7 +1,8 @@
 /**
  * Admin portal: review and approve/reject player custom tag requests.
  * Approved tags display first, before all other tags, sitewide.
- * refs: migration 241, admin/custom_tags.rs
+ *
+ * refs: migrations: 241
  */
 "use client";
 import { formatApiErrorMessage } from "@/lib/api-errors";
@@ -14,6 +15,12 @@ import { useAuth } from "@/lib/auth-context";
 import { LoadingPanel } from "@/components/async-state";
 import { useLocalization } from "@/lib/localization-context";
 
+/**
+ * Render the admin custom-tag review page (approve/reject requests).
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: migrations: 241
+ */
 export default function AdminCustomTagsPage() {
   const { t, formatDateTime } = useLocalization();
   const { user, isLoading } = useAuth();

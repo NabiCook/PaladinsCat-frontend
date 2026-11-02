@@ -1,3 +1,7 @@
+/** Server-side champion changelog snapshot reader (canonical slug resolution).
+ *
+ * refs: none
+ */
 import "server-only";
 
 import { readFile } from "node:fs/promises";

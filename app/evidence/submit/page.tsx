@@ -10,6 +10,12 @@
 import { Suspense } from "react";
 import SubmitCheaterEvidencePage from "./submit-page-client";
 
+/**
+ * Render the public evidence-submission entry point wrapped in a Suspense boundary.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: endpoints: POST /cheaters/evidence
+ */
 export default function EvidenceSubmitPage() {
   return (
     <Suspense fallback={null}>

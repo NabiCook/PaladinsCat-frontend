@@ -1,9 +1,23 @@
+/** Hi-Rez card/item scaling-token resolution into display numbers.
+ *
+ * refs: none
+ */
+
+/** A number formatting callback (value + optional Intl options -> string).
+ *
+ * refs: none
+ */
 export type NumberFormatter = (
   value: number,
   options?: Intl.NumberFormatOptions,
 ) => string;
 
-/** Resolve Hi-Rez scaling tokens for the requested card or item level. */
+/** Resolve Hi-Rez scaling tokens for the requested card or item level.
+ *
+ * I/O: in (description: string | null | undefined, level: number, formatNumber: NumberFormatter) -> out string | null
+ *
+ * refs: none
+ */
 export function formatScalingDescription(
   description: string | null | undefined,
   level: number,

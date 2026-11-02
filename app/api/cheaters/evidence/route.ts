@@ -1,14 +1,10 @@
 /**
  * Stream multipart evidence submissions to the internal API.
- * The normal Next rewrite has a short upstream-response timeout. AVIF
- * generation is intentionally synchronous before a report is made durable, so
- * a valid five-image upload can exceed that proxy window. This focused route
- * preserves the request stream and applies only to the evidence submission;
- * every other API route continues to use the shared rewrite.
  *
- * The public surface only exposes the submission POST. The evidence list,
- * detail, and review reads are Pro-only and are blocked by the proxy
- * middleware, so this handler intentionally has no GET.
+ * Preserves the request stream because synchronous AVIF generation can exceed
+ * the shared rewrite's upstream timeout; applies only to the evidence
+ * submission. The public surface exposes only the POST; the list, detail, and
+ * review reads are Pro-only and blocked by proxy middleware.
  * refs: endpoints: POST /cheaters/evidence · migrations: 166
  */
 import { NextRequest, NextResponse } from "next/server";

@@ -1,20 +1,26 @@
 /**
- * Pseudonymized browser-fingerprint inputs for security access capture.
- *
- * The backend hashes these (never stores them raw) into a versioned
- * browser signature used for cross-account correlation. SSoT-locked field
- * set: user-agent + accept-language (sent natively by the browser) plus the
- * three fields below, which the browser does not send by default.
- *
- * Privacy: these are coarse, non-identifying device characteristics. No
- * pixel-level, geolocation, or storage-derived values are collected. Values
- * are trimmed and capped so no unbounded input crosses the wire.
+ * Pseudonymized browser-fingerprint inputs for security access capture. The
+ * backend hashes these (never stores them raw) into a versioned browser
+ * signature for cross-account correlation. Coarse, non-identifying device
+ * characteristics only: no pixel, geolocation, or storage-derived values.
  *
  * refs: doc: documents/02-technical/security/security-access-capture.md
  */
 
+/** Request header carrying the screen fingerprint field.
+ *
+ * refs: none
+ */
 export const FP_SCREEN_HEADER = "x-paladinscat-fp-screen";
+/** Request header carrying the timezone fingerprint field.
+ *
+ * refs: none
+ */
 export const FP_TIMEZONE_HEADER = "x-paladinscat-fp-timezone";
+/** Request header carrying the platform fingerprint field.
+ *
+ * refs: none
+ */
 export const FP_PLATFORM_HEADER = "x-paladinscat-fp-platform";
 
 /**
@@ -24,6 +30,8 @@ export const FP_PLATFORM_HEADER = "x-paladinscat-fp-platform";
  * credential. Fields are URL-encoded then joined with "+" — a valid cookie
  * octet that encodeURIComponent never emits (it escapes "+" to "%2B"), so the
  * split stays unambiguous and timezone values containing "/" round-trip cleanly.
+ *
+ * refs: none
  */
 export const FP_COOKIE = "pc_fp";
 
@@ -36,7 +44,12 @@ function bound(value: string | undefined | null): string {
   return value.trim().slice(0, MAX_LEN);
 }
 
-/** Compute the three non-header fingerprint fields from the live browser. */
+/** Compute the three non-header fingerprint fields from the live browser.
+ *
+ * I/O: in () -> out { screen: string; timezone: string; platform: string }
+ *
+ * refs: none
+ */
 export function fingerprintFields(): {
   screen: string;
   timezone: string;
@@ -67,7 +80,12 @@ export function fingerprintFields(): {
   };
 }
 
-/** Build the fingerprint headers to attach to a security-relevant request. */
+/** Build the fingerprint headers to attach to a security-relevant request.
+ *
+ * I/O: in () -> out Record<string, string>
+ *
+ * refs: none
+ */
 export function fingerprintHeaders(): Record<string, string> {
   const { screen, timezone, platform } = fingerprintFields();
   const headers: Record<string, string> = {};
@@ -77,7 +95,12 @@ export function fingerprintHeaders(): Record<string, string> {
   return headers;
 }
 
-/** Serialize the fingerprint fields into the cookie value. */
+/** Serialize the fingerprint fields into the cookie value.
+ *
+ * I/O: in (fields: { screen, timezone, platform: string }) -> out string
+ *
+ * refs: none
+ */
 export function fingerprintCookieValue(
   fields: { screen: string; timezone: string; platform: string },
 ): string {
@@ -91,6 +114,10 @@ export function fingerprintCookieValue(
 /**
  * Set the first-party fingerprint cookie from the live browser. Safe to call
  * repeatedly; no-op on the server. Returns false when nothing could be set.
+ *
+ * I/O: in () -> out boolean
+ *
+ * refs: none
  */
 export function setFingerprintCookie(): boolean {
   if (typeof document === "undefined") return false;
@@ -106,7 +133,13 @@ export function setFingerprintCookie(): boolean {
   return true;
 }
 
-/** Parse a fingerprint cookie value back into its three fields. */
+/**
+ * Parse a fingerprint cookie value back into its three fields.
+ *
+ * I/O: in (raw: string | undefined | null) -> out { screen: string; timezone: string; platform: string }
+ *
+ * refs: none
+ */
 export function parseFingerprintCookie(
   raw: string | undefined | null,
 ): { screen: string; timezone: string; platform: string } {

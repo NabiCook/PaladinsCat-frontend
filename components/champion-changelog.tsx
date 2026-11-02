@@ -1,3 +1,11 @@
+/**
+ * Champion changelog renderer — wiki-derived changes grouped by category.
+ *
+ * Owns the `ChampionChangelog` component. Renders changelog entries from
+ * `ChampionChangelogData` (passed in as a prop); no data fetch.
+ *
+ * refs: public/data/champion-changelogs.json
+ */
 "use client";
 
 import SmartImage from "@/components/SmartImage";

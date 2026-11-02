@@ -1,6 +1,11 @@
-/** Forward an authenticated administrator evidence decision to the internal API. */
+/**
+ * Forward an authenticated administrator evidence decision to the internal API.
+ *
+ * refs: none
+ */
 import { NextRequest, NextResponse } from "next/server";
 
+/** Next.js route runtime selector: run on the Node.js server runtime. refs: none */
 export const runtime = "nodejs";
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "authorization", "content-type", "x-csrf-token", "origin", "x-forwarded-proto"] as const;
@@ -24,7 +29,12 @@ function forwardRequestHeaders(request: NextRequest): Headers {
   return headers;
 }
 
-/** Relay the review decision and preserve the backend authorization result. */
+/**
+ * Relay the review decision and preserve the backend authorization result.
+ * I/O: in `(request: NextRequest, { params }: { params: Promise<{ id: string }> })` -> out `Promise<NextResponse>`.
+ *
+ * refs: endpoints: POST /cheaters/evidence/[id]/review
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

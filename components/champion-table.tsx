@@ -68,7 +68,7 @@ function mergeChampionStats(rows: Champion[]): Champion[] {
 /**
  * Render champion table with `ArrowUp`, `ArrowDown`.
  * refs: none
- * I/O types: `{ initialChampions = null }: { initialChampions?: Champion[] | null } -> JSX.Element`.
+ * I/O types: `{ initialChampions?: Champion[] | null, relationshipDirectory?: boolean } -> JSX.Element`.
  */
 export default function ChampionTable({
   initialChampions = null,

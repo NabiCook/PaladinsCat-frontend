@@ -1,4 +1,8 @@
-/** Live data previews for the global statistics directory. */
+/**
+ * Live data previews for the global statistics directory.
+ *
+ * refs: none
+ */
 "use client";
 
 import Link from "next/link";
@@ -108,7 +112,12 @@ function TrendSparkline({ values, color, label }: { values: number[]; color: str
   );
 }
 
-/** Render a compact dashboard whose cards preview their destination's live data. */
+/**
+ * Render a compact dashboard whose cards preview their destination's live data.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function StatsPortalDashboard() {
   return <StatsPortalContent />;
 }

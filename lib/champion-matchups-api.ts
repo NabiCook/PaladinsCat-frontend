@@ -5,6 +5,10 @@ import { fetchJson } from "@/lib/api-client";
 
 const RANKED_MATCHUP_WINDOW_DAYS = 30;
 
+/** Ranked opponent relationship aggregate (wins/losses/encounters/win rate).
+ *
+ * refs: none
+ */
 export interface ChampionRelationship {
   opponentChampionId: number;
   opponentChampionName: string;
@@ -14,6 +18,10 @@ export interface ChampionRelationship {
   winRate: number | null;
 }
 
+/** One champion-talent vs opponent ranked matchup row over the rolling window.
+ *
+ * refs: none
+ */
 export interface ChampionTalentMatchupRow {
   championTalentId: number;
   opponentChampionId: number;
@@ -27,12 +35,21 @@ export interface ChampionTalentMatchupRow {
   coverageTo: string;
 }
 
+/** Champion talent matchup result: talent list plus ranked matchup rows.
+ *
+ * refs: none
+ */
 export interface ChampionTalentMatchups {
   talents: Array<{ talentId: number; talentName: string }>;
   rows: ChampionTalentMatchupRow[];
 }
 
-/** Load opponent relationships from the rolling 30-day ranked window. */
+/** Load opponent relationships from the rolling 30-day ranked window.
+ *
+ * I/O: in (championId: number, signal: AbortSignal) -> out Promise<ChampionRelationship[]>
+ *
+ * refs: none
+ */
 export async function fetchChampionRelationships(
   championId: number,
   signal: AbortSignal,
@@ -73,7 +90,12 @@ interface RawChampionTalentMatchups {
   }>;
 }
 
-/** Load the selected champion talent's observed ranked matchups from the rolling 30-day window. */
+/** Load the selected champion talent's observed ranked matchups from the rolling 30-day window.
+ *
+ * I/O: in (championId: number, talentId: number, signal: AbortSignal) -> out Promise<ChampionTalentMatchups>
+ *
+ * refs: none
+ */
 export async function fetchChampionTalentMatchups(
   championId: number,
   talentId: number,
@@ -105,6 +127,10 @@ export async function fetchChampionTalentMatchups(
   };
 }
 
+/** Per-champion strongest/weakest opponent preview aggregate.
+ *
+ * refs: none
+ */
 export interface ChampionMatchupPreviews {
   champions: Array<{
     championId: number;
@@ -113,6 +139,10 @@ export interface ChampionMatchupPreviews {
   }>;
 }
 
+/** Wire shape of the matchup-previews payload (snake_case champion ids).
+ *
+ * refs: none
+ */
 export interface RawChampionMatchupPreviews {
   champions: Array<{
     champion_id: number;
@@ -121,7 +151,12 @@ export interface RawChampionMatchupPreviews {
   }>;
 }
 
-/** Load the five strongest and weakest opponents for every reference champion. */
+/** Load the five strongest and weakest opponents for every reference champion.
+ *
+ * I/O: in (signal: AbortSignal) -> out Promise<ChampionMatchupPreviews>
+ *
+ * refs: none
+ */
 export async function fetchChampionMatchupPreviews(signal: AbortSignal): Promise<ChampionMatchupPreviews> {
   const result = await fetchJson<RawChampionMatchupPreviews>(
     "/stats/champions/matchup-previews?days=all",
@@ -130,7 +165,12 @@ export async function fetchChampionMatchupPreviews(signal: AbortSignal): Promise
   return mapChampionMatchupPreviews(result);
 }
 
-/** Normalize the same aggregate contract for the directory and matchup pages. */
+/** Normalize the same aggregate contract for the directory and matchup pages.
+ *
+ * I/O: in (result: RawChampionMatchupPreviews) -> out ChampionMatchupPreviews
+ *
+ * refs: none
+ */
 export function mapChampionMatchupPreviews(result: RawChampionMatchupPreviews): ChampionMatchupPreviews {
   const normalize = (relationship: ChampionRelationship): ChampionRelationship => ({
     ...relationship,

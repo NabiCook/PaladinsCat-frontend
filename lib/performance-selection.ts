@@ -31,8 +31,18 @@ export function performanceSelection(scope?: string | null, metric?: string | nu
   return { scope: selectedScope, metric: selectedMetric, queueId };
 }
 
+/** Return the short display alias for a performance metric (falling back to the key).
+ *
+ * I/O: in (metric: GamePerformanceMetric) -> out string
+ *
+ * refs: none
+ */
 export function performanceMetricName(metric: GamePerformanceMetric): string {
   return ({ gpm: "cpm", wpm: "wdpm", apm: "sdpm", egpm: "ecpm", deaths_per_minute: "depm" } as Partial<Record<GamePerformanceMetric, string>>)[metric] ?? metric;
 }
 
+/** The fixed set of casual (unranked) performance-queue modes (queueId + label key).
+ *
+ * refs: none
+ */
 export const CASUAL_PERFORMANCE_MODES = [{ queueId: 424, labelKey: "stats.performance.siege" }, { queueId: 452, labelKey: "stats.performance.onslaught" }, { queueId: 469, labelKey: "stats.performance.tdm" }] as const;

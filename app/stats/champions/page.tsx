@@ -5,6 +5,9 @@ import ChampionTable from "@/components/champion-table";
 
 /**
  * Render all 59 champions and route selections to matchup detail pages.
+ * I/O: in () -> out `React.JSX.Element`.
+ *
+ * refs: none
  */
 export default function Page(): React.JSX.Element {
   return <ChampionTable relationshipDirectory />;

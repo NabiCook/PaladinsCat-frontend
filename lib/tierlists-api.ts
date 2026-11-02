@@ -11,16 +11,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 /**
  * Define tier name as `"S" | "A" | "B" | "C" | "D" | "F"`.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export type TierName = "S" | "A" | "B" | "C" | "D" | "F";
 
-/** Describe what a tier list ranks. */
+/** Describe what a tier list ranks.
+ *
+ * refs: none
+ */
 export type TierListMode = "champion" | "ultimate" | "map";
 
 /**
  * Describe a champion tier-list entry with championId, championName, tier, position.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TierListChampionEntry {
   entityType: "champion";
@@ -30,7 +33,10 @@ export interface TierListChampionEntry {
   position: number;
 }
 
-/** Describe a map placement returned by the tier-list API. */
+/** Describe a map placement returned by the tier-list API.
+ *
+ * refs: none
+ */
 export interface TierListMapEntry {
   entityType: "map";
   mapName: string;
@@ -38,11 +44,15 @@ export interface TierListMapEntry {
   position: number;
 }
 
+/** A tier-list placement entry (a champion entry or a map entry).
+ *
+ * refs: none
+ */
 export type TierListEntry = TierListChampionEntry | TierListMapEntry;
 
 /**
  * Describe tier list summary with id, userId, username, linkedPlayerId, title, description, likes.
- * refs: doc: documents/02-technical/api/api-server.md
+ * refs: doc: documents/02-technical/api/paladinscat-api-internal.md
  */
 export interface TierListSummary {
   id: number;
@@ -156,7 +166,7 @@ export async function fetchTierList(postId: number): Promise<TierListSummary> {
  *
  * Accepts input; returns the created summary after an authenticated state-changing API request.
  * refs: none
- * I/O types: `input: { title: string; description: string; mode: TierListMode; entries: Array<...>; token: string | null; } -> Promise<{ postId: number }>`.
+ * I/O types: `input: { title: string; description: string; mode: TierListMode; entries: Array<{ tier: TierName }>; token: string | null; } -> Promise<{ postId: number }>`.
  */
 export async function createTierList(input: {
   title: string;
@@ -180,7 +190,7 @@ export async function createTierList(input: {
  *
  * Accepts postId and input; returns the updated summary after an authenticated API mutation.
  * refs: none
- * I/O types: `postId: number; input: { title: string; description: string; entries: Array<{ championId: number; tier: TierName; position: number }>; token: string | null; } -> Promise<{ postId: number }>`.
+ * I/O types: `postId: number; input: { title: string; description: string; mode: TierListMode; entries: Array<{ tier: TierName }>; token: string | null; } -> Promise<{ postId: number }>`.
  */
 export async function updateTierList(postId: number, input: {
   title: string;

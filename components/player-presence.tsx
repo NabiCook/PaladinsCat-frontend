@@ -1,3 +1,11 @@
+/**
+ * Player presence indicator — display-only Hi-Rez Activity status.
+ *
+ * Owns the `PlayerPresence` component. Renders a status chip from
+ * `PlayerStatus`; the profile endpoint owns all fetching.
+ *
+ * refs: none
+ */
 "use client";
 
 import { CircleHelp, CircleUserRound, Monitor, RefreshCw, Swords, Wifi, WifiOff } from "lucide-react";
@@ -14,6 +22,12 @@ const statuses = [
   { key: "common.playerPresence.unknown", icon: CircleHelp, color: "text-pc-text-muted" },
 ] as const;
 
+/**
+ * Render a display-only presence chip from a Hi-Rez activity status.
+ * I/O: in `{ status?: PlayerStatus | null, error?: string | null, loading: boolean }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function PlayerPresence({ status, error, loading }: {
   status?: PlayerStatus | null; error?: string | null; loading: boolean;
 }) {

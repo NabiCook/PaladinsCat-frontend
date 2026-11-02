@@ -2,6 +2,11 @@
  * One skill, talent, card, or champion-level history grouped across revisions.
  * refs: public/data/champion-changelogs.json
  */
+
+/** One changelog entry: a single skill/talent/card/champion-level change.
+ *
+ * refs: none
+ */
 export interface ChampionChangelogEntry {
   name: string;
   iconUrl?: string | null;

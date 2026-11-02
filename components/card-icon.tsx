@@ -1,3 +1,11 @@
+/**
+ * Card icon map — stable topic keys sharing Lucide geometry.
+ *
+ * Owns the `CardIcon` component and the `CardIconName` type. Maps topic keys to
+ * Lucide icons and renders a decorative inline SVG. No data fetch.
+ *
+ * refs: none
+ */
 import {
   Activity, ArrowRight, Badge, Bot, BrickWall, Calculator, ChartColumn,
   ChartColumnIncreasing, ChartNoAxesColumnIncreasing, ChartNoAxesCombined,
@@ -54,9 +62,19 @@ const icons = {
   relationships: Waypoints,
 } as const;
 
+/**
+ * Topic icon key — union of the supported `icons` map keys.
+ *
+ * refs: none
+ */
 export type CardIconName = keyof typeof icons;
 
-/** Decorative inline SVG. Labels remain in the card text; color inherits its topic accent. */
+/**
+ * Decorative inline SVG. Labels remain in the card text; color inherits its topic accent.
+ * I/O: in `{ name: CardIconName, className?: string, size?: number }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function CardIcon({ name, className = "", size = 32 }: {
   name: CardIconName;
   className?: string;

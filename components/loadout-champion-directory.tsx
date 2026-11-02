@@ -1,4 +1,8 @@
-/** Own the champion selection UI for ranked loadout statistics. */
+/**
+ * Own the champion selection UI for ranked loadout statistics.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
@@ -16,7 +20,12 @@ const ROLES = [
   { value: "Support", labelKey: "common.roles.support", icon: "/images/icons/Class_Support_Icon.avif" },
 ] as const;
 
-/** List all champions and filter them by their canonical class. */
+/**
+ * List all champions and filter them by their canonical class.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function LoadoutChampionDirectory() {
   const { t } = useLocalization();
   const [role, setRole] = useState<string | null>(null);

@@ -70,7 +70,12 @@ async function tierListPng(board: HTMLElement): Promise<string> {
   }
 }
 
-/** Render a localized tier-list PNG download button. */
+/**
+ * Render a localized tier-list PNG download button.
+ * I/O: in `TierListExportButtonProps` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export default function TierListExportButton({ tierListId, mode, target }: TierListExportButtonProps) {
   const { t } = useLocalization();
   const [exporting, setExporting] = useState(false);

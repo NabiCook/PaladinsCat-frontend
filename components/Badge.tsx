@@ -1,3 +1,11 @@
+/**
+ * Badge component — reusable status/role badges (verified/supporter/ranked/mode).
+ *
+ * Owns the `Badge` React component plus its `BadgeVariant` type and `BadgeProps`
+ * interface. Renders a pill-shaped status badge with an icon; no data fetch.
+ *
+ * refs: none
+ */
 import { BadgeCheck, Star, Trophy } from "lucide-react";
 
 /**

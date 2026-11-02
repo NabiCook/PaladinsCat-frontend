@@ -1,10 +1,23 @@
+/**
+ * Anonymous presence card — coarse completed-minute activity estimate.
+ *
+ * Owns the `AnonymousPresenceCard` component. Polls anonymous presence on a
+ * 60s interval while the tab is visible; renders an estimate, no catalog data.
+ *
+ * refs: none
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 import { fetchAnonymousPresence, type AnonymousPresence } from "@/lib/anonymous-presence";
 import { useLocalization } from "@/lib/localization-context";
 
-/** Display the coarse, completed-minute estimate separately from cached catalog totals. */
+/**
+ * Display the coarse, completed-minute estimate separately from cached catalog totals.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export function AnonymousPresenceCard() {
   const { t, formatNumber } = useLocalization();
   const [presence, setPresence] = useState<AnonymousPresence | null>(null);

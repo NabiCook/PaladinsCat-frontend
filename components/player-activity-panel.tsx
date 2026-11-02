@@ -15,6 +15,11 @@ import { stationaryChartSeries } from "@/lib/chart-colors";
 import { useLocalization } from "@/lib/localization-context";
 import { getPercentageColor } from "@/lib/stat-quality";
 
+/**
+ * Region -> chart series color map shared by activity charts and breakdowns.
+ *
+ * refs: none
+ */
 export const REGION_COLORS: Record<string, string> = {
   NA: stationaryChartSeries.emerald,
   EU: stationaryChartSeries.sky,
@@ -363,7 +368,12 @@ export default function PlayerActivityPanel({
   );
 }
 
-/** Render a proportional stacked activity bar from a bucket and its series colors. */
+/**
+ * Render a proportional stacked activity bar from a bucket and its series colors.
+ * I/O: in `{ entry: DisplayActivity["hourly"][number], max: number, formatNumber: (value: number) => string, colors?: Record<string, string>, seriesOrder?: string[], playersByRegion?: Record<string, Array<{ playerId: number; name: string }>> }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export function ActivityBar({
   entry,
   max,
@@ -419,7 +429,12 @@ function ChartHelp({ title, text }: { title: string; text: ReactNode }) {
   </span>;
 }
 
-/** Render activity title, queue selector and total; queue changes invoke the caller. */
+/**
+ * Render activity title, queue selector and total; queue changes invoke the caller.
+ * I/O: in `{ title: string, subtitle?: ReactNode, helpText?: ReactNode, queueLabel: string, allQueuesLabel: string, queues: Pick<MatchQueueActivity, "queueId" | "queueName">[], selectedQueue: "all" | number, onQueueChange: (queue: "all" | number) => void, total: number | null, formatNumber: (value: number) => string }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export function HourlyCardHeader({
   title,
   subtitle,
@@ -641,7 +656,12 @@ function WeeklySeriesChart({
   </div>;
 }
 
-/** Render the shared queue/platform/region layout; exact populations omit uncertainty controls. */
+/**
+ * Render the shared queue/platform/region layout; exact populations omit uncertainty controls.
+ * I/O: in `{ presence: PresenceBreakdownStats, formatNumber: (value: number) => string, title: string, queueTitle: string, platformTitle: string, regionTitle: string, publicLabel: string, privateLabel: string, unresolvedLabel: string, unresolvedRangeLabel: string, possibleTotalLabel: string, coverageLabel: string, overlapNote: string, detailsLabel: string, exact?: boolean, showStatements?: boolean }` -> out `JSX.Element`.
+ *
+ * refs: none
+ */
 export function PlayerPresenceBreakdown({
   presence,
   formatNumber,

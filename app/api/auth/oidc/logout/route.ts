@@ -1,8 +1,8 @@
-import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 /**
  * Reject cross-origin requests with 403; otherwise read the opaque session cookie and attempt backend and upstream logout. Clear session and CSRF cookies and return a 303 to the validated provider logout URL or home, even when revocation requests fail.
  * refs: none
  */
+import { operatorBackendFetch } from "@/lib/operator-transport.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { buildRpLogoutUrl, normalizedHttpsIssuer, requireSameOrigin, resolveInternalIssuer } from "@/lib/oidc-security";
 import { oidcBffServiceHeaders } from "@/lib/oidc-bff-service";

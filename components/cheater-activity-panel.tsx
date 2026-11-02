@@ -1,7 +1,10 @@
 /**
  * Render cheater-only hourly charts and queue/platform/region player breakdowns.
  * Fetches one read-only aggregate; queue changes select existing series locally.
- * refs: GET /cheaters/activity; documents/02-technical/api/paladinscat-api-internal.md
+ *
+ * refs:
+ *   doc: documents/02-technical/api/paladinscat-api-internal.md
+ *   endpoints: GET /cheaters/activity
  */
 "use client";
 
@@ -22,7 +25,12 @@ function loadActivity() {
   return pendingActivity;
 }
 
-/** Reuse the activity-page anatomy for distinct cheater matches and players. */
+/**
+ * Reuse the activity-page anatomy for distinct cheater matches and players.
+ * I/O: in () -> out `JSX.Element`.
+ *
+ * refs: endpoints: GET /cheaters/activity
+ */
 export default function CheaterActivityPanel() {
   const { t, formatNumber, formatHourFromUtcBucket } = useLocalization();
   const [activity, setActivity] = useState<CheaterActivity | null>(null);

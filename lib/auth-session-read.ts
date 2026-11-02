@@ -1,11 +1,27 @@
+/** Bounded per-process session-read throttling for the /auth/me passthrough.
+ *
+ * refs: none
+ */
 import { operatorBackendFetch } from "./operator-transport.mjs";
 /** Stop runaway session reads from already-loaded clients without caching auth. */
 import { createHash } from "node:crypto";
 import { serverApiBase } from "./server-api";
 import { accountSessionCookie } from "./operator-plane";
 
+/** Max session reads allowed per token before rate limiting kicks in.
+ *
+ * refs: none
+ */
 export const AUTH_SESSION_READ_LIMIT = 30;
+/** Rolling window (ms) over which the per-token read budget is counted.
+ *
+ * refs: none
+ */
 export const AUTH_SESSION_READ_WINDOW_MS = 10_000;
+/** Max distinct token hashes retained before the oldest bucket is evicted.
+ *
+ * refs: none
+ */
 export const AUTH_SESSION_READ_MAX_KEYS = 4096;
 
 type Dependencies = { apiBase?: () => string; fetcher?: typeof fetch; now?: () => number };
@@ -38,7 +54,12 @@ function errorResponse(status: number, code: string, message: string, retryAfter
   });
 }
 
-/** Each process keeps only bounded token hashes/counters; the backend still owns auth. */
+/** Each process keeps only bounded token hashes/counters; the backend still owns auth.
+ *
+ * I/O: in (dependencies: Dependencies) -> out (request: Request) => Promise<Response>
+ *
+ * refs: none
+ */
 export function createSessionReadHandler(dependencies: Dependencies = {}): (request: Request) => Promise<Response> {
   const buckets = new Map<string, Bucket>();
   const now = dependencies.now || Date.now;
@@ -92,4 +113,8 @@ export function createSessionReadHandler(dependencies: Dependencies = {}): (requ
 
 // Compiled API aliases share the same counters inside the serving Node process.
 const runtimeState = globalThis as typeof globalThis & { pcAuthSessionReadHandler?: ReturnType<typeof createSessionReadHandler> };
+/** Pre-built shared session-read handler reused by compiled API route aliases.
+ *
+ * refs: none
+ */
 export const readAuthSession = runtimeState.pcAuthSessionReadHandler ??= createSessionReadHandler();

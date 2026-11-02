@@ -1,17 +1,11 @@
 /**
  * Self-service tag-visibility panel for a verified player's own profile.
  *
- * Shows ONLY the automatic cosmetic performance tags the player currently has
- * (hide-only semantics — the player can never enable a tag they do not own)
- * and lets them hide or re-show each one sitewide. Also exposes the single
- * custom-tag request (max one, admin-approved, displayed first). Approved tags
- * may be hidden/re-shown or removed by their owner without another review.
- *
- * The panel renders only when the viewer is the verified linked owner of the
- * profile; the backend re-enforces the same gate on every write.
- *
+ * Shows only the automatic cosmetic tags the player owns (hide-only) and the
+ * single admin-approved custom-tag request; renders only for the verified
+ * linked owner, and the backend re-enforces the gate on every write.
  * refs:
- *   endpoints: GET/POST /players/:id/tag-visibility, POST/DELETE /players/:id/custom-tag
+ *   endpoints: GET /players/:id/tag-visibility · POST /players/:id/tag-visibility · POST /players/:id/custom-tag · DELETE /players/:id/custom-tag
  *   migrations: 241, 243
  */
 "use client";
@@ -50,6 +44,14 @@ interface PlayerTagVisibilityPanelProps {
   refreshKey?: number;
 }
 
+/**
+ * Render the self-service tag-visibility panel; writes are re-gated by the backend.
+ * I/O: in `PlayerTagVisibilityPanelProps { playerId: string, isOwnVerified: boolean, refreshKey?: number }` -> out `JSX.Element | null`.
+ *
+ * refs:
+ *   endpoints: GET /players/:id/tag-visibility · POST /players/:id/tag-visibility · POST /players/:id/custom-tag · DELETE /players/:id/custom-tag
+ *   migrations: 241, 243
+ */
 export default function PlayerTagVisibilityPanel({
   playerId,
   isOwnVerified,

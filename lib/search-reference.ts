@@ -1,4 +1,7 @@
-/** Shared bundled catalog fallback for universal search. */
+/** Shared bundled catalog fallback for universal search.
+ *
+ * refs: none
+ */
 import { fetchReferenceChampions, type UniversalSearchResult } from "@/lib/api-client";
 import { normalize } from "@/lib/search-state";
 
@@ -44,6 +47,12 @@ function uniqueByName(rows: StaticReferenceRow[]) {
   });
 }
 
+/** Load (and memoize) the bundled static search reference index.
+ *
+ * I/O: in () -> out Promise<StaticReferenceIndex>
+ *
+ * refs: none
+ */
 export async function loadStaticReferenceIndex(): Promise<StaticReferenceIndex> {
   if (!staticReferencePromise) {
     staticReferencePromise = Promise.all([
@@ -70,6 +79,12 @@ export async function loadStaticReferenceIndex(): Promise<StaticReferenceIndex> 
   return staticReferencePromise;
 }
 
+/** Rank a query against the static reference index into universal search results.
+ *
+ * I/O: in (q: string, index: StaticReferenceIndex) -> out UniversalSearchResult[]
+ *
+ * refs: none
+ */
 export function staticReferenceResults(q: string, index: StaticReferenceIndex): UniversalSearchResult[] {
   const query = normalize(q);
   if (query.length < 2) return [];

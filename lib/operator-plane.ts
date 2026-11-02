@@ -1,4 +1,13 @@
-/** Server-owned operator mode. Request headers never choose an authentication plane. */
+/** Server-owned operator mode. Request headers never choose an authentication plane.
+ *
+ * refs: none
+ */
+/** Report whether the process runs in the server-owned operator BFF mode.
+ *
+ * I/O: in () -> out boolean
+ *
+ * refs: none
+ */
 export function isOperatorBff(): boolean {
   const mode = process.env.PALADINSCAT_OPERATOR_BFF;
   if (mode === undefined || mode === "" || mode === "0") return false;
@@ -6,16 +15,32 @@ export function isOperatorBff(): boolean {
   return true;
 }
 
-/** Host-only names prevent a public browser session from becoming an operator session. */
+/** Host-only names prevent a public browser session from becoming an operator session.
+ *
+ * I/O: in () -> out string
+ *
+ * refs: none
+ */
 export function accountSessionCookie(): string {
   return isOperatorBff() ? "__Host-pc_admin_session" : "__Host-pc_session";
 }
 
+/** Return the OIDC transaction cookie name for the current authentication plane.
+ *
+ * I/O: in () -> out string
+ *
+ * refs: none
+ */
 export function oidcTransactionCookie(): string {
   return isOperatorBff() ? "__Host-pc_admin_oidc_txn" : "__Host-pc_oidc_txn";
 }
 
-/** Fail closed before contacting the provider if the private instance is misconfigured. */
+/** Fail closed before contacting the provider if the private instance is misconfigured.
+ *
+ * I/O: in () -> out void
+ *
+ * refs: none
+ */
 export function assertOperatorConfiguration(): void {
   if (!isOperatorBff()) return;
   const value = process.env.PALADINSCAT_OPERATOR_ORIGIN;
@@ -36,7 +61,12 @@ export function assertOperatorConfiguration(): void {
   }
 }
 
-/** Restrict the private instance to operator UI, authentication and static resources. */
+/** Restrict the private instance to operator UI, authentication and static resources.
+ *
+ * I/O: in (path: string, method: string) -> out string | null
+ *
+ * refs: none
+ */
 export function operatorApiSuffix(path: string, method = "GET"): string | null {
   if (path.includes("%") || path.includes("\\") || path.includes("//") || path.split("/").some(value => value === "." || value === "..")) return null;
   const prefix = ["/api", "/_pc"].find(value => path.startsWith(`${value}/`));
@@ -58,6 +88,12 @@ export function operatorApiSuffix(path: string, method = "GET"): string | null {
   return routes.some(([pattern, methods]) => methods.includes(method) && new RegExp(pattern).test(suffix)) ? suffix : null;
 }
 
+/** Report whether a path is allowed on the private operator instance.
+ *
+ * I/O: in (path: string, method: string) -> out boolean
+ *
+ * refs: none
+ */
 export function operatorPathAllowed(path: string, method = "GET"): boolean {
   if (path.includes("%") || path.includes("\\") || path.includes("//") || path.split("/").some(value => value === "." || value === "..")) return false;
   if (path === "/" || path === "/admin" || path.startsWith("/admin/")) return true;
@@ -67,7 +103,12 @@ export function operatorPathAllowed(path: string, method = "GET"): boolean {
   return operatorApiSuffix(path, method) !== null;
 }
 
-/** Require signed fresh authentication claims in addition to backend verification. */
+/** Require signed fresh authentication claims in addition to backend verification.
+ *
+ * I/O: in (claims: { auth_time?: unknown; acr?: unknown }, now: number) -> out boolean
+ *
+ * refs: none
+ */
 export function freshOperatorClaims(claims: { auth_time?: unknown; acr?: unknown }, now = Date.now()): boolean {
   return claims.acr === (process.env.PALADINSCAT_OPERATOR_REQUIRED_ACR || "2")
     && typeof claims.auth_time === "number" && Number.isSafeInteger(claims.auth_time)

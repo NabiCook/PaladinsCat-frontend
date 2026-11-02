@@ -1,16 +1,37 @@
-/** Server-confirmed Pro entitlement and navigation-only native compatibility. */
+/** Server-confirmed Pro entitlement and navigation-only native compatibility.
+ *
+ * refs: none
+ */
 import { serverApiBase } from "./server-api";
 
+/** The public PaladinsCat origin (the default browser surface).
+ *
+ * refs: none
+ */
 export const PUBLIC_ORIGIN = "https://paladinscat.com";
+/** The Pro PaladinsCat origin (the operator/native surface).
+ *
+ * refs: none
+ */
 export const PRO_ORIGIN = "https://pro.paladinscat.com";
 
-/** Native clients choose the cheaper public surface; this never grants access. */
+/** Native clients choose the cheaper public surface; this never grants access.
+ *
+ * I/O: in (headers: Headers) -> out boolean
+ *
+ * refs: none
+ */
 export function isWolper(headers: Headers): boolean {
   return [headers.get("user-agent"), headers.get("x-client-ua")]
     .some(agent => agent?.toLowerCase().includes("wolper"));
 }
 
-/** The global invitation rollout switch is not a Pro entitlement. */
+/** The global invitation rollout switch is not a Pro entitlement.
+ *
+ * I/O: in (value: unknown) -> out boolean
+ *
+ * refs: none
+ */
 export function hasProAccess(value: unknown): boolean {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const account = value as Record<string, unknown>;
@@ -30,7 +51,12 @@ export function hasProAccess(value: unknown): boolean {
   return true;
 }
 
-/** Revalidate an opaque application session with its Rust owner, without cached grants. */
+/** Revalidate an opaque application session with its Rust owner, without cached grants.
+ *
+ * I/O: in (token: string, incoming?: Headers) -> out Promise<boolean>
+ *
+ * refs: none
+ */
 export async function proveProSession(token: string, incoming?: Headers): Promise<boolean> {
   if (!token || token.length > 512) return false;
   try {
@@ -48,7 +74,12 @@ export async function proveProSession(token: string, incoming?: Headers): Promis
   }
 }
 
-/** Host-scoped sessions require a fresh Pro OIDC transaction, never a token in a URL. */
+/** Host-scoped sessions require a fresh Pro OIDC transaction, never a token in a URL.
+ *
+ * I/O: in (path: string) -> out URL
+ *
+ * refs: none
+ */
 export function proLoginUrl(path: string): URL {
   const login = new URL("/api/auth/oidc/login", PRO_ORIGIN);
   login.searchParams.set("return", path);
