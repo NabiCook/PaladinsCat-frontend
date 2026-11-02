@@ -1,0 +1,10 @@
+{
+  "reason": "Surfaces imported from the retirement-locked Pro app ship English literals; burn down per file, never grow the record.",
+  "occurrences": 81,
+  "uniqueStrings": 75,
+  "files": {
+    "app/analyze/page.tsx": 1,
+    "components/demo-analyzer/demo-analyzer.tsx": 27,
+    "components/demo-analyzer/report-sections.tsx": 53
+  }
+}
