@@ -9,7 +9,6 @@ import { oidcBffServiceHeaders, type CfForwardHeaders } from "@/lib/oidc-bff-ser
 import { oidcClientSecret } from "@/lib/oidc-client-secret";
 import { oidcFetch } from "@/lib/oidc-transport";
 import { FP_COOKIE, parseFingerprintCookie } from "@/lib/fingerprint";
-import { isWolper, proveProSession, PRO_ORIGIN, proLoginUrl } from "@/lib/pro-surface";
 import { accountSessionCookie, assertOperatorConfiguration, freshOperatorClaims, isOperatorBff, oidcTransactionCookie } from "@/lib/operator-plane";
 
 /**
@@ -92,21 +91,10 @@ export async function GET(request: NextRequest) {
   const sessionMaxAge = Number.isFinite(expiresMs) ? Math.floor((expiresMs - Date.now()) / 1000) : 60 * 60 * 8;
   if (sessionMaxAge <= 0) { const response = NextResponse.redirect(new URL("/auth/login?oidc_error=1", origin())); clear(response); return response; }
   const returnPath = safeReturnPath(tx.returnPath);
-  // Browser logins for invitation-active accounts continue on the dedicated Pro surface.
-  // Wolper must establish its session on the public host, which its API calls use.
-  // Hand browser sessions off to Pro's
-  // OIDC login (not a bare page redirect): the session cookie is host-scoped, so a bare
-  // cross-origin redirect would land them on Pro without a session. Base and Pro share the
-  // same OIDC client, so the fresh Keycloak SSO session makes this a silent login that
-  // establishes the Pro session, and the validated return path is preserved. The origin
-  // guard makes this a no-op when the callback already runs on Pro (no loop).
-  const currentOrigin = origin().replace(/\/$/, "");
-  const stayPublic = new URL(returnPath, origin()).searchParams.get("pc_surface") === "public";
-  const destination = !isOperatorBff() && currentOrigin !== PRO_ORIGIN && !stayPublic && !isWolper(request.headers)
-    && await proveProSession(result.token, request.headers) ? proLoginUrl(returnPath) : new URL(returnPath, origin());
-  // Keep the public session available for normal API/native reads, including Pro
-  // accounts. Pro creates a separate host-only cookie through its OIDC callback.
-  const response = NextResponse.redirect(destination);
+  // One surface owns every browser session: the consolidated public app lands the
+  // user on the validated return path in the same origin that set the cookie, so no
+  // cross-host hand-off can strand a host-scoped session on a retired host.
+  const response = NextResponse.redirect(new URL(returnPath, origin()));
   response.headers.set("Cache-Control", "private, no-store");
   clear(response);
   response.cookies.set(accountSessionCookie(), result.token, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: isOperatorBff() ? Math.min(sessionMaxAge, 900) : sessionMaxAge });

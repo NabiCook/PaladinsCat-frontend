@@ -9,11 +9,6 @@ import { serverApiBase } from "./server-api";
  * refs: none
  */
 export const PUBLIC_ORIGIN = "https://paladinscat.com";
-/** The Pro PaladinsCat origin (the operator/native surface).
- *
- * refs: none
- */
-export const PRO_ORIGIN = "https://pro.paladinscat.com";
 
 /** Native clients choose the cheaper public surface; this never grants access.
  *
@@ -72,16 +67,4 @@ export async function proveProSession(token: string, incoming?: Headers): Promis
   } catch {
     return false;
   }
-}
-
-/** Host-scoped sessions require a fresh Pro OIDC transaction, never a token in a URL.
- *
- * I/O: in (path: string) -> out URL
- *
- * refs: none
- */
-export function proLoginUrl(path: string): URL {
-  const login = new URL("/api/auth/oidc/login", PRO_ORIGIN);
-  login.searchParams.set("return", path);
-  return login;
 }

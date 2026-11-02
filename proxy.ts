@@ -8,7 +8,7 @@ import { GUEST_COOKIE, GUEST_TTL_SECONDS, issueGuest, validGuest, safeWebsiteReq
 import { isAccountOnlyPath, isVerifiedOnlyPath } from "./lib/verified-access";
 import { serverApiBase } from "./lib/server-api";
 import { anonymousPresenceRequestAllowed } from "./lib/anonymous-presence-gate";
-import { hasProAccess, isWolper, proLoginUrl } from "./lib/pro-surface";
+import { hasProAccess } from "./lib/pro-surface";
 import { accountSessionCookie, assertOperatorConfiguration, isOperatorBff, operatorPathAllowed } from "./lib/operator-plane";
 
 const ACCESS_POLICY_PATH = "/prototype/access-policy";
@@ -191,20 +191,6 @@ export async function proxy(request: NextRequest) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "private, no-store");
     return response;
-  }
-  // Promotion applies to browser documents and RSC navigation only. Native/API
-  // requests always remain on the public cache policy, regardless of entitlement.
-  if (!api && !path.startsWith("/auth/") && path !== ACCESS_POLICY_PATH
-      && request.nextUrl.searchParams.get("pc_surface") !== "public" && !isWolper(request.headers)
-      && (request.method === "GET" || request.method === "HEAD")
-      && (request.headers.get("accept")?.includes("text/html") || request.headers.get("rsc") === "1")
-      && request.cookies.has(accountSessionCookie())) {
-    const check = await getAccountCheck();
-    if (check.pro) {
-      const response = NextResponse.redirect(proLoginUrl(`${path}${request.nextUrl.search}`));
-      response.headers.set("Cache-Control", "private, no-store");
-      return markProtectedResponse(response);
-    }
   }
   if (
     path !== ACCESS_POLICY_PATH
