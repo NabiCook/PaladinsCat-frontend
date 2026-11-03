@@ -12,7 +12,7 @@ entries:
     status: released
     targetVersion: v1.2.3
     publishedAt: "2026-09-09T12:00:00Z"
-    sourceUrl: https://github.com/PaladinsCat/PaladinsCat/discussions/1
+    sourceUrl: https://github.com/NabiCook/PaladinsCat/discussions/1
     title: Valid release
     summary: A useful customer-facing change.
   - id: Invalid ID
@@ -44,7 +44,7 @@ entries:
     status: upcoming
     targetVersion: Next release
     publishedAt: "2026-09-09T00:00:00Z"
-    sourceUrl: https://github.com/PaladinsCat/PaladinsCat/discussions/1
+    sourceUrl: https://github.com/NabiCook/PaladinsCat/discussions/1
     title: Upcoming
     summary: Visible before release.
   - id: current
@@ -53,7 +53,7 @@ entries:
     status: released
     targetVersion: v1.2.3
     publishedAt: "2026-09-08T00:00:00Z"
-    sourceUrl: https://github.com/PaladinsCat/PaladinsCat/releases/tag/v1.2.3
+    sourceUrl: https://github.com/NabiCook/PaladinsCat/releases/tag/v1.2.3
     title: Current
     summary: Still inside the window.
   - id: expired
@@ -62,7 +62,7 @@ entries:
     status: released
     targetVersion: v1.2.2
     publishedAt: "2026-09-01T00:00:00Z"
-    sourceUrl: https://github.com/PaladinsCat/PaladinsCat/blob/main/docs/features/expired.md
+    sourceUrl: https://github.com/NabiCook/PaladinsCat/blob/main/docs/features/expired.md
     title: Expired
     summary: Outside the window.
 ---`).entries;
@@ -82,7 +82,7 @@ entries:
     status: upcoming
     targetVersion: Next release
     publishedAt: "2026-09-09T00:00:00Z"
-    sourceUrl: https://github.com/PaladinsCat/PaladinsCat/discussions/1
+    sourceUrl: https://github.com/NabiCook/PaladinsCat/discussions/1
     title: Announcement
     summary: A customer-facing announcement.
 ---`;

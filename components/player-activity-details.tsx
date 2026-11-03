@@ -21,7 +21,7 @@ import { useLocalization } from "@/lib/localization-context";
 import { useRouteSettledLoading } from "@/lib/route-transition-context";
 
 const METHODOLOGY_URL =
-  "https://github.com/PaladinsCat/PaladinsCat/blob/main/docs/blog/public-release/how-paladinscat-counts-active-players.md";
+  "https://github.com/NabiCook/PaladinsCat/blob/main/docs/blog/public-release/how-paladinscat-counts-active-players.md";
 
 type EvidenceTab = "matches" | "players";
 

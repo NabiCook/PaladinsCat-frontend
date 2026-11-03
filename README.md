@@ -2,8 +2,8 @@
   <h1>PaladinsCat Frontend</h1>
   <p>The player-facing web application for <a href="https://paladinscat.com/">PaladinsCat</a>.</p>
 
-  [![CI](https://github.com/PaladinsCat/PaladinsCat-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/PaladinsCat/PaladinsCat-frontend/actions/workflows/ci.yml)
-  [![CodeQL](https://github.com/PaladinsCat/PaladinsCat-frontend/actions/workflows/codeql.yml/badge.svg)](https://github.com/PaladinsCat/PaladinsCat-frontend/actions/workflows/codeql.yml)
+  [![CI](https://github.com/NabiCook/PaladinsCat-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/NabiCook/PaladinsCat-frontend/actions/workflows/ci.yml)
+  [![CodeQL](https://github.com/NabiCook/PaladinsCat-frontend/actions/workflows/codeql.yml/badge.svg)](https://github.com/NabiCook/PaladinsCat-frontend/actions/workflows/codeql.yml)
 </div>
 
 Built with Next.js, React, and TypeScript, this repository powers PaladinsCat's player profiles, match histories, champion analytics, activity reporting, research articles, localization, account flows, and staff operations interface.

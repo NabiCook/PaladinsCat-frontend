@@ -7,7 +7,7 @@
 import { unstable_cache } from "next/cache";
 import { activeNewFeatures, parseNewFeaturesDocument, type NewFeatureEntry } from "@/lib/feature-feed";
 
-const FEATURES_GITHUB_REPO = process.env.FEATURES_GITHUB_REPO || "PaladinsCat/PaladinsCat";
+const FEATURES_GITHUB_REPO = process.env.FEATURES_GITHUB_REPO || "NabiCook/PaladinsCat";
 const FEATURES_GITHUB_PATH = (process.env.FEATURES_GITHUB_PATH || "docs/features/new-features.md").replace(/^\/+|\/+$/g, "");
 const FEATURES_GITHUB_REF = process.env.FEATURES_GITHUB_REF || "main";
 const FEATURES_GITHUB_RAW_BASE = `https://raw.githubusercontent.com/${FEATURES_GITHUB_REPO}/${FEATURES_GITHUB_REF}`;
