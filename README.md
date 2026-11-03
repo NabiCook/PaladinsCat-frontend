@@ -15,7 +15,7 @@ Built with Next.js, React, and TypeScript, this repository powers PaladinsCat's 
 | `app/` | Routes, layouts, server handlers, and application surfaces |
 | `components/` | Shared interface and visualization components |
 | `lib/` | API clients, security helpers, localization, and domain logic |
-| `public/` | Optimized game and site assets |
+| `public/` | Public scripts, reference data and generated resource outputs |
 | `scripts/` | Build-time data, localization, and security audits |
 | `locales/` | Pinned community locale submodule |
 
@@ -23,6 +23,7 @@ Built with Next.js, React, and TypeScript, this repository powers PaladinsCat's 
 
 ```text
 git submodule update --init --recursive
+# Authorized maintainers: clone NabiCook/paladinscat-frontend-images beside this repo.
 npm ci
 npm run dev
 ```
@@ -30,3 +31,7 @@ npm run dev
 Run `npm run lint`, `npx tsc --noEmit`, and `npm run build` before submitting a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 Licensed under the [MIT License](LICENSE).
+
+## Private resources
+
+Artwork and fonts belong to the private `NabiCook/paladinscat-frontend-images` repository. `frontend-images.lock.json` pins the exact commit and manifest; dev/build hooks prepare ignored files at their original paths. Source revisions contain code and resource references. See [image resource composition](docs/image-resources.md) for local, Docker and CI setup. Existing Git history is preserved.

@@ -29,3 +29,12 @@ public/locales/
 *.log
 *.md
 docker-compose*.yml
+
+# Private resource input and generated materialization
+/.frontend-images/
+/.frontend-images-state.json
+/public/images/
+/public/fonts/
+/scripts/assets/
+/public/drafts/cooldown-icon.png
+/public/drafts/discovery-credit-icon.svg

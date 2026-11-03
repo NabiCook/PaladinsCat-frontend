@@ -42,6 +42,7 @@ export default defineConfig([
     globalIgnores([
     ".next*/**",
     "out/**",
+    ".frontend-images/**",
     "public/locales/**",
     "next-env.d.ts",
   ]),

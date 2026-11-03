@@ -1,9 +1,17 @@
 # Frontend — Next.js app
-# Usage: docker build -t paladinscat-frontend --build-arg MODE=dev .
+# Usage: docker build --build-context frontend-images=../paladinscat-frontend-images -t paladinscat-frontend .
 #   MODE=prod (default): build + optimized runtime
 #   MODE=dev: dev server with hot reload
 
 ARG MODE=prod
+
+# Pinned private resource assembly; no repository credentials enter this context.
+FROM node:22-alpine AS resources
+WORKDIR /app
+COPY frontend-images.lock.json ./
+COPY scripts/prepare-frontend-images.mjs ./scripts/
+RUN --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
+    node scripts/prepare-frontend-images.mjs --source /frontend-images
 
 # Build stage (shared)
 FROM node:22-alpine AS builder
@@ -24,7 +32,9 @@ RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm ci
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm run build
+COPY --from=resources /app/public/ ./public/
+RUN --mount=type=cache,id=npm-cache,target=/root/.npm --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
+    PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images npm run build
 
 # Dev stage
 FROM node:22-alpine AS dev
@@ -35,6 +45,9 @@ RUN npm install
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . ./
+COPY --from=frontend-images /manifest.json /frontend-images/manifest.json
+COPY --from=frontend-images /frontend/ /frontend-images/frontend/
+ENV PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images
 CMD ["sh", "-c", "npm install && npm run dev -- -H 0.0.0.0"]
 
 # Prod runtime
