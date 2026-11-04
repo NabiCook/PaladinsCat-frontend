@@ -19,7 +19,7 @@ test("query parser enforces the comma-array limit for bracket keys", () => {
 });
 
 test("runtime dependencies include the advisory fixes", () => {
-  assert.ok(semver.gte(require("next/package.json").version, "16.3.8"));
+  assert.ok(semver.gte(require("next/package.json").version, "16.4.1"));
   assert.ok(semver.gte(sharp.versions.sharp, "0.35.5"));
   assert.ok(semver.gte(sharp.versions.heif, "1.23.2"));
   assert.ok(semver.satisfies(matterRequire("js-yaml/package.json").version, ">=3.15.2 <4"));

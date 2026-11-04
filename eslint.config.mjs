@@ -42,6 +42,11 @@ export default defineConfig([
     globalIgnores([
     ".next*/**",
     "out/**",
+    ".frontend-images/**",
+    // Generated browser/vendor bundles; source modules remain linted.
+    "public/drafts/discovery-activity.js",
+    "public/drafts/discovery-stats-pro.js",
+    "public/drafts/discovery-community-export.js",
     "public/locales/**",
     // Generated bundles include third-party code; handwritten draft modules stay linted.
     "public/drafts/discovery-activity.js",

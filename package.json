@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/check-localization-catalog.mjs && node scripts/copy-pinned-locales.mjs",
+    "predev": "node scripts/prepare-frontend-images.mjs && node scripts/check-localization-catalog.mjs && node scripts/copy-pinned-locales.mjs",
     "dev": "next dev",
     "dev:proxy": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Start-PaladinsCatDevProxy.ps1",
-    "prebuild": "npm run prepare-locales && npm run test:champion-icons && node scripts/audit-champion-data.mjs && node scripts/sync-champion-reference-data.mjs && node scripts/check-localization-catalog.mjs && node scripts/check-localization-keys.mjs && node scripts/audit-text-size.mjs && node scripts/audit-localization.mjs --strict",
+    "prebuild": "node scripts/prepare-frontend-images.mjs && npm run prepare-locales && npm run test:champion-icons && node scripts/audit-champion-data.mjs && node scripts/sync-champion-reference-data.mjs && node scripts/check-localization-catalog.mjs && node scripts/check-localization-keys.mjs && node scripts/audit-text-size.mjs && node scripts/audit-localization.mjs --strict",
     "build": "node scripts/audit-image-assets.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
@@ -40,7 +40,10 @@
     "check-localization-catalog": "node scripts/check-localization-catalog.mjs",
     "check-localization-keys": "node scripts/check-localization-keys.mjs",
     "test:api-namespace": "node --test lib/api-namespace.test.mjs",
-    "test:match-images": "node --test lib/match-image-route.test.mjs"
+    "test:match-images": "node --test lib/match-image-route.test.mjs",
+    "prepare-images": "node scripts/prepare-frontend-images.mjs",
+    "check:code-only": "node scripts/check-code-only.mjs",
+    "test:resource-inputs": "node --test scripts/prepare-frontend-images.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

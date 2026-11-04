@@ -11,7 +11,25 @@ permissions:
   contents: read
 
 jobs:
+  code-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - run: node scripts/check-code-only.mjs
+      - run: node --test scripts/prepare-frontend-images.test.mjs
+
   build:
+    # Fork CI exercises code/pin guards without access to private resources.
+    # Full resource builds run only for owner-controlled refs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      PALADINSCAT_FRONTEND_IMAGES_ROOT: ${{ github.workspace }}/.frontend-images
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,6 +37,22 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+
+      - name: Resolve immutable private resource pin
+        id: resources
+        run: node -e "const f=require('node:fs');const p=require('./frontend-images.lock.json');if(!/^[a-f0-9]{40}$/.test(p.commit))throw Error('Invalid resource pin');f.appendFileSync(process.env.GITHUB_OUTPUT,'commit='+p.commit+'\n')"
+
+      - name: Checkout private frontend resources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: NabiCook/paladinscat-frontend-images
+          ref: ${{ steps.resources.outputs.commit }}
+          path: .frontend-images
+          ssh-key: ${{ secrets.FRONTEND_IMAGES_DEPLOY_KEY }}
+          persist-credentials: false
+
+      - name: Verify and prepare private resources
+        run: npm run prepare-images
 
       - name: Full-history credential boundary
         timeout-minutes: 3
