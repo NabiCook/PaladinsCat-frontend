@@ -4,10 +4,10 @@
  */
 import { X509Certificate, createHash } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import { Agent } from "undici";
+import { Agent, Dispatcher1Wrapper } from "undici";
 
 const MAX_CA_BYTES = 64 * 1024;
-let privateAgent: { fingerprint: string; agent: Agent } | undefined;
+let privateAgent: { fingerprint: string; agent: Dispatcher1Wrapper } | undefined;
 
 function privateCa(): Buffer {
   const path = process.env.PALADINSCAT_OIDC_CA_FILE?.trim();
@@ -35,17 +35,18 @@ function privateCa(): Buffer {
   } finally { closeSync(fd); }
 }
 
-function keycloakAgent(): Agent {
+function keycloakAgent(): Dispatcher1Wrapper {
   const ca = privateCa();
   const fingerprint = createHash("sha256").update(ca).digest("hex");
   if (privateAgent?.fingerprint !== fingerprint) {
     const previous = privateAgent;
-    privateAgent = { fingerprint, agent: new Agent({
+    // Adapt Node bundled fetch without changing global dispatch or private TLS trust.
+    privateAgent = { fingerprint, agent: new Dispatcher1Wrapper(new Agent({
       connections: 8,
       connect: { ca, rejectUnauthorized: true, timeout: 3_000 },
       headersTimeout: 10_000,
       bodyTimeout: 10_000,
-    }) };
+    })) };
     if (previous) void previous.agent.close().catch(() => undefined);
   }
   return privateAgent.agent;
@@ -61,7 +62,7 @@ export async function oidcFetch(input: string | URL, init: RequestInit = {}): Pr
   const url = new URL(input);
   if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash
       || (url.hostname === "keycloak" && url.port !== "8443")) throw new Error("Invalid OIDC HTTPS endpoint");
-  const options: RequestInit & { dispatcher?: Agent } = {
+  const options: RequestInit & { dispatcher?: Dispatcher1Wrapper } = {
     ...init,
     cache: "no-store",
     redirect: "error",

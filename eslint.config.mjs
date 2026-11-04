@@ -43,6 +43,10 @@ export default defineConfig([
     ".next*/**",
     "out/**",
     "public/locales/**",
+    // Generated bundles include third-party code; handwritten draft modules stay linted.
+    "public/drafts/discovery-activity.js",
+    "public/drafts/discovery-stats-pro.js",
+    "public/drafts/discovery-community-export.js",
     "next-env.d.ts",
   ]),
 ]);
