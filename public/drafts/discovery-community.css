@@ -141,7 +141,8 @@
 .home-streams .community-stream-image { width:76px; height:44px; }
 .home-streams .community-stream-details .community-copy { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin:1px 0; font-size:14px; line-height:1.25; }
 .home-streams .home-stream-more { flex:none; align-self:flex-end; margin-top:6px; text-decoration:none; }
-.home-streams .home-stream-more::after { content:"→"; }
+
+.text-button.home-stream-more::after { content:none; }
 .home-streams .home-stream-more:hover { text-decoration:none; }
 .home-esports { padding:20px; }
 .home-esports p { margin:0; color:var(--secondary); font-size:14px; line-height:1.5; }

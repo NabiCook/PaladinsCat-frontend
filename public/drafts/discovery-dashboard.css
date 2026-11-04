@@ -892,3 +892,5 @@ button,input{font:inherit}button{color:inherit;cursor:default}button:focus-visib
 .discovery-card[href="https://mods.lowrezstudio.com/mods/wolper-scoreboard"] .wolper-art { background:radial-gradient(ellipse 58% 35% at 50% 100%,rgba(183,66,46,.28),transparent 76%),radial-gradient(ellipse 60% 72% at 32% 45%,rgba(116,159,180,.22),transparent 72%),linear-gradient(145deg,#1b1c1d,#111315); }
 
 @media (max-width:600px) { .rail-main .rail-button[data-demo-analysis-trigger] { display:flex; } }
+
+.navigation-arrow, .text-button .navigation-arrow { display:block; flex:none; width:16px; height:16px; }

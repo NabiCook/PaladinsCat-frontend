@@ -142,7 +142,18 @@
   new MutationObserver(schedulePercentages).observe(stack, { childList: true, subtree: true, characterData: true });
   new MutationObserver(schedulePercentages).observe(shell, { attributes: true, attributeFilter: ['data-view'] });
   new MutationObserver(activate).observe(shell, { attributes: true, attributeFilter: ['data-view'] });
-  window.DiscoveryApp = { registerRoute, navigate, createPage, open, request, getUser, record, scopedPath, scopedFetch, setLobbyTier,
+  // Reuse the dashboard's rendered Lucide ArrowRight for navigation controls.
+  function createNavigationArrow() {
+    const icon = document.querySelector('.card-arrow .lucide-arrow-right')?.cloneNode(true);
+    if (!icon) return null;
+    icon.setAttribute('width', '16');
+    icon.setAttribute('height', '16');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('focusable', 'false');
+    icon.classList.add('navigation-arrow');
+    return icon;
+  }
+  window.DiscoveryApp = { registerRoute, navigate, createPage, open, request, getUser, record, scopedPath, scopedFetch, setLobbyTier, createNavigationArrow,
     t: (...args) => window.DiscoveryLocale.t(...args), locale: () => window.DiscoveryLocale.locale(),
     message: (...args) => window.DiscoveryLocale.message(...args), setText: (...args) => window.DiscoveryLocale.setText(...args),
     formatNumber: (...args) => window.DiscoveryLocale.formatNumber(...args), formatDate: (...args) => window.DiscoveryLocale.formatDate(...args),

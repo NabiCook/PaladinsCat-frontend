@@ -8,6 +8,10 @@
   const next = banner.querySelector('[data-banner-next]');
   if (slides.length !== 2 || pages.length !== slides.length || !previous || !next) return;
 
+  const navigationIcon = banner.querySelector('[data-banner-navigation-icon]');
+  const arrow = window.DiscoveryApp?.createNavigationArrow?.();
+  if (navigationIcon && arrow) navigationIcon.replaceChildren(arrow);
+
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let current = 0, hovering = false, focused = false, timer;
   function show(index) {

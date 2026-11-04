@@ -145,8 +145,10 @@
   async function streamCards(host,state){
     const box = panel(), list = el("div", "community-stream-list");
     box.setAttribute("aria-label", t("generated.community.liveOnTwitch"));
-    const more = safeExternal(t("generated.community.browse"), "https://www.twitch.tv/directory/category/paladins");
+    const more = safeExternal(App.t("menu.browse", undefined, "Browse"), "https://www.twitch.tv/directory/category/paladins");
     more.className = "text-button home-stream-more";
+    const arrow = App.createNavigationArrow?.();
+    if (arrow) more.append(arrow);
     box.append(list, more); host.append(box);
     message(list, t("diminishingReturns.loading"));
     window.DiscoveryLoading?.show(list, "rows", "community-content-card");
