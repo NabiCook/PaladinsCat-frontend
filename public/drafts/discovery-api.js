@@ -7,16 +7,12 @@
   function url(input, method = 'GET') {
     const value = new URL(input, location.href);
     if (value.origin !== location.origin || !/^\/(?:api|_pc)(?:\/|$)/.test(value.pathname)) return value.href;
-    const explicitV1 = /^\/api\/v1(?:\/|$)/.test(value.pathname);
     const path = value.pathname.replace(/^\/(?:api|_pc)(?:\/v1)?(?=\/|$)/, '') || '/';
-    const read = ['GET', 'HEAD'].includes(String(method).toUpperCase());
-    const acquisition = [...value.searchParams].some(([key, flag]) => ['remote', 'refresh'].includes(key) && /^(true|1)$/i.test(flag));
-    // The browser app is a guest website client: developer-v1 reads require an
-    // API key and answer 401 to a session cookie, so every read goes to the
-    // session-backed `/api` contract unless the caller asked for /api/v1
-    // explicitly. Non-reads (and remote/refresh acquisitions) always do.
-    const website = !read || acquisition || !explicitV1;
-    value.pathname = (website ? '/api' : '/api/v1') + path;
+    // The browser app is a guest website client. It holds no developer key, and
+    // `/api/v1/*` answers 401 to a session cookie, so every call — including
+    // the draft's own `/api/v1/...` literals — is collapsed onto the
+    // session-backed `/api` contract. Keyed clients do not load this file.
+    value.pathname = '/api' + path;
     return value.href;
   }
 
