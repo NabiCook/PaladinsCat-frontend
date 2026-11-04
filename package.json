@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
-    "@heroui/react": "^3.2.6",
+    "@heroui/react": "^3.2.7",
     "@heroui/system": "^2.4.28",
     "@heroui/theme": "^2.4.26",
     "@next/swc-wasm-nodejs": "~16.4.3",
