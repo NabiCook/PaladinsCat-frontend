@@ -1,6 +1,6 @@
 // Browser-safe public feed loader; owning logic is lib/feature-document.ts.
 import {activeNewFeatures} from './discovery-feature-feed.js?v=server-parser-1';
-const sourceUrl="https://github.com/PaladinsCat/PaladinsCat/blob/main/docs/features/new-features.md",rawUrl="https://raw.githubusercontent.com/PaladinsCat/PaladinsCat/main/docs/features/new-features.md";
+const sourceUrl="https://github.com/NabiCook/PaladinsCat/blob/main/docs/features/new-features.md",rawUrl="https://raw.githubusercontent.com/NabiCook/PaladinsCat/main/docs/features/new-features.md";
 let cached=null,expires=0;
 export async function getFeatureDocument(refresh=false){if(refresh){cached=null;expires=0;}if(!cached||Date.now()>expires){expires=Date.now()+300000;cached=fetch('/preview/features'+(refresh?'?refresh=true':''),{cache:'no-store',signal:AbortSignal.timeout(10000)}).then(async response=>{if(!response.ok)throw Error('Feature document unavailable');const document=await response.json();if(!Array.isArray(document.entries))throw Error('Invalid feature document');return document;}).catch(()=>{cached=null;return null;});}const data=await cached;return data?{...data,entries:activeNewFeatures(data.entries)}:null;}
 export const resolveFeatureLink=href=>!href||href.startsWith('#')||href.startsWith('/')||/^[a-z][a-z0-9+.-]*:/i.test(href)||href.startsWith('//')||!href.split(/[?#]/,1)[0].toLowerCase().endsWith('.md')?href:new URL(href,sourceUrl).href;

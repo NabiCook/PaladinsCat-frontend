@@ -28,7 +28,7 @@ function addFinding(source, node, text, kind) {
   findingPositions.add(identity);
   const position = source.getLineAndCharacterOfPosition(node.getStart(source));
   findings.push({
-    file: source.fileName.replace(`${root}\\`, "").replaceAll("\\", "/"),
+    file: source.fileName.replaceAll("\\", "/").replace(`${root.replaceAll("\\", "/")}/`, ""),
     line: position.line + 1,
     kind,
     text: normalized,
@@ -222,4 +222,39 @@ for (const finding of findings) {
   console.log(`${finding.file}:${finding.line}  [${finding.kind}] ${finding.text}`);
 }
 
-if (process.argv.includes("--strict") && findings.length > 0) process.exitCode = 1;
+// Debt ledger: surfaces imported from the retirement-locked Pro app still carry English
+// literals. The baseline records the exact count allowed per file, so the gate keeps
+// blocking every new occurrence while the recorded debt is burned down file by file.
+const baselinePath = resolve(root, "localization-audit-baseline.json");
+let baseline = null;
+try {
+  baseline = JSON.parse(await readFile(baselinePath, "utf8"));
+} catch {
+  baseline = null;
+}
+
+if (process.argv.includes("--strict")) {
+  if (!baseline) {
+    if (findings.length > 0) process.exitCode = 1;
+  } else {
+    const actual = new Map();
+    for (const finding of findings) actual.set(finding.file, (actual.get(finding.file) ?? 0) + 1);
+    const allowed = baseline.files ?? {};
+    const regressions = [];
+    for (const [file, count] of actual) {
+      const limit = allowed[file] ?? 0;
+      if (count > limit) regressions.push(`${file}: ${count} occurrences, baseline allows ${limit}`);
+    }
+    const tightened = Object.entries(allowed).filter(([file, limit]) => (actual.get(file) ?? 0) < limit);
+    for (const [file, limit] of tightened) {
+      console.log(`Baseline is loose for ${file}: ${actual.get(file) ?? 0} of ${limit} allowed occurrences remain — lower the entry.`);
+    }
+    if (regressions.length > 0) {
+      console.log("\nStrict localization gate failed:");
+      for (const regression of regressions) console.log(`- ${regression}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`Strict localization gate passed: ${findings.length} recorded occurrences, none above baseline.`);
+    }
+  }
+}

@@ -6,7 +6,7 @@
 import { BookOpen, CheckCircle2, GitBranch, Languages } from "lucide-react";
 import { useLocalization } from "@/lib/localization-context";
 
-const REPOSITORY_URL = "https://github.com/PaladinsCat/PaladinsCat-locales";
+const REPOSITORY_URL = "https://github.com/NabiCook/PaladinsCat-locales";
 const WEBLATE_URL = "https://translate.paladinscat.com";
 
 /**

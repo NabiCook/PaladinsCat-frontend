@@ -67,7 +67,7 @@ export function verifyBackport(read = boundedRead) {
 export function fixedVex(manifest) {
   return {
     "@context": "https://openvex.dev/ns/v0.2.0",
-    "@id": `https://github.com/PaladinsCat/paladinscat-frontend/security/braces-backport/${manifest.archiveSha256}`,
+    "@id": `https://github.com/NabiCook/paladinscat-frontend/security/braces-backport/${manifest.archiveSha256}`,
     author: "PaladinsCat maintainers",
     timestamp: "2026-10-16T12:00:00Z",
     version: 1,
