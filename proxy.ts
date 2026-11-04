@@ -303,12 +303,20 @@ export async function proxy(request: NextRequest) {
   const nonce = crypto.randomUUID().replaceAll("-", "");
   const forwardedProtocol = request.headers.get("x-forwarded-proto")
     ?? request.nextUrl.protocol.replace(":", "");
+  // /drafts/* are standalone static preview documents served from public/.
+  // Nothing server-renders them, so they cannot carry the per-request nonce and
+  // a 'strict-dynamic' script-src silently blocks every script they load. Keep
+  // the rest of the policy, but allow same-origin scripts on that surface.
+  const isStaticDraft = path.startsWith("/drafts/");
+  const scriptSrc = isStaticDraft
+    ? "script-src 'self'"
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
 
   const csp = [
     "default-src 'self'",
     // 'unsafe-inline' below is a legacy fallback only; browsers that support
     // 'strict-dynamic' ignore it.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`,
+    scriptSrc,
     // Next.js injects inline styles (Tailwind, PostCSS, next/font) server-side.
     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
     // Player avatars, live-stream previews, and repository-owned blog images
