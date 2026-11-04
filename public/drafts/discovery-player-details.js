@@ -499,7 +499,22 @@
   }
 
   function evidenceNav(host,selected) {const nav=n('nav','players-subnav');nav.setAttribute('aria-label',ui('moderation.evidence','Evidence sections'));nav.append(link(ui('moderation.evidence','Reports'),'/evidence','reference-filter'+(selected==='feed'?' is-active':'')),link(ui('moderation.submitEvidence','Submit'),'/evidence/submit','reference-filter'+(selected==='submit'?' is-active':'')));host.append(nav);void session(true).then(user=>{if(nav.isConnected&&permitted(user,'admin'))nav.append(link(ui('moderation.evidenceReview','Review'),'/evidence/review','reference-filter'+(selected==='review'?' is-active':'')));}).catch(()=>{});}
-  async function evidenceFeed(path) {const url=new URL(path,location.origin),p=Math.max(1,Number(url.searchParams.get('page'))||1),ctx=begin('players-evidence',ui('moderation.evidence','Evidence'),'/players');window.DiscoveryLoading?.show(ctx.body,'cards','players-panel');evidenceNav(ctx.main,'feed');ctx.main.insertBefore(ctx.main.lastChild,ctx.body);try{const data=await App.request('/cheaters/evidence?limit=20&offset='+((p-1)*20)+'&publicOnly=true');if(!ctx.current())return;const entries=rows(data).filter(row=>row.origin==null||row.origin==='player_submitted');ctx.body.replaceChildren();ctx.body.append(paragraph(ui('moderation.evidenceCount','{value1} reports',{value1:fmt(data.total)})));const grid=n('div','players-card-grid');entries.forEach(row=>grid.append(evidenceCard(row,true)));if(!entries.length)ctx.body.append(paragraph(ui('moderation.noEvidenceYet','No reports yet.')));ctx.body.append(grid);pager(ctx.body,p,num(data.total),entries.length,next=>App.navigate('/evidence?page='+next),20);}catch(error){if(ctx.current())failure(ctx.body,error,()=>evidenceFeed(path));}finally{if(ctx.current())ctx.body.setAttribute('aria-busy','false');}}
+  let evidenceLayoutRequest;
+  function evidenceLayout() {return evidenceLayoutRequest??=(import('./discovery-evidence.js?v=1').then(()=>window.DiscoveryEvidence).catch(error=>{evidenceLayoutRequest=null;throw error;}));}
+  async function evidenceFeed(path) {
+    window.DiscoveryEvidence?.dispose();
+    const url=new URL(path,location.origin),p=Math.max(1,Number(url.searchParams.get('page'))||1),ctx=begin('players-evidence',ui('moderation.evidence','Evidence'),'/players');
+    window.DiscoveryLoading?.show(ctx.body,'cards','players-panel');evidenceNav(ctx.main,'feed');ctx.main.insertBefore(ctx.main.lastChild,ctx.body);
+    try {
+      const layout=await evidenceLayout();if(!ctx.current())return;
+      const data=await layout.load(p);if(!ctx.current())return;
+      const entries=data.items;ctx.body.replaceChildren();ctx.body.append(paragraph(ui('moderation.evidenceCount','{value1} reports',{value1:fmt(data.total)})));
+      if(!entries.length)ctx.body.append(paragraph(ui('moderation.noEvidenceYet','No reports yet.')));
+      const feed=n('div','discovery-evidence-source');ctx.body.append(feed);layout.mount(feed,entries);
+      pager(ctx.body,p,num(data.total),entries.length,next=>App.navigate('/evidence?page='+next),layout.PAGE_SIZE);
+    }catch(error){if(ctx.current())failure(ctx.body,error,()=>evidenceFeed(path));}
+    finally{if(ctx.current())ctx.body.setAttribute('aria-busy','false');}
+  }
   App.registerRoute('/evidence',evidenceFeed);App.registerRoute('/players/cheaters/evidence',path=>evidenceFeed(path.replace('/players/cheaters/evidence','/evidence')));
   App.registerRoute(/^\/(?:evidence\/reports|players\/cheaters\/evidence)\/([1-9]\d*)$/,async(path,match)=>{await loadView('players-evidence-report-'+match[1],ui('moderation.evidence','Evidence report'),'/evidence',()=>App.request('/cheaters/evidence/'+match[1]),(ctx,data)=>{const report=data.evidence??data;if(report.origin&&report.origin!=='player_submitted')throw Object.assign(new Error('Report not found'),{status:404});ctx.main.querySelector('h1').textContent=report.title||ui('moderation.evidence','Evidence report');ctx.body.append(evidenceCard(report,false,false));});});
   async function session(refresh=false) {if(window.DiscoveryCommunity?.session)return window.DiscoveryCommunity.session(refresh);try{const user=await App.request('/auth/me');return user&&String(user.id??user.user_id??'').trim()?user:null;}catch(error){if([401,403].includes(Number(error.status)))return null;throw error;}}

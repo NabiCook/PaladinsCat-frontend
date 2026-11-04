@@ -39,6 +39,9 @@
   .search-page-result
 ),
 .workspace .players-metrics > div,
+.workspace .discovery-evidence-source > .grid > article,
+.workspace .operations-pro-source .operations-admin-content .pc-card,
+.workspace .operations-pro-source .operations-admin-content :is(section,article,div).border:is(.bg-pc-bg-secondary,.bg-pc-bg-elevated):where(:not(.pc-card *)),
 .workspace .stats-pro-source :is(.pc-card,.pc-card-flush,.pc-surface,.pc-mobile-panel),
 .workspace .stats-pro-source :is(a,div,section).border.bg-pc-bg-elevated:is(.rounded-xl,.rounded-2xl):where(:not(:is(.pc-card,.pc-card-flush,.pc-mobile-panel) *)),
 .workspace .leaderboard-pro-source :is(.pc-card,.pc-card-flush,.pc-surface,.pc-mobile-panel),
@@ -80,7 +83,7 @@
 
 /* Generated utility themes must inherit the dashboard font, including when
    their own Tailwind theme declares a system-font fallback later in its CSS. */
-.workspace :is(.stats-pro-source,.leaderboard-pro-source,.demo-pro-source,.activity-source,.footer-pro-source),
+.workspace :is(.stats-pro-source,.leaderboard-pro-source,.demo-pro-source,.activity-source,.footer-pro-source,.discovery-evidence-source,.operations-pro-source),
 .workspace #stats-activity-page .activity-source {
   --font-sans: var(--pc-dashboard-font);
   font-family: var(--pc-dashboard-font);
@@ -136,4 +139,65 @@
   background-color: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* Evidence keeps the frontend feed and media layout within dashboard surfaces. */
+.workspace .discovery-evidence-source > .grid > article {
+  border-color: var(--pc-glass-border);
+  border-radius: 14px;
+}
+.workspace .discovery-evidence-source article > .aspect-video:has(> .pc-btn-secondary) {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--pc-glass-border);
+  border-radius: 0;
+}
+.workspace .discovery-evidence-source .pc-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--pc-glass-border);
+  border-radius: 11px;
+  background: var(--pc-glass-bg-subtle);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--pc-motion-fast) var(--pc-ease-standard), background-color var(--pc-motion-fast) var(--pc-ease-standard);
+}
+.workspace .discovery-evidence-source .pc-btn-secondary:hover {
+  border-color: color-mix(in srgb,var(--accent) 50%,var(--pc-glass-border));
+}
+
+.workspace .operations-pro-source .operations-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.workspace .operations-pro-source .operations-tabs a { white-space: nowrap; }
+.workspace .operations-pro-source .operations-staff-tools { margin-bottom: 16px; }
+.workspace .operations-pro-source .operations-admin-content {
+  --color-pc-border: var(--pc-glass-border);
+  --color-pc-text-muted: var(--secondary);
+}
+.workspace .operations-pro-source .operations-admin-content .pc-card {
+  border-color: var(--pc-glass-border);
+}
+.workspace .operations-pro-source .operations-admin-content .pc-heading-lg {
+  font-size: clamp(34px,4vw,46px);
+  letter-spacing: -.045em;
+  line-height: 1.1;
+}
+.workspace .operations-pro-source .operations-admin-content :is(.pc-input,.pc-select,input:not([type="checkbox"],[type="radio"],[type="range"],[type="color"]),textarea,select) {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--pc-glass-border);
+  border-radius: 11px;
+  background: var(--pc-glass-bg-subtle);
+  color: var(--text);
+  font: inherit;
 }

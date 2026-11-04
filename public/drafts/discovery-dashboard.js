@@ -1678,9 +1678,15 @@
     const copyTrail = trail => trail.map(entry => typeof entry === 'object' && entry !== null ? { ...entry } : entry);
     const withScroll = (entry, scroll) => ({ ...(typeof entry === 'object' && entry !== null ? entry : { view: entry }), scroll: { x: Number(scroll?.x) || 0, y: Number(scroll?.y) || 0 } });
     const state = (entry, trail) => ({ ...(browser.state && typeof browser.state === 'object' ? browser.state : {}), [key]: { session, index, entry, trail: copyTrail(trail) } });
+    const validEntry = entry => entry && typeof entry === 'object' && typeof entry.view === 'string' && typeof entry.path === 'string' && /^\/(?![\\/])/.test(entry.path);
+    const saved = browser.state?.[key];
+    let initial = saved && typeof saved.session === 'string' && Number.isSafeInteger(saved.index) && saved.index >= 0 && validEntry(saved.entry) && Array.isArray(saved.trail) && saved.trail.every(entry => typeof entry === 'string' || validEntry(entry)) ? saved : null;
     if ('scrollRestoration' in browser) browser.scrollRestoration = 'manual';
-    positions.set(positionKey(), { x: 0, y: 0 });
-    browser.replaceState(state(withScroll({ view: 'dashboard', path: '/' }, { x: 0, y: 0 }), []), '');
+    if (initial) { session = initial.session; index = initial.index; }
+    const initialEntry = initial?.entry || { view: 'dashboard', path: '/' };
+    const initialScroll = initialEntry.scroll || { x: 0, y: 0 };
+    positions.set(positionKey(), initialScroll);
+    browser.replaceState(state(withScroll(initialEntry, initialScroll), initial?.trail || []), '');
     listen('popstate', event => {
       const target = event.state?.[key];
       if (!target || typeof target.session !== 'string' || !Number.isInteger(target.index) || !Array.isArray(target.trail)) return;
@@ -1690,6 +1696,13 @@
       onRestore(withScroll(target.entry, scroll), copyTrail(target.trail));
     });
     return {
+      resume(canRestore = () => true) {
+        const target = initial; initial = null;
+        if (!target) return false;
+        if (!canRestore(target.entry)) { this.replace({ view: 'dashboard', path: '/' }, []); return false; }
+        onRestore(withScroll(target.entry, positions.get(positionKey())), copyTrail(target.trail));
+        return true;
+      },
       remember() { const scroll = readScroll(); positions.set(positionKey(), { x: Number(scroll.x) || 0, y: Number(scroll.y) || 0 }); },
       updateEntry(values) {
         const current = browser.state?.[key];
@@ -1759,6 +1772,10 @@
   });
   window.DiscoveryViewScroll = {
     capture: captureDashboardScroll,
+    rememberRoute: (view, path) => {
+      const entry = window.history.state?.discoveryDashboardHistory?.entry;
+      if (entry?.view === view && shell.dataset.view === view) browserViewHistory.updateEntry({ path });
+    },
     rememberChampionTab: tab => { if (shell.dataset.view === 'champion-detail') browserViewHistory.updateEntry({ championTab: tab }); },
     rememberState: (name, value) => {
       const entry = window.history.state?.discoveryDashboardHistory?.entry;
@@ -1771,6 +1788,12 @@
     captureDashboardScroll(); clearTimeout(scrollWriteTimer);
     scrollWriteTimer = setTimeout(() => { if (!pendingScrollRestore) browserViewHistory.persist(); }, 250);
   }, { passive: true });
+  window.addEventListener('pagehide', () => {
+    captureDashboardScroll();
+    const entry = snapshotCurrentView(shell.dataset.view || 'dashboard');
+    if (entry && typeof entry === 'object') browserViewHistory.updateEntry(entry);
+    browserViewHistory.persist();
+  });
   document.addEventListener('click', captureDashboardScroll, true);
   for (const event of ['wheel', 'touchstart', 'pointerdown', 'keydown']) document.addEventListener(event, () => { if (pendingScrollRestore) { cancelScrollRestore(); captureDashboardScroll(); } }, { passive: true, capture: true });
   window.addEventListener('resize', () => pendingScrollRestore?.schedule());
@@ -2022,4 +2045,8 @@
 
   renderResults();
   setView("dashboard");
+  // Deferred page modules register their routes before DOMContentLoaded.
+  const resumeLastView = () => browserViewHistory.resume(entry => entry.view === 'dashboard' || window.DiscoveryApp?.hasRoute(entry.path));
+  if (document.readyState !== 'complete') document.addEventListener('DOMContentLoaded', resumeLastView, { once: true });
+  else queueMicrotask(resumeLastView);
 })();

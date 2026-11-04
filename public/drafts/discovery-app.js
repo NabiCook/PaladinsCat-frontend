@@ -83,7 +83,7 @@
     }
     const timeoutMs = Math.max(1000, Math.min(180000, options.timeoutMs || 10000));
     let response;
-    try { response = await fetch('/api' + path, { method, headers, body, credentials: 'same-origin', signal: options.signal || AbortSignal.timeout(timeoutMs) }); }
+    try { response = await fetch(window.DiscoveryApi.path(path, method), { method, headers, body, credentials: 'same-origin', signal: options.signal || AbortSignal.timeout(timeoutMs) }); }
     catch (cause) { if (['TimeoutError', 'AbortError'].includes(cause.name)) { const error = new Error('This request took too long. Try again.'); error.status = 504; error.code = 'TIMEOUT'; throw error; } throw cause; }
     let data; try { data = await response.json(); } catch { data = null; }
     if (!response.ok) { const error = new Error(data?.error?.message || data?.message || (response.status === 401 ? 'Sign in to continue.' : response.status === 403 ? 'This action requires additional access.' : 'This content could not be loaded.')); error.status = response.status; error.code = data?.error?.code; error.data = data; throw error; }
@@ -106,7 +106,7 @@
   }
   function record(view, input, options = {}) {
     const path = canonical(input); viewPaths.set(view, path);
-    if (options.current !== false) { currentPath = path; shell.dataset.route = path; restorePath = null; }
+    if (options.current !== false) { currentPath = path; shell.dataset.route = path; restorePath = null; window.DiscoveryViewScroll?.rememberRoute(view, path); }
   }
   document.addEventListener('click', event => {
     const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null; if (!anchor || anchor.hasAttribute('download')) return;
