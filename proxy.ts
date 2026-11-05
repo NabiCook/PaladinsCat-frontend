@@ -329,9 +329,13 @@ export async function proxy(request: NextRequest) {
   // inherits this policy). Without it every analysis dies with a CSP
   // CompileError before the recording is parsed.
   const isStaticSurface = spaDocument || path.startsWith("/app/");
+  // 'wasm-unsafe-eval' is granted on BOTH surfaces on purpose: a worker's
+  // policy is the CSP of its own script response, and /demo-analyzer/worker.js
+  // is served through the nonce branch. Granting it only on documents leaves
+  // the worker's WebAssembly.compile blocked.
   const scriptSrc = isStaticSurface
     ? "script-src 'self' 'wasm-unsafe-eval'"
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'wasm-unsafe-eval'`;
 
   const csp = [
     "default-src 'self'",
