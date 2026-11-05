@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "repository": "NabiCook/paladinscat-frontend-images",
-  "commit": "355baa62fa28e76b86cd01ba74a1d81460c74470",
-  "manifestSha256": "877aa8d5258f5031819c23268f59f6e6c219474482be07b96c85923826d15962",
+  "commit": "80d5af51da9067aa21c67d64b1393611aad8b27a",
+  "manifestSha256": "88d59c15194a6c518f39118289e6751ceea4f83bdd88fb8fe6d49b884a29a5eb",
   "variant": "frontend"
 }
