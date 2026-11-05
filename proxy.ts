@@ -371,7 +371,7 @@ export async function proxy(request: NextRequest) {
   response.headers.set(
     "Cache-Control",
     path.startsWith("/app/")
-      ? "public, max-age=86400, stale-while-revalidate=604800"
+      ? "public, max-age=300, stale-while-revalidate=86400"
       : "private, no-store",
   );
   if (protectedPage) markProtectedResponse(response);
