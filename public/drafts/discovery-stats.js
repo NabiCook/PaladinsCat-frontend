@@ -138,14 +138,13 @@
     }).catch(()=>{championControl.querySelector('select').disabled=true;});
     const championFor=row=>s.champions.find(c=>c.id===Number(row.champion_id)||c.name===row.champion_name);
     const championLink=row=>{const champion=championFor(row);if(!champion)return row.champion_name;const a=el('a','browse-link',champion.name);a.href='/champions/'+champion.slug;return a;};
-    const portraitBase=fixedChampion&&/^[a-z0-9-]+$/.test(championSlug||'')?'/images/skins/'+championSlug+'/':null;
-    const portraitReference=portraitBase?fetch(portraitBase+'sources.json?v=11',{signal:AbortSignal.timeout(10000)}).then(r=>{if(!r.ok)throw Error('Skin portraits unavailable');return r.json();}).then(data=>Number(data.champion_id)===Number(fixedChampion)?new Set((data.assets||[]).map(asset=>Number(asset.skin_id)).filter(Number.isSafeInteger)):new Set()).catch(()=>new Set()):Promise.resolve(new Set());
+    const portraitReference=import('./discovery-skin-portraits.js?v=avif-png-1');
     s.load=async refresh=>{const seq=begin(s),params=new URLSearchParams({scope:s.scope,sort:'plays',limit:'200'});if(s.champion)params.set('championId',s.champion);
       const broken=new URLSearchParams({scope:s.scope});if(s.champion)broken.set('championId',s.champion);
       const results=await Promise.allSettled([request('/stats/skins?'+params,refresh),request('/stats/broken-skins?'+broken,refresh),reference,portraitReference]);await championRateColorReady;if(!finish(s,seq))return;
       s.body.replaceChildren();s.skinHost=el('div');s.brokenHost=el('div');s.body.append(s.brokenHost,s.skinHost);
-      const portraitIds=results[3].status==='fulfilled'?results[3].value:new Set();
-      const skinName=row=>{const id=Number(row.skin_id);if(Number(row.champion_id)!==Number(fixedChampion)||!portraitBase||!portraitIds.has(id))return row.skin_name;const name=el('span','stats-skin-identity'),img=el('img','stats-skin-portrait');img.src=portraitBase+id+'.webp?v=2';img.alt='';img.width=40;img.height=29;img.loading='lazy';img.addEventListener('error',()=>img.remove());name.append(img,el('span','',row.skin_name));return name;};
+      const portraits=results[3].status==='fulfilled'?results[3].value:null;
+      const skinName=row=>{const sources=portraits?.skinPortraitSources(Number(row.champion_id),Number(row.skin_id));if(!sources)return row.skin_name;const name=el('span','stats-skin-identity'),img=el('img','stats-skin-portrait');img.setAttribute('data-pc-image-managed','true');img.dataset.skinPng=sources.fallback;img.src=sources.preferred;img.alt='';img.width=40;img.height=29;img.loading='lazy';img.addEventListener('error',()=>portraits.retrySkinPortraitPng({currentTarget:img}));name.append(img,el('span','',row.skin_name));return name;};
       const matchesClass=row=>!s.role||championFor(row)?.role===s.role;
       const matches=row=>matchesClass(row)&&(row.skin_name+' '+row.champion_name).toLowerCase().includes(s.search.toLowerCase());
       s.draw=()=>{if(!s.skinHost)return;s.skinHost.replaceChildren();s.brokenHost.replaceChildren();

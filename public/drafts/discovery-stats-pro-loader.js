@@ -4,7 +4,7 @@
   const app=window.DiscoveryApp;if(!app)return;
   const pages={tiers:['stats-tiers','stats.tiers.title','Rank distribution'],performance:['stats-performance','menu.performanceOverview','Performance'],skins:['stats-skins','menu.skinStats','Skins'],compositions:['stats-compositions','menu.teamCompositions','Team compositions'],ecpm:['stats-ecpm','generated.stats.effectiveCreditsPerMinute','Effective credits'],winrate:['stats-winRate','common.sort.winRate','Win rate'],banrate:['stats-banRate','common.metrics.banRate','Ban rate'],champions:['analytics-matchups','stats.matchups.title','Ranked champion matchups'],loadouts:['analytics-loadouts','stats.loadouts.title','Ranked card statistics']};
   let pending;
-  function load(){return pending ||= import('./discovery-stats-pro.js?v=4').catch(error=>{pending=null;throw error;});}
+  function load(){return pending ||= import('./discovery-skin-portraits.js?v=avif-png-1').then(()=>import('./discovery-stats-pro.js?v=4&skinFormat=avif-png-1')).catch(error=>{pending=null;throw error;});}
   let tierMountPending=false;
   function mountLeaderboardTiers(){
     const host=document.querySelector('[data-leaderboard-tier-host]');
