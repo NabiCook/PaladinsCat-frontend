@@ -363,7 +363,17 @@ export async function proxy(request: NextRequest) {
         request: { headers: requestHeaders },
       });
   response.headers.set("Content-Security-Policy", csp);
-  response.headers.set("Cache-Control", "private, no-store");
+  // The dashboard bundle is static and referenced with an explicit version
+  // query, so it can be cached at the edge and in the browser: that keeps a
+  // repeat navigation from re-downloading 30+ modules and leaves the API call
+  // as the only hot-path latency. Documents and API responses keep
+  // private/no-store because they carry admission cookies.
+  response.headers.set(
+    "Cache-Control",
+    path.startsWith("/app/")
+      ? "public, max-age=86400, stale-while-revalidate=604800"
+      : "private, no-store",
+  );
   if (protectedPage) markProtectedResponse(response);
   if (!admitted && request.method === "GET" && request.headers.get("accept")?.includes("text/html")) {
     response.cookies.set(GUEST_COOKIE, issueGuest(secret, origin), {

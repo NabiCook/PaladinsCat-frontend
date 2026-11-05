@@ -522,14 +522,23 @@
     const cacheKey = window.DiscoveryApp.scopedPath("/stats/champions?scope="+scope+"&queueId="+queueId);
     const existing = championMetricRequests.get(cacheKey);
     if (!refresh && existing && existing.expires > Date.now()) return existing.promise;
-    const promise = window.DiscoveryApp.scopedFetch("/api/v1/stats/champions?scope=" + scope + "&queueId=" + queueId + "&limit=200", {
-      headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000),
+    // A cold statistic read can legitimately take longer than ten seconds while
+    // the projection is rebuilt; aborting there left the panel blank until the
+    // visitor refreshed the page. Give the request a wider window and retry once
+    // for transient aborts/network faults, so a slow first load still resolves.
+    const retryable = (error) => error && (error.name === "TimeoutError" || error.name === "AbortError" || error.name === "TypeError");
+    const fetchScope = (attempt) => window.DiscoveryApp.scopedFetch("/api/v1/stats/champions?scope=" + scope + "&queueId=" + queueId + "&limit=200", {
+      headers: { Accept: "application/json" }, signal: AbortSignal.timeout(30000),
     }).then(async (response) => {
       if (!response.ok) throw new Error("Champion statistics unavailable");
       const rows = await response.json();
       if (!Array.isArray(rows)) throw new Error("Invalid champion statistics");
       return rows;
     }).catch((error) => {
+      if (attempt < 2 && retryable(error)) return fetchScope(attempt + 1);
+      throw error;
+    });
+    const promise = fetchScope(1).catch((error) => {
       if (championMetricRequests.get(cacheKey)?.promise === promise) championMetricRequests.delete(cacheKey);
       throw error;
     });
