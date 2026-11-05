@@ -18,7 +18,7 @@
   function loadSettingsModel(refresh = false) {
     if (preferences && !refresh) return Promise.resolve(preferences);
     if (refresh) settingsRequest = null;
-    if (!settingsRequest) settingsRequest = import("/drafts/discovery-settings-model.js?v=" + (refresh ? Date.now() : 1))
+    if (!settingsRequest) settingsRequest = import("/app/discovery-settings-model.js?v=" + (refresh ? Date.now() : 1))
       .then(model => { preferences = model; applyPreferences(); return model; })
       .catch(error => { settingsRequest = null; throw error; });
     return settingsRequest;

@@ -104,7 +104,7 @@
   }
   const catalogs = new Map();
   let modulesPromise;
-  const draftMessages = fetch('/drafts/discovery-ui-messages.json?localizationAudit=1&saveLink=1&scrollTop=1&v=surgical-4&match=1&plays=1',{signal:AbortSignal.timeout(10000)}).then(response => response.ok ? response.json() : {}).catch(() => ({}));
+  const draftMessages = fetch('/app/discovery-ui-messages.json?localizationAudit=1&saveLink=1&scrollTop=1&v=surgical-4&match=1&plays=1',{signal:AbortSignal.timeout(10000)}).then(response => response.ok ? response.json() : {}).catch(() => ({}));
   async function catalog(code) {
     if (!catalogs.has(code)) catalogs.set(code,(async () => {
       modulesPromise ||= fetch('/locales/modules.json',{signal:AbortSignal.timeout(10000)}).then(response => { if (!response.ok) throw Error('Locale modules unavailable'); return response.json(); });

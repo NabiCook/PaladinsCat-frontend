@@ -10,7 +10,7 @@
   const profileCache = new Map();
   let championReferenceRequest;
   function championReferences() {
-    if(!championReferenceRequest)championReferenceRequest=Promise.all(['/data/champion-data.json','/drafts/champion-titles.json?v=card-ids-1'].map(async path=>{const response=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error('Champion reference unavailable');return response.json();})).then(([roster,titles])=>{const ids=new Map(),names=new Map();for(const[slug,row]of Object.entries(roster)){const champion={name:row.name,role:row.roles?.[0]};ids.set(Number(titles.championIds[slug]),champion);names.set(row.name.toLowerCase(),champion);}return{ids,names};}).catch(error=>{championReferenceRequest=null;throw error;});
+    if(!championReferenceRequest)championReferenceRequest=Promise.all(['/data/champion-data.json','/app/champion-titles.json?v=card-ids-1'].map(async path=>{const response=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!response.ok)throw new Error('Champion reference unavailable');return response.json();})).then(([roster,titles])=>{const ids=new Map(),names=new Map();for(const[slug,row]of Object.entries(roster)){const champion={name:row.name,role:row.roles?.[0]};ids.set(Number(titles.championIds[slug]),champion);names.set(row.name.toLowerCase(),champion);}return{ids,names};}).catch(error=>{championReferenceRequest=null;throw error;});
     return championReferenceRequest;
   }
   function championIdentity(row,references) {
@@ -431,7 +431,7 @@
 
   async function exportDeck(ctx,target,deck,status,control) {
     if(control.disabled)return;control.disabled=true;target.dataset.imageExport='true';
-    try{await import('/drafts/discovery-community-export.js?v=1');if(!window.htmlToImage?.toPng)throw Error('Image exporter unavailable');await document.fonts.ready;await Promise.all([...target.querySelectorAll('img')].map(image=>image.decode?.().catch(()=>{})));if(!active(ctx))return;
+    try{await import('/app/discovery-community-export.js?v=1');if(!window.htmlToImage?.toPng)throw Error('Image exporter unavailable');await document.fonts.ready;await Promise.all([...target.querySelectorAll('img')].map(image=>image.decode?.().catch(()=>{})));if(!active(ctx))return;
       const background=getComputedStyle(document.documentElement).getPropertyValue('--pc-bg-secondary').trim(),data=await window.htmlToImage.toPng(target,{width:1280,height:720,canvasWidth:2048,canvasHeight:1152,pixelRatio:1,cacheBust:false,backgroundColor:background,style:{width:'1280px',height:'720px',overflow:'hidden',transform:'none'}});if(!active(ctx))return;if(!data.startsWith('data:image/png;base64,'))throw Error('Invalid PNG export');const anchor=n('a','players-inline-link',tr('generated.matches.saveImage','Save image'));anchor.href=data;anchor.download='paladinscat-loadout-'+String(deck.champion_name||'champion').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+deck.id+'.png';status.replaceChildren(anchor);anchor.click();
     }catch(error){if(active(ctx))failure(status,error);}finally{delete target.dataset.imageExport;control.disabled=false;}
   }

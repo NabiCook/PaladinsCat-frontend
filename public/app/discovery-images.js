@@ -33,7 +33,7 @@ function canonicalLocalImageUrl(src) {
  */
 function localImageSources(src) {
     const canonical = canonicalLocalImageUrl(src);
-    if (!canonical.startsWith("/images/") && !canonical.startsWith("/drafts/")) {
+    if (!canonical.startsWith("/images/") && !canonical.startsWith("/app/")) {
         return { preferred: canonical, fallback: canonical };
     }
     // Motion and reduced-motion PNG selection remain owned by PlayerLoadingFrame.

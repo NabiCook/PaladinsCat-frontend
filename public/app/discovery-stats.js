@@ -132,7 +132,7 @@
       field(message("skins.sortBy",'Sort by',undefined),[['plays',message("skins.sortPlays",'Most played',undefined)],['winRate',message("skins.sortWinRate",'Highest win rate',undefined)],['champion',message("skins.sortChampion",'Champion name',undefined)],['class',message("skins.sortClass",'Champion class',undefined)]],s.sort,value=>{s.sort=value;draw();}),
       search(message("generated.stats.searchSkins",'Search skins or champions',undefined),value=>{s.search=value;draw();}));
     if (fixedChampion) s.controls.querySelector('[role=group]')?.closest('.stats-field')?.setAttribute('hidden', '');
-    const reference=Promise.all(['/data/champion-data.json','/drafts/champion-titles.json'].map(async path=>{const r=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Champion reference unavailable');return r.json();})).then(([roster,ids])=>{
+    const reference=Promise.all(['/data/champion-data.json','/app/champion-titles.json'].map(async path=>{const r=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Champion reference unavailable');return r.json();})).then(([roster,ids])=>{
       s.champions=Object.entries(roster).map(([slug,c])=>({id:Number(ids.championIds[slug]),name:c.name,role:c.roles?.[0],slug})).sort((a,b)=>a.name.localeCompare(b.name,A.locale()));
       for(const champion of s.champions){const option=el('option','',champion.name);option.value=champion.id;championControl.querySelector('select').append(option);}championControl.querySelector('select').value=s.champion;
     }).catch(()=>{championControl.querySelector('select').disabled=true;});
@@ -205,7 +205,7 @@
   }
   const championStates = new Set();
   let championRateColor = null;
-  const championRateColorReady = import('/drafts/discovery-stat-quality.js?v=5f308f541b9e').then(module => { championRateColor = module.getPercentageColor; }).catch(() => {});
+  const championRateColorReady = import('/app/discovery-stat-quality.js?v=5f308f541b9e').then(module => { championRateColor = module.getPercentageColor; }).catch(() => {});
   function championRate(value, samples) {
     const output = el('span', '', rate(value, samples));
     if (Number(samples) > 0 && validNumber(value) && championRateColor) output.style.color = championRateColor(Number(value));

@@ -873,7 +873,7 @@
         if (hasCooldown) {
           const cooldown = detailNode("span", "champion-loadout-cooldown");
           nativeAttribute(cooldown, "aria-label", M("discovery.champion.cardCooldown", {seconds:formatLoadoutCooldown(cooldownValue, 1)}, "Card cooldown {seconds} seconds"));
-          const cooldownIcon = detailImage("/drafts/cooldown-icon.png", "", "champion-loadout-cooldown-icon", 18, 18);
+          const cooldownIcon = detailImage("/app/cooldown-icon.png", "", "champion-loadout-cooldown-icon", 18, 18);
           const cooldownText = detailNode("span", "champion-loadout-cooldown-value", formatLoadoutCooldown(cooldownValue, 1));
           if (cooldownIcon) cooldown.append(cooldownIcon);
           cooldown.append(cooldownText);
@@ -973,7 +973,7 @@
   function loadLoadoutModel() {
     if (!loadoutModelRequest) {
       let timer;
-      const imported = import('/drafts/discovery-loadout-model.js?v=ai-loadouts-3&attempt=' + loadoutModelAttempt++);
+      const imported = import('/app/discovery-loadout-model.js?v=ai-loadouts-3&attempt=' + loadoutModelAttempt++);
       const timeout = new Promise((_, reject) => { timer = window.setTimeout(() => reject(new Error('Suggestion model unavailable')), 10000); });
       const request = Promise.race([imported, timeout]).finally(() => window.clearTimeout(timer)).catch((error) => {
         if (loadoutModelRequest === request) loadoutModelRequest = null;
@@ -1175,7 +1175,7 @@
 
   function loadCardPercentageColors() {
     if (!cardPercentageColorRequest) {
-      cardPercentageColorRequest = import("/drafts/discovery-stat-quality.js?v=5f308f541b9e")
+      cardPercentageColorRequest = import("/app/discovery-stat-quality.js?v=5f308f541b9e")
         .then((module) => {
           if (typeof module.getPercentageColor !== "function") throw new Error("Percentage colors unavailable");
           cardPercentageColor = module.getPercentageColor;
@@ -1446,7 +1446,7 @@
         return response.json();
       })
       .then(async (data) => {
-        const titleResponse = await fetch("/drafts/champion-titles.json?v=card-ids-1", {
+        const titleResponse = await fetch("/app/champion-titles.json?v=card-ids-1", {
           headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000),
         });
         if (!titleResponse.ok) throw new Error("Champion titles unavailable");
@@ -1454,7 +1454,7 @@
         championTitles = titleData.titles || {};
         championIds = titleData.championIds || {};
         try {
-          const cooldownResponse = await fetch("/drafts/champion-card-cooldowns.json", {
+          const cooldownResponse = await fetch("/app/champion-card-cooldowns.json", {
             headers: { Accept: "application/json" },
           });
           if (cooldownResponse.ok) {
@@ -1580,7 +1580,7 @@
   const referenceDataRequests = { maps: null, items: null };
   function fetchReference(view) {
     if (references[view]) return Promise.resolve(references[view]);
-    if (!referenceDataRequests[view]) referenceDataRequests[view] = fetch(view === "maps" ? "/drafts/discovery-map-reference.json" : "/data/paladins-active-items.json", {
+    if (!referenceDataRequests[view]) referenceDataRequests[view] = fetch(view === "maps" ? "/app/discovery-map-reference.json" : "/data/paladins-active-items.json", {
       headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000),
     }).then(async response => {
       if (!response.ok) throw new Error("Reference unavailable");

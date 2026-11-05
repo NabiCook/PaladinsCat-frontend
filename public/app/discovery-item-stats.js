@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   // The rail uses the shared Items navigation glyph.
-  void fetch("/drafts/discovery-credit-icon.svg?v=2", { signal: AbortSignal.timeout(5000) })
+  void fetch("/app/discovery-credit-icon.svg?v=2", { signal: AbortSignal.timeout(5000) })
     .then(response => { if (!response.ok) throw new Error("Credit icon unavailable"); return response.text(); })
     .then(source => {
       const icon = new DOMParser().parseFromString(source, "image/svg+xml").documentElement;
@@ -20,7 +20,7 @@
     const roles = ["Frontline", "Damage", "Flank", "Support"];
     const cache = new Map();
     let color = () => "";
-    const colorsReady = import("/drafts/discovery-stat-quality.js?v=5f308f541b9e").then(module => { color = module.getPercentageColor; }).catch(() => {});
+    const colorsReady = import("/app/discovery-stat-quality.js?v=5f308f541b9e").then(module => { color = module.getPercentageColor; }).catch(() => {});
     let itemMode = "ranked", itemRows = null, itemState = "idle", itemVersion = 0, detailVersion = 0, currentItem = null, selectedRole = "";
     document.addEventListener("discovery:lobby-tier-changed",()=>{cache.clear();itemRows=null;itemState="idle";itemVersion++;detailVersion++;});
     const number = value => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)) ? Number(value) : null;

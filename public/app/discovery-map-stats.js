@@ -175,7 +175,7 @@
     function loadIdentities() {
       if (identities) return Promise.resolve(identities);
       if (identityRequest) return identityRequest;
-      identityRequest = Promise.all(["/data/champion-data.json", "/drafts/champion-titles.json?v=card-ids-1"].map(async (url) => {
+      identityRequest = Promise.all(["/data/champion-data.json", "/app/champion-titles.json?v=card-ids-1"].map(async (url) => {
         const response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000) });
         if (!response.ok) throw new Error("Champion identities unavailable");
         return response.json();
