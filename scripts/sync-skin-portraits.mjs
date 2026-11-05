@@ -24,7 +24,7 @@ if (!region.test(previous)) throw Error("Skin resolver generation markers are mi
 const source = previous.replace(region, `// BEGIN pinned skin index\nconst champions = ${JSON.stringify(records)} as const;\n// END pinned skin index`);
 const result = ts.transpileModule(source, { fileName: file, reportDiagnostics: true, compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2020, newLine: ts.NewLineKind.LineFeed } });
 if (result.diagnostics?.some(item => item.category === ts.DiagnosticCategory.Error)) throw Error("Skin resolver failed TypeScript generation");
-const target = resolve(root, "public/drafts/discovery-skin-portraits.js");
+const target = resolve(root, "public/app/discovery-skin-portraits.js");
 if (process.argv.includes("--check")) {
   if (previous !== source || (await readFile(target, "utf8")).replaceAll("\r\n", "\n") !== result.outputText) throw Error("Skin portrait resolver differs from its pinned index; regenerate it");
 } else {

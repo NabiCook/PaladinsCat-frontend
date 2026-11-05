@@ -64,7 +64,9 @@ const server = http.createServer((req, res) => {
   // The website API (/api/players/:id) requires a browser session; the public
   // API (/api/v1/players/:id) accepts x-api-key. Rewrite to /v1 so the
   // developer credential is honored.
-  const targetPath = "/api/v1" + (incoming.startsWith("/") ? incoming : "/" + incoming);
+  // The preview relay may already supply /v1; apply the namespace once.
+  const unversioned = incoming.replace(/^\/v1(?=\/|\?|$)/, "");
+  const targetPath = "/api/v1" + (unversioned.startsWith("/") ? unversioned : "/" + unversioned);
   const headers = { ...req.headers };
   // Strip any Authorization (stale Bearer would force the OIDC path -> 401).
   delete headers.authorization;
