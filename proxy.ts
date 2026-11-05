@@ -323,9 +323,14 @@ export async function proxy(request: NextRequest) {
   // per-request nonce and a 'strict-dynamic' script-src would silently block
   // every script they load. Keep the rest of the policy, but allow same-origin
   // scripts on that surface.
+  // 'wasm-unsafe-eval' is required by the demo analyzer: its worker compiles
+  // paladins_demo_analyzer_bg.wasm, and WebAssembly compilation is refused
+  // unless script-src grants it explicitly ('self' does not, and the worker
+  // inherits this policy). Without it every analysis dies with a CSP
+  // CompileError before the recording is parsed.
   const isStaticSurface = spaDocument || path.startsWith("/app/");
   const scriptSrc = isStaticSurface
-    ? "script-src 'self'"
+    ? "script-src 'self' 'wasm-unsafe-eval'"
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
 
   const csp = [
