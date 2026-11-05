@@ -12,6 +12,15 @@ import { hasProAccess } from "./lib/pro-surface";
 import { accountSessionCookie, assertOperatorConfiguration, isOperatorBff, operatorPathAllowed } from "./lib/operator-plane";
 
 const ACCESS_POLICY_PATH = "/prototype/access-policy";
+// The dashboard ships as a standalone static document under public/app. Every
+// public browser navigation renders that shell and the client router owns the
+// address bar; operational surfaces (dev tools, ops console, Discord embeds,
+// the access-policy page) and API/asset namespaces keep their own handlers.
+const SPA_DOCUMENT = "/app/index.html";
+const SPA_BYPASS_PREFIXES = [
+  "/app/", "/api", "/_pc", "/_next/", "/dev/", "/operations/", "/prototype/",
+  "/discord-preview/", "/match-images/", "/player-avatars/",
+] as const;
 type AccountSessionState = "guest" | "unverified" | "uninvited" | "verified" | "rate-limited" | "unavailable";
 type AccountSessionCheck = { state: AccountSessionState; retryAfter?: string; restricted?: boolean; invitationRequired?: boolean; pro?: boolean };
 
@@ -110,6 +119,12 @@ function markProtectedResponse(response: NextResponse): NextResponse {
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isSecure = (request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "")) === "https";
+  // Public document navigations render the dashboard shell. The bypass list
+  // keeps API, assets and operational surfaces on their own handlers.
+  const spaDocument =
+    (request.method === "GET" || request.method === "HEAD") &&
+    Boolean(request.headers.get("accept")?.includes("text/html")) &&
+    !SPA_BYPASS_PREFIXES.some((prefix) => path.startsWith(prefix));
   // The production nonce policy makes Next's development runtime defer client
   // hydration. Dev servers must not be used as a public surface; let Next
   // handle its local assets and HMR without injecting production headers.
@@ -202,7 +217,7 @@ export async function proxy(request: NextRequest) {
     if (check.restricted) return accessRedirect(request, ACCESS_POLICY_PATH);
   }
   if (process.env.NODE_ENV === "development") {
-    return NextResponse.next();
+    return spaDocument ? NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url)) : NextResponse.next();
   }
   const verifiedOnly = isVerifiedOnlyPath(decodedPath);
   if (protectedPage) {
@@ -303,12 +318,13 @@ export async function proxy(request: NextRequest) {
   const nonce = crypto.randomUUID().replaceAll("-", "");
   const forwardedProtocol = request.headers.get("x-forwarded-proto")
     ?? request.nextUrl.protocol.replace(":", "");
-  // /drafts/* are standalone static preview documents served from public/.
-  // Nothing server-renders them, so they cannot carry the per-request nonce and
-  // a 'strict-dynamic' script-src silently blocks every script they load. Keep
-  // the rest of the policy, but allow same-origin scripts on that surface.
-  const isStaticDraft = path.startsWith("/drafts/");
-  const scriptSrc = isStaticDraft
+  // The dashboard shell and its assets are standalone static documents served
+  // from public/app. Nothing server-renders them, so they cannot carry the
+  // per-request nonce and a 'strict-dynamic' script-src would silently block
+  // every script they load. Keep the rest of the policy, but allow same-origin
+  // scripts on that surface.
+  const isStaticSurface = spaDocument || path.startsWith("/app/");
+  const scriptSrc = isStaticSurface
     ? "script-src 'self'"
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline'`;
 
@@ -339,9 +355,13 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  const response = spaDocument
+    ? NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
+        request: { headers: requestHeaders },
+      })
+    : NextResponse.next({
+        request: { headers: requestHeaders },
+      });
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("Cache-Control", "private, no-store");
   if (protectedPage) markProtectedResponse(response);

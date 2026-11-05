@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The dashboard bundle moved from /drafts to /app. The old draft URL is
+      // retired; inbound links land on the dashboard shell instead.
+      { source: "/drafts", destination: "/", permanent: false },
+      { source: "/drafts/:path*", destination: "/", permanent: false },
       { source: "/stats/platforms", destination: "/stats/activity#platforms", permanent: true },
       { source: "/stats/regions", destination: "/stats/activity#regions", permanent: true },
       { source: "/stats/metrics", destination: "/stats/performance", permanent: true },

@@ -9,7 +9,7 @@ import { Package } from "lucide-react";
 import type { DemoPlayer } from "@/lib/demo-analyzer";
 import { groupSkillObservations, observedSlotLabel, type ObservedDevice } from "@/lib/demo-skill-rows";
 import { championSlug } from "@/lib/utils";
-import championTitles from "@/public/drafts/champion-titles.json";
+import championTitles from "@/public/app/champion-titles.json";
 
 export const reportPanel = "pc-card p-4 sm:p-6";
 export const reportButton = "pc-btn-secondary min-h-11 inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-accent disabled:cursor-not-allowed disabled:opacity-50";

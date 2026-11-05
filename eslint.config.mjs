@@ -44,14 +44,14 @@ export default defineConfig([
     "out/**",
     ".frontend-images/**",
     // Generated browser/vendor bundles; source modules remain linted.
-    "public/drafts/discovery-activity.js",
-    "public/drafts/discovery-stats-pro.js",
-    "public/drafts/discovery-community-export.js",
+    "public/app/discovery-activity.js",
+    "public/app/discovery-stats-pro.js",
+    "public/app/discovery-community-export.js",
     "public/locales/**",
     // Generated bundles include third-party code; handwritten draft modules stay linted.
-    "public/drafts/discovery-activity.js",
-    "public/drafts/discovery-stats-pro.js",
-    "public/drafts/discovery-community-export.js",
+    "public/app/discovery-activity.js",
+    "public/app/discovery-stats-pro.js",
+    "public/app/discovery-community-export.js",
     "next-env.d.ts",
   ]),
 ]);
