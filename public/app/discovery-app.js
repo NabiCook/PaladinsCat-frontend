@@ -163,6 +163,15 @@
     isRestoring: path => restorePath === path,
     hasView: view => pages.has(view), hasRoute: path => Boolean(resolve(path)), routes: () => routes.map(r => String(r.pattern)), currentPath: () => currentPath };
   registerRoute('/', () => document.querySelector('[data-search-home]')?.click());
+  // The dashboard is served at the site root now, so a hard navigation to a
+  // deep link must render that view instead of always landing on home. Deferred
+  // scripts run before DOMContentLoaded, so every module has registered by then.
+  const bootPath = location.pathname + location.search + location.hash;
+  const boot = () => { if (bootPath !== '/' && resolve(bootPath)) navigate(bootPath); };
+  // Run after every module's own start-up work (some renderers anchor to home on
+  // init); the load event is the last hook before first paint settles.
+  if (document.readyState === 'complete') setTimeout(boot, 0);
+  else window.addEventListener('load', () => setTimeout(boot, 0), { once: true });
   document.querySelector('[data-discovery-features-trigger]')?.addEventListener('click',() => navigate('/features'));
   document.addEventListener('discovery:locale-changed', event => {
     const locale = window.DiscoveryLocale;
