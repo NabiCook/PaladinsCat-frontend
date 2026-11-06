@@ -76,6 +76,24 @@ async function accountSessionState(request: NextRequest, allowBearer = false): P
   }
 }
 
+/**
+ * Recognise the migrated Pro evidence routes that already carry backend guards.
+ *
+ * These mirrors `routes/match_access.rs` (public Read tier for the published feed,
+ * detail, file and media reads) and `routes/cheaters.rs` (verified review queue,
+ * admin-only decisions), so the frontend gate must let them reach the backend.
+ * refs: routes/match_access.rs · routes/cheaters.rs · migrations: 166
+ */
+function isMigratedEvidenceRoute(path: string, method: string): boolean {
+  const relative = path.replace(/^\/(?:api|_pc)(?=\/)/, "");
+  if (!relative.startsWith("/cheaters/evidence")) return false;
+  if (method === "GET" || method === "HEAD") {
+    if (relative === "/cheaters/evidence" || relative === "/cheaters/evidence/review") return true;
+    return /^\/cheaters\/evidence\/[1-9]\d{0,11}(?:\/file|\/media\/\d{1,2})?$/.test(relative);
+  }
+  return method === "POST" && /^\/cheaters\/evidence\/[1-9]\d{0,11}\/review$/.test(relative);
+}
+
 /** Redirect a protected website request without accepting caller-controlled origins. */
 function accessRedirect(request: NextRequest, destination: "/auth/login" | "/link-account" | "/account" | typeof ACCESS_POLICY_PATH) {
   const url = request.nextUrl.clone();
@@ -181,9 +199,14 @@ export async function proxy(request: NextRequest) {
   // non-existent to cheaters probing the public surface. Both /api and /_pc
   // aliases are covered on the decoded path so percent-encoded variants are
   // admitted on exactly the same terms.
-  const isCheaterExploitApi =
+  // The migrated Pro evidence surface keeps the backend's own access contract:
+  // published reads are public, the review queue is verified, and decisions are
+  // admin-only. The moderated-directory wall below must not shadow those routes.
+  // refs: routes/match_access.rs (Read tier) · routes/cheaters.rs (review admin)
+  const migratedEvidenceRoute = isMigratedEvidenceRoute(decodedPath, request.method);
+  const isCheaterExploitApi = !migratedEvidenceRoute && (
     decodedPath.startsWith("/api/cheaters/") || decodedPath.startsWith("/_pc/cheaters/") ||
-    decodedPath.startsWith("/api/players/exploiters") || decodedPath.startsWith("/_pc/players/exploiters");
+    decodedPath.startsWith("/api/players/exploiters") || decodedPath.startsWith("/_pc/players/exploiters"));
   if (isCheaterExploitApi) {
     const isPublicSubmit = request.method === "POST" &&
       (decodedPath === "/api/cheaters/evidence" || decodedPath === "/_pc/cheaters/evidence");

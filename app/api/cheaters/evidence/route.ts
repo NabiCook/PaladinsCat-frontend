@@ -1,11 +1,12 @@
 /**
- * Stream multipart evidence submissions to the internal API.
+ * Stream evidence-list reads and multipart submissions to the internal API.
  *
- * Preserves the request stream because synchronous AVIF generation can exceed
- * the shared rewrite's upstream timeout; applies only to the evidence
- * submission. The public surface exposes only the POST; the list, detail, and
- * review reads are Pro-only and blocked by proxy middleware.
- * refs: endpoints: POST /cheaters/evidence · migrations: 166
+ * The shared rewrite answers the collection too slowly for a five-image upload
+ * because AVIF generation runs synchronously before the report is durable, so
+ * this focused route preserves the request stream. Reads relay query and session
+ * context unchanged; every other API route keeps the shared rewrite.
+ *
+ * refs: GET /cheaters/evidence · POST /cheaters/evidence · migrations: 166
  */
 import { NextRequest, NextResponse } from "next/server";
 
@@ -53,9 +54,9 @@ async function forwardEvidence(request: NextRequest): Promise<NextResponse> {
   const init: RequestInit & { duplex: "half" } = {
     method: request.method,
     headers: forwardRequestHeaders(request),
-    body: request.body,
     cache: "no-store",
     duplex: "half",
+    ...(request.method === "GET" || request.method === "HEAD" ? {} : { body: request.body }),
   };
   try {
     const upstream = await fetch(target, init);
@@ -68,6 +69,16 @@ async function forwardEvidence(request: NextRequest): Promise<NextResponse> {
   } catch {
     return new NextResponse("Evidence service is unavailable", { status: 502 });
   }
+}
+
+/**
+ * Relay the evidence collection read; the query string carries the published
+ * filters and the backend applies its own Read/Verified/Admin contract.
+ * I/O types: `request: NextRequest -> Promise<NextResponse>`.
+ * refs: GET /cheaters/evidence
+ */
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  return forwardEvidence(request);
 }
 
 /**
