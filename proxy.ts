@@ -171,13 +171,16 @@ export async function proxy(request: NextRequest) {
   }
   const api = websiteApiPath(path);
   const protectedPage = isVerifiedOnlyPath(decodedPath) || isAccountOnlyPath(decodedPath);
-  // Pro-only cheater/exploit evidence data must not be served on the public
-  // surface. The public report flow needs only the submission POST; every
-  // other cheater/exploit API path would otherwise fall through to the
-  // backend catch-all rewrite and leak the moderated feed. Block all of them
-  // here (both /api and /_pc aliases, checked on the decoded path so
-  // percent-encoded variants are covered too) and return 404 so the routes
-  // appear non-existent to cheaters probing the public surface.
+  // Moderated cheater/exploit data must not be served on the public surface.
+  // The public report flow needs only the submission POST; every other
+  // cheater/exploit API path would otherwise fall through to the backend
+  // catch-all rewrite and leak the moderated feed. Verified accounts keep the
+  // in-product directories and detail pages that render this data (those page
+  // routes are verified-only), so admit GET/HEAD reads only after the backend
+  // proves the session; every other caller gets 404 so the routes appear
+  // non-existent to cheaters probing the public surface. Both /api and /_pc
+  // aliases are covered on the decoded path so percent-encoded variants are
+  // admitted on exactly the same terms.
   const isCheaterExploitApi =
     decodedPath.startsWith("/api/cheaters/") || decodedPath.startsWith("/_pc/cheaters/") ||
     decodedPath.startsWith("/api/players/exploiters") || decodedPath.startsWith("/_pc/players/exploiters");
@@ -185,7 +188,19 @@ export async function proxy(request: NextRequest) {
     const isPublicSubmit = request.method === "POST" &&
       (decodedPath === "/api/cheaters/evidence" || decodedPath === "/_pc/cheaters/evidence");
     if (!isPublicSubmit) {
-      return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
+      const isRead = request.method === "GET" || request.method === "HEAD";
+      const check = isRead ? await getAccountCheck() : { state: "guest" as AccountSessionState };
+      if (isRead && (check.state === "rate-limited" || check.state === "unavailable")) {
+        const headers = new Headers({ "Cache-Control": "private, no-store" });
+        if (check.state === "rate-limited") {
+          if (check.retryAfter) headers.set("Retry-After", check.retryAfter);
+          return NextResponse.json({ error: { code: "AUTHENTICATION_RATE_LIMITED" } }, { status: 429, headers });
+        }
+        return NextResponse.json({ error: { code: "AUTHENTICATION_UNAVAILABLE" } }, { status: 503, headers });
+      }
+      if (!isRead || check.state !== "verified") {
+        return NextResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404, headers: { "Cache-Control": "private, no-store" } });
+      }
     }
   }
   // Aggregate GET only. Collection uses /auth/account/maintenance-presence
