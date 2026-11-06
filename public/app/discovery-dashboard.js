@@ -148,6 +148,7 @@
       : inItems ? String(M("menu.items", undefined, "Items")) + " · PaladinsCat"
       : initialDocumentTitle;
     if (!inChampionDetail) stopSkillIconCycle();
+    else scheduleLoadoutDescriptionFit();
   }
 
   const searchText = (key, fallback, values) => window.DiscoveryLocale.t(key, values, fallback);
@@ -340,6 +341,47 @@
   let championCatalog = null;
   let championCatalogRequest = null;
   let activeChampionRole = "all";
+  const championNameInput = setupChampionNameFilter();
+
+  function setupChampionNameFilter() {
+    const controls = championsPage.querySelector(".champion-directory-controls");
+    const filter = document.createElement("div");
+    filter.className = "champion-name-filter";
+    const label = document.createElement("label");
+    label.htmlFor = "champion-name-query";
+    nativeText(label, M("playerTrends.search", undefined, "Search champions"));
+    const field = document.createElement("div");
+    field.className = "champion-name-field";
+    const input = document.createElement("input");
+    input.type = "search";
+    input.id = "champion-name-query";
+    input.dataset.championQuery = "";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    if (!championGrid.id) championGrid.id = "champion-directory-grid";
+    input.setAttribute("aria-controls", championGrid.id);
+    const clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "champion-name-clear";
+    clear.hidden = true;
+    nativeText(clear, M("generated.search.clearSearch", undefined, "Clear search"));
+    const update = () => {
+      clear.hidden = input.value.length === 0;
+      if (championCatalog) renderChampionCards();
+    };
+    input.addEventListener("input", update);
+    clear.addEventListener("click", () => {
+      input.value = "";
+      update();
+      input.focus({ preventScroll: true });
+    });
+    field.append(input, clear);
+    filter.append(label, field);
+    controls.prepend(filter);
+    championCount.setAttribute("aria-live", "polite");
+    championCount.setAttribute("aria-atomic", "true");
+    return input;
+  }
 
   function championSlug(name) {
     return name.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -393,12 +435,14 @@
   }
 
   function renderChampionCards() {
+    const query = normalize(championNameInput.value.trim());
     const visible = championCatalog
-      .filter((champion) => activeChampionRole === "all" || champion.role === activeChampionRole)
+      .filter((champion) => (activeChampionRole === "all" || champion.role === activeChampionRole) && normalize(champion.name).includes(query))
       .sort((a, b) => a.name.localeCompare(b.name));
     nativeText(championCount, activeChampionRole === "all"
-      ? M("discovery.champions.count", {count:nativeNumber(championCatalog.length)}, "{count} champions")
+      ? M("discovery.champions.count", {count:nativeNumber(visible.length)}, "{count} champions")
       : M("discovery.champions.filteredCount", {count:nativeNumber(visible.length), role:String(nativeRole(activeChampionRole)).toLocaleLowerCase(window.DiscoveryLocale.locale())}, "{count} {role} champions"));
+    nativeText(championStatus, visible.length ? "" : M("generated.search.noResultsFound", undefined, "No results found"));
     championGrid.replaceChildren(...visible.map(createChampionCard));
     championGrid.setAttribute("aria-busy", "false");
   }
@@ -477,6 +521,27 @@
     return nativeNumber(value, { maximumFractionDigits: 2 });
   }
 
+  let loadoutDescriptionFitFrame = 0;
+  function scheduleLoadoutDescriptionFit() {
+    if (loadoutDescriptionFitFrame) return;
+    loadoutDescriptionFitFrame = window.requestAnimationFrame(() => {
+      loadoutDescriptionFitFrame = 0;
+      const mobileCards = window.matchMedia("(max-width: 600px)").matches;
+      for (const description of championDetailPage.querySelectorAll(".champion-loadout-description")) {
+        description.style.removeProperty("--card-description-font-size");
+        if (!mobileCards || !description.clientWidth || !description.clientHeight) continue;
+        // Keep the original artwork geometry and use the largest fitting native size.
+        let size = 14;
+        while (size > 12 && description.scrollHeight > description.clientHeight) {
+          size -= 0.5;
+          description.style.setProperty("--card-description-font-size", size + "px");
+        }
+      }
+    });
+  }
+  window.addEventListener("resize", scheduleLoadoutDescriptionFit, { passive: true });
+  document.fonts?.ready.then(scheduleLoadoutDescriptionFit);
+
   function updateLoadoutRank(card, level) {
     const safeLevel = Math.max(1, Math.min(5, Math.floor(Number(level) || 1)));
     const frame = card.querySelector(".champion-loadout-frame");
@@ -488,7 +553,9 @@
     const name = card.dataset.cardName || String(M("generated.matches.card", undefined, "Card"));
     card.dataset.level = String(safeLevel);
     if (frame) frame.src = loadoutFramePath(safeLevel);
-    if (description) description.textContent = formatLoadoutDescription(card.dataset.description, safeLevel);
+    const descriptionText = formatLoadoutDescription(card.dataset.description, safeLevel);
+    if (description) description.textContent = descriptionText;
+    scheduleLoadoutDescriptionFit();
     if (cooldown) {
       const formattedCooldown = formatLoadoutCooldown(card.dataset.cooldown, safeLevel);
       cooldown.textContent = formattedCooldown;

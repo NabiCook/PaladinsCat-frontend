@@ -92,7 +92,25 @@
     if(!s.result)return;const {raw,entries}=s.result;
     s.output.replaceChildren();s.output.classList.remove('discovery-state');
     if(!entries.length)s.output.append(el('p','discovery-copy',message('generated.matches.noMatchingGames','No matches meet these filters.')));
-    else {if(s.filtered)s.output.append(el('p','discovery-copy',message('common.summary.valueMetric','{value} matching Ranked Siege matches',{value:fmt(raw.total),metric:String(message('generated.matches.ranked','Ranked Siege'))+' '+String(message('generated.matches.matches','matches'))})));table(s.output,[message("generated.players.match.0335207","Match"),message("generated.matches.map","Map"),message("generated.players.time","Started"),message("generated.matches.duration","Duration"),message("generated.matches.region","Region")],entries.map(m=>[link(String(m.match_id),'/matches/'+m.match_id),m.map,date(m.entry_datetime),duration(m.duration_seconds),m.region]));}
+    else {
+      if(s.filtered)s.output.append(el('p','discovery-copy',message('common.summary.valueMetric','{value} matching Ranked Siege matches',{value:fmt(raw.total),metric:String(message('generated.matches.ranked','Ranked Siege'))+' '+String(message('generated.matches.matches','matches'))})));
+      const labels = [message('generated.players.match.0335207','Match'),message('generated.matches.map','Map'),message('generated.players.time','Started'),message('generated.matches.duration','Duration'),message('generated.matches.region','Region')];
+      const desktop = el('div','matches-desktop-list');
+      table(desktop,labels,entries.map(m=>[link(String(m.match_id),'/matches/'+m.match_id),m.map,date(m.entry_datetime),duration(m.duration_seconds),m.region]));
+      const mobile = el('ul','matches-mobile-list');
+      for (const m of entries) {
+        const item = el('li'), target = link('', '/matches/'+m.match_id);
+        target.className = 'matches-mobile-summary';
+        const title = el('div','matches-mobile-title');
+        title.append(el('strong','',m.map || '—'),el('span','',String(labels[0])+' '+String(m.match_id)));
+        const details = el('dl','matches-mobile-details');
+        for (const [label,value] of [[labels[2],date(m.entry_datetime)],[labels[3],duration(m.duration_seconds)],[labels[4],m.region]]) {
+          const pair = el('div'); pair.append(el('dt','',label),el('dd','',value ?? '—')); details.append(pair);
+        }
+        target.append(title,details); item.append(target); mobile.append(item);
+      }
+      s.output.append(desktop,mobile);
+    }
     if(s.filtered)pager(s.output,s.page,Number(raw.page?.totalPages)||1,page=>{s.page=page;void loadMatches();});
   }
 

@@ -1,0 +1,71 @@
+.champion-name-filter {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 360px;
+}
+
+.champion-name-filter > label {
+  color: var(--secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.champion-name-field {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.champion-name-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--pc-glass-border);
+  border-radius: 11px;
+  background: var(--pc-glass-bg-subtle);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.champion-name-clear {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--pc-glass-border);
+  border-radius: 11px;
+  background: var(--pc-glass-bg-subtle);
+  color: var(--secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.champion-name-clear[hidden] { display: none; }
+
+.champion-name-field :is(input, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  #champions-page .champion-directory-controls { align-items: stretch; }
+  #champions-page .champion-name-filter { flex-basis: 100%; max-width: none; }
+
+  /* Preserve two proportional card faces and keep their text inside the frame. */
+  #champion-detail-page .champion-loadout-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 240px));
+    justify-content: center;
+    gap: 8px;
+  }
+
+  #champion-detail-page .champion-loadout-description {
+    font-size: var(--card-description-font-size, 14px);
+    line-height: 1.2;
+  }
+}

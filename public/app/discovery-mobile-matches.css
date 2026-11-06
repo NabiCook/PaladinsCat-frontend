@@ -1,0 +1,15 @@
+.matches-mobile-list { display: none; }
+@media (max-width: 600px) {
+  .matches-desktop-list { display: none; }
+  .matches-mobile-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .matches-mobile-summary { display: block; min-height: 44px; padding: 14px; border: 1px solid var(--pc-glass-border); border-radius: 12px; background: var(--pc-glass-bg-subtle); color: var(--text); text-decoration: none; }
+  .matches-mobile-summary:hover { border-color: var(--accent); }
+  .matches-mobile-summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .matches-mobile-title { display: flex; flex-direction: column; gap: 5px; overflow-wrap: anywhere; }
+  .matches-mobile-title strong { font-size: 16px; }
+  .matches-mobile-title span { font-size: 14px; color: var(--secondary); }
+  .matches-mobile-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0 0; }
+  .matches-mobile-details > div:first-child { grid-column: 1 / -1; }
+  .matches-mobile-details dt { color: var(--secondary); font-size: 12px; }
+  .matches-mobile-details dd { margin: 3px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+}

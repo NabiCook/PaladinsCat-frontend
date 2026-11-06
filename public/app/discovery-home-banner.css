@@ -118,9 +118,14 @@
   .home-banner-demo h2 { font-size: 52px; }
 }
 @media (max-width: 600px) {
-  .home-banner-demo-copy { width: 85%; padding: 25px 22px 60px; }
+  .home-banner-demo-copy { width: 100%; padding: 25px 22px 80px; }
   .home-banner-demo h2 { font-size: 46px; }
+  .home-banner-page, .home-banner-arrow { width: 44px; height: 44px; }
   .home-banner-controls { bottom: 14px; }
+  /* Keep the navigation below the copy, with separate targets for every control. */
+  .home-banner-arrow { top: auto; bottom: 14px; transform: none; }
+  .home-banner-previous { left: 14px; }
+  .home-banner-next { right: 14px; }
   .home-banner-demo-art { width: 72%; right: -12%; opacity: .65; }
 }
 @media (prefers-reduced-motion: reduce) {

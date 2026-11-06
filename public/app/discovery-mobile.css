@@ -1,8 +1,8 @@
-/* Mobile keeps the existing navigation and surfaces, with room for the fixed rail. */
-.discovery-scroll-top { display: none; }
+/* Mobile keeps the existing navigation and surfaces, with a visible core menu and expandable destinations. */
+.discovery-scroll-top, .rail-mobile-more, .rail-mobile-options { display: none; }
 @media (max-width: 600px) {
-  html { scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
-  body { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+  html { scroll-padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)); }
+  body { padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)); }
   .dashboard-shell[data-view] > .rail {
     position: fixed; z-index: 100; inset: auto 8px calc(8px + env(safe-area-inset-bottom, 0px));
     display: flex; flex-direction: row; align-items: center; gap: 4px; padding: 6px;
@@ -11,18 +11,30 @@
     -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur);
     transition: transform var(--pc-motion-base) var(--pc-ease-standard);
   }
-  .dashboard-shell[data-view] > .rail.is-mobile-hidden { transform: translateY(calc(100% + 16px + env(safe-area-inset-bottom, 0px))); }
   .rail .rail-brand, .rail .rail-size-toggle { display: none; }
-  .rail .rail-main { display: flex; flex: 1 1 auto; min-width: 0; width: auto; justify-content: flex-start; gap: 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
-  .rail .rail-main .rail-button:nth-child(n) { display: flex; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .rail .rail-main .rail-button[hidden] { display: none; }
-  .rail .rail-bottom { display: flex; flex: 0 0 auto; width: auto; flex-direction: row; gap: 2px; margin: 0; padding: 0; }
-  .rail .rail-bottom > .rail-button:not([hidden]) { display: flex; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .rail .rail-bottom .rail-divider, .rail .rail-label { display: none; }
-  .rail .rail-button .lucide { width: 20px; height: 20px; }
+  .rail .rail-main { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex: 1; min-width: 0; width: 100%; gap: 2px; overflow: visible; }
+  .rail .rail-main .rail-button:nth-child(n), .rail .rail-mobile-more {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    width: 100%; min-width: 44px; min-height: 64px; height: auto; padding: 5px 1px;
+    border: 0; border-radius: 10px; background: transparent; color: var(--secondary); cursor: pointer;
+  }
+  .rail .rail-main .rail-button[hidden],
+  .rail .rail-main .rail-button:not([data-navigation-key="Home"], [data-navigation-key="Search"], [data-navigation-key="Players"], [data-navigation-key="Champions"]),
+  .rail > .rail-bottom { display: none; }
+  .rail .rail-label { max-width: 100%; opacity: 1; overflow: visible; }
+  .rail .rail-main .rail-label, .rail-mobile-more > span { display: block; max-width: 100%; font-size: 12px; line-height: 14px; white-space: normal; overflow-wrap: anywhere; text-align: center; letter-spacing: -.02em; }
+  .rail .rail-main .rail-button.active, .rail-mobile-more.active, .rail-mobile-more[aria-expanded="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .rail .rail-button .lucide, .rail-mobile-more .lucide { width: 20px; height: 20px; flex-shrink: 0; }
+  .rail-mobile-options:not([hidden]) { display: block; position: absolute; inset: auto -1px calc(100% + 8px); max-height: calc(100dvh - 120px - env(safe-area-inset-bottom, 0px)); overflow: auto; overscroll-behavior: contain; padding: 12px; border: 1px solid var(--pc-glass-border); border-radius: 15px; background: var(--pc-glass-bg); -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur); }
+  .rail-mobile-links, .rail .rail-mobile-options .rail-bottom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; width: 100%; margin: 0; padding: 0; }
+  .rail .rail-mobile-options .rail-bottom { border-top: 1px solid var(--pc-glass-border); margin-top: 8px; padding-top: 8px; }
+  .rail .rail-mobile-options .rail-button:not([hidden]) { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; min-width: 0; min-height: 48px; height: auto; padding: 8px; }
+  .rail .rail-mobile-options .rail-label { display: block; min-width: 0; font-size: 14px; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+  .rail .rail-mobile-options .rail-divider { display: none; }
+  .rail-mobile-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .rail .search-page-back { top: auto; bottom: calc(100% + 8px); left: 0; width: 44px; height: 44px; }
   .rail .notification i { left: auto; right: 7px; top: 7px; }
-  .discovery-scroll-top:not([hidden]) { position: fixed; z-index: 101; right: 12px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--pc-glass-border); border-radius: 50%; background: var(--pc-glass-bg); color: var(--secondary); -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur); cursor: pointer; }
+  .discovery-scroll-top:not([hidden]) { position: fixed; z-index: 101; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--pc-glass-border); border-radius: 50%; background: var(--pc-glass-bg); color: var(--secondary); -webkit-backdrop-filter: var(--pc-glass-blur); backdrop-filter: var(--pc-glass-blur); cursor: pointer; }
   .discovery-scroll-top svg { width: 20px; height: 20px; }
   .discovery-scroll-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .dashboard-shell .page-view-stack > main[aria-hidden="false"] { max-height: none; }

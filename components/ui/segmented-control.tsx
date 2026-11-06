@@ -5,7 +5,7 @@ import Link from "next/link";
 type Item<T extends string> = { value: T; label: ReactNode; icon?: ReactNode };
 
 function optionClass(active: boolean) {
-  return `inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${active ? "border-pc-accent bg-pc-accent text-pc-bg" : "pc-surface text-pc-text-secondary hover:border-pc-accent-mid hover:text-pc-text"}`;
+  return `inline-flex min-h-10 max-[601px]:min-h-11 max-[601px]:min-w-11 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${active ? "border-pc-accent bg-pc-accent text-pc-bg" : "pc-surface text-pc-text-secondary hover:border-pc-accent-mid hover:text-pc-text"}`;
 }
 
 /**

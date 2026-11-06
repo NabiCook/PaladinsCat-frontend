@@ -1,0 +1,24 @@
+/* Shared phone control sizing also covers the embedded React pages. */
+@media (max-width: 600px) {
+  .dashboard-shell :is(select, textarea, input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"], [type="image"])) {
+    /* Keep native forms readable and prevent focus zoom despite embedded utility styles. */
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+
+  .dashboard-shell :is(.search-clear, .search-page-clear) {
+    right: 1px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .dashboard-shell :is(.search-preview, .search-page-form) input[type="search"] {
+    padding-right: 48px;
+  }
+
+  /* Existing static React bundles still use the shared 40px utility class. */
+  .dashboard-shell [role="group"] > :is(button, a).min-h-10 {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
