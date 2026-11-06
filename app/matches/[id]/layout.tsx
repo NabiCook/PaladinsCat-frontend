@@ -24,8 +24,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("seo.matches.detail.title", { id }),
     description: t("seo.matches.detail.description", { id }),
+    // A match URL is a share target, not an indexable page: the body is the
+    // same client shell for every id, so Google would index thousands of thin
+    // duplicates and dilute the single canonical /matches entry (the only
+    // match route the sitemap publishes). Keep the deep link crawlable but
+    // out of the index and consolidate it on the dashboard URL.
+    robots: { index: false, follow: true },
     alternates: {
-      canonical: `/matches/${id}`,
+      canonical: "/matches",
     },
   };
 }
