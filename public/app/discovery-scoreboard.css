@@ -255,4 +255,8 @@
 #browser-scoreboard a.player-name, #browser-scoreboard a.player-sub { text-decoration:none; }
 #browser-scoreboard .player-platform-icon { display:inline-flex; width:18px; height:18px; flex-shrink:0; align-items:center; justify-content:center; }
 .dashboard-match-heading { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.dashboard-match-actions { display:flex; justify-content:flex-end; margin:0 0 14px; }
+.dashboard-share-link { display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:7px 14px; border:1px solid var(--pc-glass-border); border-radius:999px; background:var(--pc-glass-bg-subtle); color:var(--text); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+.dashboard-share-link:hover { border-color:var(--accent); color:var(--accent); }
+.dashboard-share-fallback { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
 #browser-scoreboard .hero { min-height:0; }

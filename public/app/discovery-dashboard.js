@@ -1728,13 +1728,13 @@
         trail[trail.length - 1] = previousWithScroll;
         browser.replaceState(state(previousWithScroll, trail.slice(0, -1)), '');
         index++; positions.set(positionKey(), { x: 0, y: 0 });
-        browser.pushState(state(withScroll(entry, { x: 0, y: 0 }), trail), '');
+        browser.pushState(state(withScroll(entry, { x: 0, y: 0 }), trail), '', entry.path);
       },
       replace(entry, trail) {
         const recorded = browser.state?.[key]?.entry;
         const scroll = positions.get(positionKey()) || recorded?.scroll || { x: 0, y: 0 };
         const restored = recorded?.path && recorded.path === entry.path ? { ...recorded, ...entry } : entry;
-        browser.replaceState(state(withScroll(restored, scroll), trail), '');
+        browser.replaceState(state(withScroll(restored, scroll), trail), '', restored.path);
       },
       back(trail) {
         if (index <= 0 || !trail.length || browser.state?.[key]?.session !== session) return false;

@@ -52,6 +52,10 @@
     activate(); window.scrollTo({ top: 0, behavior: 'instant' });
     requestAnimationFrame(() => { const heading = pages.get(view).element.querySelector('h1'); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); } });
   }
+  // The address bar names the view being shown. History entries are written by
+  // the dashboard's view-history manager (discovery-dashboard.js), which already
+  // owns back/forward and scroll restoration: each entry carries its path and
+  // that path is published as the URL there, so the router only resolves here.
   function navigate(input) {
     window.DiscoveryViewScroll?.capture();
     const path = canonical(input), found = resolve(path);
