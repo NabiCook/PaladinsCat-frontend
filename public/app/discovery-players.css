@@ -256,6 +256,8 @@ a.players-directory-card:focus-visible,.players-directory-card a:focus-visible {
 .players-profile-tab-content { display:grid; gap:16px; min-width:0; }
 .players-profile-tabs { margin:16px 0; }
 .players-view .players-profile-hero { flex-direction:row; align-items:center; justify-content:space-between; margin:0; gap:16px; }
+/* Raise the glass header's stacking context so Actions clears later cards. */
+.players-view .players-profile-hero:has(.players-profile-toolbar > details[open]) { position:relative; z-index:10; }
 .players-profile-person { flex:1 1 auto; }
 .players-profile-name-line { flex-wrap:wrap; }
 .players-profile-name-line .players-section { margin:0; }
