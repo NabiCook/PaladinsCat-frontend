@@ -90,7 +90,7 @@ export default function PrivateAccountsPage() {
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-pc-text-muted">
                 <span>#{account.playerId}</span>
-                <span>portal {account.portalId}</span>
+                <span>{t("generated.players.portal")} {account.portalId}</span>
                 {account.source && <span>{account.source}</span>}
                 {account.lastRunId && <span>{account.lastRunId}</span>}
                 <span>{t("generated.players.firstObserved")} {formatDate(account.firstSeenAt)}</span>
