@@ -949,7 +949,7 @@
         if (hasCooldown) {
           const cooldown = detailNode("span", "champion-loadout-cooldown");
           nativeAttribute(cooldown, "aria-label", M("discovery.champion.cardCooldown", {seconds:formatLoadoutCooldown(cooldownValue, 1)}, "Card cooldown {seconds} seconds"));
-          const cooldownIcon = detailImage("/app/cooldown-icon.png", "", "champion-loadout-cooldown-icon", 18, 18);
+          const cooldownIcon = detailImage("/drafts/cooldown-icon.png", "", "champion-loadout-cooldown-icon", 18, 18);
           const cooldownText = detailNode("span", "champion-loadout-cooldown-value", formatLoadoutCooldown(cooldownValue, 1));
           if (cooldownIcon) cooldown.append(cooldownIcon);
           cooldown.append(cooldownText);

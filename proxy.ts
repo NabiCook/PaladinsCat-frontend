@@ -438,6 +438,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Cover both API aliases as well as documents; static assets need no guest cookie.
   matcher: [
-    "/((?!_next/static|_next/image|_next/webpack-hmr|images/|fonts/|locales/|robots.txt|sitemap\\.xml|ads\\.txt$|manifest\\.webmanifest).*)",
+    "/((?!_next/static|_next/image|_next/webpack-hmr|images/|drafts/|fonts/|locales/|robots.txt|sitemap\\.xml|ads\\.txt$|manifest\\.webmanifest).*)",
   ],
 };

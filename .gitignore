@@ -22,3 +22,6 @@ __pycache__/
 /scripts/assets/
 /public/drafts/cooldown-icon.png
 /public/drafts/discovery-credit-icon.svg
+/public/app/cooldown-icon.avif
+/public/app/cooldown-icon.png
+/public/app/discovery-credit-icon.svg

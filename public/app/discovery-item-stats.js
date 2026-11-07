@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   // The rail uses the shared Items navigation glyph.
-  void fetch("/app/discovery-credit-icon.svg?v=2", { signal: AbortSignal.timeout(5000) })
+  void fetch("/drafts/discovery-credit-icon.svg?v=2", { signal: AbortSignal.timeout(5000) })
     .then(response => { if (!response.ok) throw new Error("Credit icon unavailable"); return response.text(); })
     .then(source => {
       const icon = new DOMParser().parseFromString(source, "image/svg+xml").documentElement;
