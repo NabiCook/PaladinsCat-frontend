@@ -1,5 +1,5 @@
 /**
- * Render the PrivateAccountsPage view for the player private-accounts page route.
+ * Render the PrivateTrackingPage view for the player private-tracking page route.
  * This file owns the page, layout, loading state, or route handler named by its path.
  * It does not own unrelated player sections or shared library policy.
  * refs: none
@@ -22,11 +22,11 @@ import PlayerDirectorySearch from "@/components/player-directory-search";
 const PAGE_SIZE = 24;
 
 /**
- * Render the PrivateAccountsPage view for the player private-accounts page route.
+ * Render the PrivateTrackingPage view for the player private-tracking page route.
  * refs: none
  * I/O types: `none -> JSX.Element`.
  */
-export default function PrivateAccountsPage() {
+export default function PrivateTrackingPage() {
   const { t, formatNumber } = useLocalization();
   const [accounts, setAccounts] = useState<PrivateAccountSummary[]>([]);
   const [total, setTotal] = useState(0);
@@ -81,7 +81,7 @@ export default function PrivateAccountsPage() {
           {accounts.map((account) => {
             const tierName = TIER_NAMES[account.leagueTier] || "Unranked";
             return (
-              <Link href={`/players/private-accounts/${account.id}`} key={account.id} className="group block overflow-hidden rounded-xl border border-slate-400/20 bg-pc-bg-elevated p-3 transition-colors hover:border-pc-accent-mid">
+              <Link href={`/players/private-tracking/${account.id}`} key={account.id} className="group block overflow-hidden rounded-xl border border-slate-400/20 bg-pc-bg-elevated p-3 transition-colors hover:border-pc-accent-mid">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <h2 className="mr-0.5 truncate text-base font-semibold text-pc-text group-hover:text-pc-accent">{account.alias || account.displayName}</h2>

@@ -27,7 +27,7 @@ const fixtures: Record<string, string> = {
   "/players/class/[role]": "/players/class/damage",
   "/players/exploiters/[id]": "/players/exploiters/736565921",
   "/players/parties/[kind]/[key]": "/players/parties/pairs/736531766-736531767",
-  "/players/private-accounts/[id]": "/players/private-accounts/1242",
+  "/players/private-tracking/[id]": "/players/private-tracking/1242",
   "/stats/champions/[name]": "/stats/champions/androxus",
   "/stats/items/[itemId]": "/stats/items/11646",
   "/stats/maps/[mapName]": "/stats/maps/brightmarsh",

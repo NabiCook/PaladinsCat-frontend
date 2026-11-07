@@ -18,7 +18,7 @@ const EMPTY_PORTAL: CheaterPortal = { activeCount: 0, inactiveCount: 0, evidence
 
 function entryHref(entry: CheaterPortalEntry): string {
   return entry.kind === "private"
-    ? `/players/private-accounts/${entry.subjectId}`
+    ? `/players/private-tracking/${entry.subjectId}`
     : `/evidence/${encodeURIComponent(String(entry.playerId ?? entry.subjectId))}`;
 }
 

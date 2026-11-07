@@ -43,7 +43,7 @@ export function matchPlayerKey(player: MatchPlayerDetail): string {
  */
 export function matchPlayerHref(player: MatchPlayerDetail): string | null {
   const privateId = trackedPrivateId(player);
-  if (privateId) return `/players/private-accounts/${privateId}`;
+  if (privateId) return `/players/private-tracking/${privateId}`;
   const playerId = Number(player.player_id);
   return playerId > 0 ? `/players/${playerId}` : null;
 }
@@ -114,7 +114,7 @@ export function MatchPlayerReference({ player, className = "" }: { player: Match
   const privateId = trackedPrivateId(player);
   const privateCode = privateAccountCode(player);
   if (privateId) {
-    const href = `/players/private-accounts/${privateId}`;
+    const href = `/players/private-tracking/${privateId}`;
     const destination = verifiedDestination(href, user, isLoading);
     return <Link href={destination ?? href} aria-disabled={isLoading} onClick={isLoading ? (event) => event.preventDefault() : undefined} className={className}>{privateCode}</Link>;
   }

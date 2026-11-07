@@ -54,7 +54,7 @@ const styles: Record<Accent, {
 };
 
 function entryHref(entry: CheaterPortalEntry): string {
-  if (entry.kind === "private") return `/players/private-accounts/${encodeURIComponent(entry.subjectId)}`;
+  if (entry.kind === "private") return `/players/private-tracking/${encodeURIComponent(entry.subjectId)}`;
   return `/evidence/${encodeURIComponent(String(entry.playerId ?? entry.subjectId))}`;
 }
 

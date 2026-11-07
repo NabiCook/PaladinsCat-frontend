@@ -131,7 +131,7 @@ export default function SuspiciousPage() {
             const reasons = isPrivate ? entry.account.topReasons : entry.player.topReasons;
             return (
             <Link
-              href={isPrivate ? `/players/private-accounts/${entry.account.id}` : `/evidence/${entry.player.id}`}
+              href={isPrivate ? `/players/private-tracking/${entry.account.id}` : `/evidence/${entry.player.id}`}
               className={`${PLAYER_DIRECTORY_CARD_CLASS} flex-col justify-center gap-1 border-amber-500/20 hover:border-amber-400/40 hover:bg-amber-500/[0.04]`}
             >
               <div className="flex min-w-0 items-start justify-between gap-2">

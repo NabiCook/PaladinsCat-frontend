@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
       { source: "/stats/maps/:path*", destination: "/game/maps/:path*", permanent: true },
       { source: "/stats/compositions", destination: "/game/compositions", permanent: true },
       { source: "/players/stats/:metric", destination: "/players/performance", permanent: true },
+      // The id-based activity tracker was renamed to /players/private-tracking so the
+      // MCTS-backed Private Account DB can own /players/private-accounts. Kept
+      // temporary: the new database page publishes its own routes and drops these.
+      { source: "/players/private-accounts", destination: "/players/private-tracking", permanent: false },
+      { source: "/players/private-accounts/:id(\\d+)", destination: "/players/private-tracking/:id", permanent: false },
     ];
   },
   async rewrites() {

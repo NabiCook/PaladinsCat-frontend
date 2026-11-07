@@ -43,7 +43,7 @@ test("base profiles require the same combined entitlement as secondary data", ()
     assert.equal(verifiedDestination(path, null, false), `/auth/login?redirect=${encodeURIComponent(path)}`);
     assert.equal(verifiedDestination(path, { linkedPlayerId: null }, false), "/link-account");
   }
-  for (const path of ["/players/16706730/loadouts", "/players/16706730/friends", "/players/16706730/champions", "/players/private-accounts/1"]) {
+  for (const path of ["/players/16706730/loadouts", "/players/16706730/friends", "/players/16706730/champions", "/players/private-tracking/1"]) {
     assert.equal(isVerifiedOnlyPath(path), true);
     assert.equal(verifiedDestination(path, { linkedPlayerId: null }, false), "/link-account");
   }
