@@ -190,6 +190,7 @@ export default function Nav() {
       title: t("nav.players"),
       links: [
         { href: "/players", label: t("menu.playerHub") },
+        { href: "/players/private-accounts", label: t("generated.players.mctsPrivateAccounts") },
         { href: "/players/private-tracking", label: t("generated.players.privateAccounts") },
         { href: "/players/parties", label: t("generated.players.rankedParties") },
       ],

@@ -2395,6 +2395,66 @@ export async function fetchPrivateAccountsDirectory(params: { page?: number; pag
 }
 
 /**
+ * One MCTS-discovered private account, as listed by the private account DB.
+ *
+ * refs: none
+ * I/O types: `data -> MctsPrivateAccountSummary`.
+ */
+export interface MctsPrivateAccountSummary {
+  playerId: number;
+  mctsPlayerId: string;
+  name: string | null;
+  gamerTag: string | null;
+  portalId: number;
+  portalUserId: string | null;
+  status: string | null;
+  xpLevel: number;
+  firstSeenAt: string | null;
+  lastObservedAt: string | null;
+  observations: number;
+  source: string | null;
+  lastMember: string | null;
+  lastRunId: string | null;
+}
+
+function mapMctsPrivateAccount(row: any): MctsPrivateAccountSummary {
+  const name = row.name == null ? "" : String(row.name).trim();
+  return {
+    playerId: Number(row.player_id),
+    mctsPlayerId: row.mcts_player_id == null ? "" : String(row.mcts_player_id),
+    name: name || null,
+    gamerTag: row.gamer_tag == null ? null : String(row.gamer_tag).trim() || null,
+    portalId: Number(row.portal_id ?? 0),
+    portalUserId: row.portal_user_id == null ? null : String(row.portal_user_id),
+    status: row.status == null ? null : String(row.status),
+    xpLevel: Number(row.xp_level ?? 0),
+    firstSeenAt: row.first_seen_at ?? null,
+    lastObservedAt: row.last_observed_at ?? null,
+    observations: Number(row.observations ?? 0),
+    source: row.source == null ? null : String(row.source),
+    lastMember: row.last_member == null ? null : String(row.last_member),
+    lastRunId: row.last_run_id == null ? null : String(row.last_run_id),
+  };
+}
+
+/**
+ * Fetch the MCTS private account directory for the private account DB page.
+ *
+ * refs: none
+ * Request `GET '/player-ext/mcts-private?${query.toString()}'` through the shared API transport. Uncaught network/API errors reject the returned promise.
+ * I/O types: `params: { page?: number; pageSize?: number; query?: string } -> Promise<PlayerDirectoryPage<MctsPrivateAccountSummary>>`.
+ */
+export async function fetchMctsPrivateAccountsDirectory(params: { page?: number; pageSize?: number; query?: string } = {}): Promise<PlayerDirectoryPage<MctsPrivateAccountSummary>> {
+  const page = Math.max(1, params.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 24));
+  const query = new URLSearchParams({ page: String(page), perPage: String(pageSize) });
+  if (params.query?.trim()) query.set('q', params.query.trim());
+  const rows = await fetchJson<any[]>(`/player-ext/mcts-private?${query.toString()}`);
+  const total = Number(rows[0]?.total_count ?? 0);
+  return { items: rows.map(mapMctsPrivateAccount), total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+/**
  * Fetch private account detail data for client consumers.
  *
  * refs: none
