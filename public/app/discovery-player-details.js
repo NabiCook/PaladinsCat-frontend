@@ -401,7 +401,7 @@
   function renderMctsProfile(ctx,id,data,player) {
     const name=data.name||player?.name||ui('generated.players.player','Player')+' '+id;
     const hero=n('section','players-profile-hero'),copy=n('div','players-profile-copy'),line=n('div','players-profile-name-line');
-    line.append(n('h2','players-profile-name',name),n('span','players-directory-tag',tr('generated.players.mctsSource','MCTS')),n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
+    line.append(n('span','players-directory-tag',tr('generated.players.mctsSource','MCTS')),n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
     copy.append(line,n('p','players-meta',tr('generated.players.mctsIdentity','MCTS identity')+' '+id+(data.gamer_tag?' · '+data.gamer_tag:'')));
     hero.append(copy);ctx.body.append(hero);
     const provenance=data.provenance||{},counts=data.counts||{},overview=panel(tr('generated.players.overview','Overview'));
@@ -426,10 +426,14 @@
     record.append(n('p','players-note',data.stats_note||tr('generated.players.mctsStatsNote','Match statistics are unavailable for API-hidden accounts.')));
     ctx.body.append(record);
     const champions=panel(tr('common.playerChampions.title','Champion stats'));
-    table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP'),tr('generated.players.ownership','Ownership')],(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp),mctsText(row.ownership_type)]),tr('common.playerChampions.title','Champion stats'));
+    const championRows=(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp),mctsText(row.ownership_type)]);
+    if(championRows.length)table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP'),tr('generated.players.ownership','Ownership')],championRows,tr('common.playerChampions.title','Champion stats'));
+    else champions.append(n('p','players-note',tr('generated.players.noMctsChampions','No champion records were captured for this account yet.')));
     ctx.body.append(champions);
     const loadouts=panel(tr('generated.players.loadouts','Loadouts'));
-    table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']),tr('generated.players.loadouts','Loadouts'));
+    const loadoutRows=(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']);
+    if(loadoutRows.length)table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],loadoutRows,tr('generated.players.loadouts','Loadouts'));
+    else loadouts.append(n('p','players-note',tr('generated.players.noMctsLoadouts','No loadout records were captured for this account yet.')));
     ctx.body.append(loadouts);
     if(Array.isArray(data.inventory)&&data.inventory.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],data.inventory.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
     if(Array.isArray(data.currency)&&data.currency.length){const currency=panel(tr('generated.players.currency','Currency'));table(currency,[tr('generated.players.currencyType','Currency'),tr('generated.players.amount','Amount')],data.currency.map(row=>[mctsText(row.currency_type_value_id),mctsNumber(row.currency_value)]),tr('generated.players.currency','Currency'));ctx.body.append(currency);}
