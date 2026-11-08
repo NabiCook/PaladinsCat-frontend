@@ -396,10 +396,9 @@
     const access=raw.access??player.access;if(access&&access.fullAccess===false)left.append(n('p','players-note',ui('discovery.players.limitedProfile','This profile has limited access. Sign in and complete the required account verification for full statistics.')));
     left.append(profileTrends(ctx,id));
   }
-  // Paladins account level from XP: level L starts at 10,000 x L x (L-1) XP up to
-  // level 61 (36.6M), then 1,000,000 XP per level. Measured on public players
-  // (players.level vs players.total_xp): 99.996% within one level.
-  function accountLevel(xp){const value=num(xp);if(value==null||value<0)return null;if(value<=36600000)return Math.max(1,Math.floor((1+Math.sqrt(1+value/2500))/2));return 61+Math.floor((value-36600000)/1000000);}
+  // Paladins account level from XP: T(L) = 10,000 x L x (L+3) XP to reach L+1.
+  // level = 1 + floor((sqrt(9 + xp/2500) - 3) / 2), capped at 999.
+  function accountLevel(xp){const value=num(xp);if(value==null||value<0)return null;return Math.min(999,1+Math.floor((Math.sqrt(9+value/2500)-3)/2));}
   function mctsText(value,fallback='—'){const text=value==null?'':String(value).trim();return text||fallback;}
   function mctsNumber(value,fallback='—'){const number=num(value);return number==null?mctsText(value,fallback):fmt(number);}
   function renderMctsProfile(ctx,id,data) {

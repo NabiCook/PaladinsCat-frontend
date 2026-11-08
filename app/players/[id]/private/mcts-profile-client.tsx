@@ -143,10 +143,8 @@ export default function MctsProfileClient({
     if (row.account_level != null) return row.account_level;
     const xp = Number(row.xp_level);
     if (!Number.isFinite(xp) || xp < 0) return null;
-    // Paladins account level: level L starts at 10,000 x L x (L-1) XP up to
-    // level 61 (36.6M), then 1,000,000 XP per level.
-    if (xp <= 36_600_000) return Math.max(1, Math.floor((1 + Math.sqrt(1 + xp / 2500)) / 2));
-    return 61 + Math.floor((xp - 36_600_000) / 1_000_000);
+    // T(L) = 10,000 x L x (L+3) XP to reach L+1, capped at 999.
+    return Math.min(999, 1 + Math.floor((Math.sqrt(9 + xp / 2500) - 3) / 2));
   };
   const level = levelOf(response);
   const headline = response.gamer_tag.trim() || response.name.trim() || t("mctsProfile.playerId", { value1: response.player_id });
