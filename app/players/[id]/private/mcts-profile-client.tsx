@@ -7,7 +7,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Info } from "lucide-react";
 
 import { ContentFade, EmptyState, ErrorState, LoadingPanel } from "@/components/async-state";
 import { LoginRequired } from "@/components/login-required";
@@ -35,7 +34,7 @@ export default function MctsProfileClient({
   id: string;
   initialResponse: MctsProfileResponse | null;
 }) {
-  const { t, formatNumber, formatDateTime } = useLocalization();
+  const { t, formatNumber } = useLocalization();
   const { user, isLoading: authLoading } = useAuth();
   const [response, setResponse] = useState<MctsProfileResponse | null>(initialResponse);
   const [notCaptured, setNotCaptured] = useState(false);
@@ -140,7 +139,16 @@ export default function MctsProfileClient({
 
   if (!response) return null;
 
-  const level = response.account_level ?? response.xp_level;
+  const levelOf = (row: MctsProfileResponse): number | null => {
+    if (row.account_level != null) return row.account_level;
+    const xp = Number(row.xp_level);
+    if (!Number.isFinite(xp) || xp < 0) return null;
+    // Paladins account level: level L starts at 10,000 x L x (L-1) XP up to
+    // level 61 (36.6M), then 1,000,000 XP per level.
+    if (xp <= 36_600_000) return Math.max(1, Math.floor((1 + Math.sqrt(1 + xp / 2500)) / 2));
+    return 61 + Math.floor((xp - 36_600_000) / 1_000_000);
+  };
+  const level = levelOf(response);
   const headline = response.gamer_tag.trim() || response.name.trim() || t("mctsProfile.playerId", { value1: response.player_id });
   const championLabel = (row: MctsChampionRow) =>
     row.champion_name.trim() || t("mctsProfile.championFallback", { value1: row.profile_id });
@@ -162,47 +170,16 @@ export default function MctsProfileClient({
             <span className="pc-badge">
               {t("mctsProfile.accountLevel")} {formatNumber(level)}
             </span>
-            <span className="pc-badge">
-              {t("mctsProfile.xpLevel")} {formatNumber(response.xp_level)}
-            </span>
-            <span className="pc-badge">
-              {t("mctsProfile.identity")} {response.identity_status}
-            </span>
             <span className="pc-badge">{t("mctsProfile.playerId", { value1: response.player_id })}</span>
           </div>
         }
-        description={t("mctsProfile.explanation")}
       />
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        {([
-          [t("mctsProfile.capturedChampions"), formatNumber(response.counts.champions)],
-          [t("mctsProfile.capturedLoadouts"), formatNumber(response.counts.loadouts)],
-          [t("mctsProfile.capturedInventory"), formatNumber(response.counts.inventory)],
-        ] as const).map(([label, value]) => (
-          <div key={label} className="pc-glass rounded-xl p-4">
-            <div className="text-xs uppercase tracking-wide text-pc-text-muted">{label}</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums text-pc-text">{value}</div>
-          </div>
-        ))}
-      </div>
-
-      <section className="pc-card" aria-labelledby="mcts-match-statistics">
-        <h2 id="mcts-match-statistics" className="flex items-center gap-2 text-sm font-semibold text-pc-text">
-          <Info className="h-4 w-4 shrink-0 text-pc-accent" aria-hidden="true" />
-          {t("mctsProfile.statsTitle")}
-        </h2>
-        <p className="mt-2 text-sm font-medium text-pc-text-secondary">{t("mctsProfile.statsPlaceholderTitle")}</p>
-        <p className="mt-1 max-w-3xl text-xs leading-relaxed text-pc-text-muted">{t("mctsProfile.statsPlaceholderBody")}</p>
-        {response.stats_note ? <p className="mt-2 text-xs leading-relaxed text-pc-text-muted">{response.stats_note}</p> : null}
-      </section>
 
       <section aria-labelledby="mcts-champions">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 id="mcts-champions" className="pc-card-title">
             {t("mctsProfile.championsTitle")}
           </h2>
-          <p className="mb-4 text-xs text-pc-text-muted">{t("mctsProfile.championsNote")}</p>
         </div>
         {response.champions.length === 0 ? (
           <EmptyState title={t("mctsProfile.noChampions")} />
@@ -343,27 +320,6 @@ export default function MctsProfileClient({
           </details>
         )}
       </section>
-
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-pc-border pt-3 text-xs text-pc-text-muted">
-        <span className="uppercase tracking-wide">{t("mctsProfile.provenance")}</span>
-        <span>
-          {t("mctsProfile.capturedAt")} {formatDateTime(response.captured_at)}
-        </span>
-        {response.provenance ? (
-          <>
-            <span>
-              {t("mctsProfile.runId")} <span className="font-mono text-pc-text-secondary">{response.provenance.run_id}</span>
-            </span>
-            <span>
-              {t("mctsProfile.member")} <span className="font-mono text-pc-text-secondary">{response.provenance.member}</span>
-            </span>
-            <span>
-              {t("mctsProfile.captureStatus")}{" "}
-              <span className="font-mono text-pc-text-secondary">{response.provenance.status}</span>
-            </span>
-          </>
-        ) : null}
-      </footer>
     </ContentFade>
   );
 }

@@ -95,7 +95,6 @@
     badges.append(n('span','',ui('generated.players.portal','Portal')+' '+fmt(row.portalId)));
     if(row.firstSeenAt)badges.append(n('span','',ui('generated.players.firstObserved','First observed')+' '+date(row.firstSeenAt)));
     if(row.lastObservedAt)badges.append(n('span','',ui('generated.players.lastObserved','Last observed')+' '+date(row.lastObservedAt)));
-    if(row.source)badges.append(n('span','',row.source));
     card.append(top,badges); return card;
   }
   function partyCard(row, kind) {

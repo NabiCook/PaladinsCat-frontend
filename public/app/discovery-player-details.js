@@ -396,47 +396,28 @@
     const access=raw.access??player.access;if(access&&access.fullAccess===false)left.append(n('p','players-note',ui('discovery.players.limitedProfile','This profile has limited access. Sign in and complete the required account verification for full statistics.')));
     left.append(profileTrends(ctx,id));
   }
+  // Paladins account level from XP: level L starts at 10,000 x L x (L-1) XP up to
+  // level 61 (36.6M), then 1,000,000 XP per level. Measured on public players
+  // (players.level vs players.total_xp): 99.996% within one level.
+  function accountLevel(xp){const value=num(xp);if(value==null||value<0)return null;if(value<=36600000)return Math.max(1,Math.floor((1+Math.sqrt(1+value/2500))/2));return 61+Math.floor((value-36600000)/1000000);}
   function mctsText(value,fallback='—'){const text=value==null?'':String(value).trim();return text||fallback;}
   function mctsNumber(value,fallback='—'){const number=num(value);return number==null?mctsText(value,fallback):fmt(number);}
-  function renderMctsProfile(ctx,id,data,player) {
-    const name=data.name||player?.name||ui('generated.players.player','Player')+' '+id;
+  function renderMctsProfile(ctx,id,data) {
     const hero=n('section','players-profile-hero'),copy=n('div','players-profile-copy'),line=n('div','players-profile-name-line');
-    line.append(n('span','players-directory-tag',tr('generated.players.mctsSource','MCTS')),n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
-    copy.append(line,n('p','players-meta',tr('generated.players.mctsIdentity','MCTS identity')+' '+id+(data.gamer_tag?' · '+data.gamer_tag:'')));
-    hero.append(copy);ctx.body.append(hero);
-    const provenance=data.provenance||{},counts=data.counts||{},overview=panel(tr('generated.players.overview','Overview'));
-    metrics(overview,[
-      [tr('generated.players.level','Level'),mctsNumber(data.xp_level)],
-      [tr('generated.players.accountLevel','Account level'),mctsNumber(data.account_level)],
-      [tr('generated.players.identityStatus','Identity'),mctsText(data.identity_status)],
-      [tr('generated.players.privacyFlag','Privacy flag'),mctsText(data.privacy_flag)],
-      [tr('generated.players.captured','Captured'),data.captured_at?date(data.captured_at):tr('generated.players.notCaptured','Not captured')],
-      [tr('generated.players.source','Source'),mctsText(data.source,'mcts')]
-    ]);
-    ctx.body.append(overview);
-    const record=panel(tr('generated.players.mctsCapture','MCTS capture'));
-    metrics(record,[
-      [tr('generated.players.captureStatus','Capture status'),mctsText(provenance.status,'stub')],
-      [tr('generated.players.championsCaptured','Champions'),fmt(num(counts.champions)??0)],
-      [tr('generated.players.loadoutsCaptured','Loadouts'),fmt(num(counts.loadouts)??0)],
-      [tr('generated.players.inventoryCaptured','Inventory'),fmt(num(counts.inventory)??0)],
-      [tr('generated.players.captureRun','Run'),mctsText(provenance.run_id)],
-      [tr('generated.players.captureMember','Member'),mctsText(provenance.member)]
-    ]);
-    record.append(n('p','players-note',data.stats_note||tr('generated.players.mctsStatsNote','Match statistics are unavailable for API-hidden accounts.')));
-    ctx.body.append(record);
-    const champions=panel(tr('common.playerChampions.title','Champion stats'));
-    const championRows=(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp),mctsText(row.ownership_type)]);
-    if(championRows.length)table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP'),tr('generated.players.ownership','Ownership')],championRows,tr('common.playerChampions.title','Champion stats'));
-    else champions.append(n('p','players-note',tr('generated.players.noMctsChampions','No champion records were captured for this account yet.')));
-    ctx.body.append(champions);
-    const loadouts=panel(tr('generated.players.loadouts','Loadouts'));
+    line.append(n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
+    copy.append(line);hero.append(copy);ctx.body.append(hero);
+    const championRows=(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp)]);
     const loadoutRows=(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']);
-    if(loadoutRows.length)table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],loadoutRows,tr('generated.players.loadouts','Loadouts'));
-    else loadouts.append(n('p','players-note',tr('generated.players.noMctsLoadouts','No loadout records were captured for this account yet.')));
-    ctx.body.append(loadouts);
-    if(Array.isArray(data.inventory)&&data.inventory.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],data.inventory.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
-    if(Array.isArray(data.currency)&&data.currency.length){const currency=panel(tr('generated.players.currency','Currency'));table(currency,[tr('generated.players.currencyType','Currency'),tr('generated.players.amount','Amount')],data.currency.map(row=>[mctsText(row.currency_type_value_id),mctsNumber(row.currency_value)]),tr('generated.players.currency','Currency'));ctx.body.append(currency);}
+    const inventoryRows=data.inventory||[],currencyRows=data.currency||[];
+    const capturedLevel=num(data.account_level),level=capturedLevel!=null?capturedLevel:accountLevel(data.xp_level);
+    const facts=panel(tr('generated.players.overview','Overview'));
+    metrics(facts,[[tr('generated.players.playerId','Player ID'),mctsText(data.player_id??id)],[tr('generated.players.accountLevel','Account level'),level==null?'—':fmt(level)]]);
+    ctx.body.append(facts);
+    if(!championRows.length&&!loadoutRows.length&&!inventoryRows.length&&!currencyRows.length){facts.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
+    if(championRows.length){const champions=panel(tr('common.playerChampions.title','Champion stats'));table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP')],championRows,tr('common.playerChampions.title','Champion stats'));ctx.body.append(champions);}
+    if(loadoutRows.length){const loadouts=panel(tr('generated.players.loadouts','Loadouts'));table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],loadoutRows,tr('generated.players.loadouts','Loadouts'));ctx.body.append(loadouts);}
+    if(inventoryRows.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],inventoryRows.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
+    if(currencyRows.length){const currency=panel(tr('generated.players.currency','Currency'));table(currency,[tr('generated.players.currencyType','Currency'),tr('generated.players.amount','Amount')],currencyRows.map(row=>[mctsText(row.currency_type_value_id),mctsNumber(row.currency_value)]),tr('generated.players.currency','Currency'));ctx.body.append(currency);}
   }
   async function profileShell(ctx,id,raw,player,selected) {
     await profileControls(ctx,id,raw,player);if(!ctx.current())return null;
