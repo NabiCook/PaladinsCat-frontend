@@ -20,7 +20,20 @@
   }
   function recordWinRate(wins,matches,explicit) {const value=num(explicit),w=num(wins),m=num(matches);return value??(w!=null&&m!=null&&m>0?w/m*100:null);}
   async function profile(id) {
-    if (!profileCache.has(id)) profileCache.set(id,App.request('/players/'+id,{timeoutMs:65000}).then(raw => {const player=raw.player??raw;if(!player||!positive(player.id))throw new Error('Invalid player profile');return{raw,player};}).catch(error=>{profileCache.delete(id);throw error;}));
+    if (!profileCache.has(id)) profileCache.set(id,(async()=>{
+      let legacyError=null;
+      try {
+        const raw=await App.request('/players/'+id,{timeoutMs:65000}),player=raw.player??raw;
+        if(!player||!positive(player.id))throw new Error('Invalid player profile');
+        return{raw,player};
+      } catch(error) {
+        legacyError=error;
+        if(Number(error?.status??error?.statusCode)!==404)throw error;
+      }
+      const mcts=await App.request('/players/'+id+'/mcts-profile',{timeoutMs:30000}).catch(()=>null);
+      if(!mcts||String(mcts.player_id??'')!==String(id))throw legacyError;
+      return{raw:{mcts},player:{id,name:mcts.name||null,mcts:true},mcts};
+    })().catch(error=>{profileCache.delete(id);throw error;}));
     return profileCache.get(id);
   }
   function tabs(host,id,selected='') {
@@ -383,6 +396,44 @@
     const access=raw.access??player.access;if(access&&access.fullAccess===false)left.append(n('p','players-note',ui('discovery.players.limitedProfile','This profile has limited access. Sign in and complete the required account verification for full statistics.')));
     left.append(profileTrends(ctx,id));
   }
+  function mctsText(value,fallback='—'){const text=value==null?'':String(value).trim();return text||fallback;}
+  function mctsNumber(value,fallback='—'){const number=num(value);return number==null?mctsText(value,fallback):fmt(number);}
+  function renderMctsProfile(ctx,id,data,player) {
+    const name=data.name||player?.name||ui('generated.players.player','Player')+' '+id;
+    const hero=n('section','players-profile-hero'),copy=n('div','players-profile-copy'),line=n('div','players-profile-name-line');
+    line.append(n('h2','players-profile-name',name),n('span','players-directory-tag',tr('generated.players.mctsSource','MCTS')),n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
+    copy.append(line,n('p','players-meta',tr('generated.players.mctsIdentity','MCTS identity')+' '+id+(data.gamer_tag?' · '+data.gamer_tag:'')));
+    hero.append(copy);ctx.body.append(hero);
+    const provenance=data.provenance||{},counts=data.counts||{},overview=panel(tr('generated.players.overview','Overview'));
+    metrics(overview,[
+      [tr('generated.players.level','Level'),mctsNumber(data.xp_level)],
+      [tr('generated.players.accountLevel','Account level'),mctsNumber(data.account_level)],
+      [tr('generated.players.identityStatus','Identity'),mctsText(data.identity_status)],
+      [tr('generated.players.privacyFlag','Privacy flag'),mctsText(data.privacy_flag)],
+      [tr('generated.players.captured','Captured'),data.captured_at?date(data.captured_at):tr('generated.players.notCaptured','Not captured')],
+      [tr('generated.players.source','Source'),mctsText(data.source,'mcts')]
+    ]);
+    ctx.body.append(overview);
+    const record=panel(tr('generated.players.mctsCapture','MCTS capture'));
+    metrics(record,[
+      [tr('generated.players.captureStatus','Capture status'),mctsText(provenance.status,'stub')],
+      [tr('generated.players.championsCaptured','Champions'),fmt(num(counts.champions)??0)],
+      [tr('generated.players.loadoutsCaptured','Loadouts'),fmt(num(counts.loadouts)??0)],
+      [tr('generated.players.inventoryCaptured','Inventory'),fmt(num(counts.inventory)??0)],
+      [tr('generated.players.captureRun','Run'),mctsText(provenance.run_id)],
+      [tr('generated.players.captureMember','Member'),mctsText(provenance.member)]
+    ]);
+    record.append(n('p','players-note',data.stats_note||tr('generated.players.mctsStatsNote','Match statistics are unavailable for API-hidden accounts.')));
+    ctx.body.append(record);
+    const champions=panel(tr('common.playerChampions.title','Champion stats'));
+    table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP'),tr('generated.players.ownership','Ownership')],(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp),mctsText(row.ownership_type)]),tr('common.playerChampions.title','Champion stats'));
+    ctx.body.append(champions);
+    const loadouts=panel(tr('generated.players.loadouts','Loadouts'));
+    table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']),tr('generated.players.loadouts','Loadouts'));
+    ctx.body.append(loadouts);
+    if(Array.isArray(data.inventory)&&data.inventory.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],data.inventory.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
+    if(Array.isArray(data.currency)&&data.currency.length){const currency=panel(tr('generated.players.currency','Currency'));table(currency,[tr('generated.players.currencyType','Currency'),tr('generated.players.amount','Amount')],data.currency.map(row=>[mctsText(row.currency_type_value_id),mctsNumber(row.currency_value)]),tr('generated.players.currency','Currency'));ctx.body.append(currency);}
+  }
   async function profileShell(ctx,id,raw,player,selected) {
     await profileControls(ctx,id,raw,player);if(!ctx.current())return null;
     const [hero,notice,history,actions]=Array.from(ctx.body.children),copy=hero.querySelector('.players-profile-copy'),toolbar=hero.querySelector('.players-profile-toolbar');const nameLine=copy.querySelector('.players-profile-name-line');nameLine.append(history);if(window.DiscoveryPlayerName){const tagHost=n('span','players-profile-tags');nameLine.append(tagHost);window.DiscoveryPlayerName.mountTags(tagHost,window.DiscoveryPlayerName.propsFromRow(player));}toolbar.append(actions);ctx.main.querySelector('.players-hub-header')?.remove();
@@ -392,7 +443,7 @@
     const id=match[1],child=match[2]||'',url=new URL(path,location.origin),view='player-'+id+(child?'-'+child:'-overview');
     const ctx=begin(view,ui('generated.players.player','Player')+' '+id,child?'/players/'+id:'/players');const shellBody=ctx.body;
     try {
-      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
+      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();if(player.mcts){renderMctsProfile(ctx,id,raw.mcts,player);return;}await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
       if(!child) {
         renderProfileOverview(ctx,id,raw,player);
       } else if(child==='matches') {
