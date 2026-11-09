@@ -408,11 +408,22 @@
     const championRows=(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp)]);
     const loadoutRows=(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']);
     const inventoryRows=data.inventory||[],currencyRows=data.currency||[];
+    // MCTS aggregate statistics: career totals per champion x queue, imported from the
+    // same reply that carries the match list. Rates arrive pre-derived by the backend.
+    const statsRows=(data.champion_stats||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.games),num(row.win_rate)==null?'—':rate(num(row.win_rate)),num(row.kda)==null?'—':fmt(num(row.kda),{maximumFractionDigits:2}),mctsNumber(row.kills),mctsNumber(row.deaths),mctsNumber(row.assists)]);
+    // A match already ingested from the public API is linkable; an MCTS-only match
+    // has no scoreboard in PaladinsCat and is shown as plain text.
+    const matchRows=(data.matches||[]).map(row=>{const id=row.match_id;return[row.paladinscat_match?link(String(id),'/matches/'+id):mctsText(id),mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),row.win===true?'Win':row.win===false?'Loss':'—',[mctsNumber(row.kills),mctsNumber(row.deaths),mctsNumber(row.assists)].join(' / '),num(row.duration_seconds)==null?'—':timeDuration(row.duration_seconds)];});
     const capturedLevel=num(data.account_level),level=capturedLevel!=null?capturedLevel:accountLevel(data.xp_level);
     const facts=panel(tr('generated.players.overview','Overview'));
     metrics(facts,[[tr('generated.players.playerId','Player ID'),mctsText(data.player_id??id)],[tr('generated.players.accountLevel','Account level'),level==null?'—':fmt(level)]]);
+    // Mark the id itself as private, not just the header: a copied id must stay
+    // self-describing wherever it is pasted.
+    facts.querySelector('.players-metrics dd')?.append(' ',n('span','players-directory-tag',tr('generated.matches.private','Private')));
     ctx.body.append(facts);
-    if(!championRows.length&&!loadoutRows.length&&!inventoryRows.length&&!currencyRows.length){facts.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
+    if(!championRows.length&&!loadoutRows.length&&!inventoryRows.length&&!currencyRows.length&&!statsRows.length&&!matchRows.length){facts.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
+    if(statsRows.length){const stats=panel(tr('common.playerChampions.title','Champion stats'));table(stats,[tr('generated.champions.name','Champion'),tr('generated.stats.plays','Games'),tr('common.metrics.winRate','Win rate'),tr('common.metrics.kda','KDA'),'K','D','A'],statsRows,tr('common.playerChampions.title','Champion stats'));ctx.body.append(stats);}
+    if(matchRows.length){const matches=panel(tr('generated.players.matches','Matches'));table(matches,[tr('generated.matches.match','Match'),tr('generated.matches.champion','Champion'),tr('generated.matches.result','Result'),'K / D / A',tr('generated.matches.duration','Duration')],matchRows,tr('generated.players.matches','Matches'));ctx.body.append(matches);}
     if(championRows.length){const champions=panel(tr('common.playerChampions.title','Champion stats'));table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP')],championRows,tr('common.playerChampions.title','Champion stats'));ctx.body.append(champions);}
     if(loadoutRows.length){const loadouts=panel(tr('generated.players.loadouts','Loadouts'));table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],loadoutRows,tr('generated.players.loadouts','Loadouts'));ctx.body.append(loadouts);}
     if(inventoryRows.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],inventoryRows.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
