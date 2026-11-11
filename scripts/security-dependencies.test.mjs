@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 // Exercise the dependency owners used by Next image optimization and content parsing.
@@ -10,12 +11,41 @@ const sharp = nextRequire("sharp");
 const matter = require("gray-matter");
 const semver = require("semver");
 
-test("query parser enforces the comma-array limit for bracket keys", () => {
-  const qs = require("qs");
-  assert.ok(semver.gte(require("qs/package.json").version, "6.16.0"));
-  assert.throws(() => qs.parse("a[]=1,2,3,4", {
-    comma: true, arrayLimit: 3, throwOnLimitExceeded: true,
-  }), RangeError);
+test("URI, address and glob consumers use compatible patched overrides", () => {
+  for (const owner of ["eslint", "@eslint/eslintrc", "@eslint/config-array"]) {
+    const consumer = createRequire(require.resolve(owner));
+    assert.ok(semver.satisfies(consumer("minimatch/package.json").version, ">=3.1.4 <4"));
+    assert.equal(consumer("minimatch")("src/example.ts", "**/*.ts"), true);
+    assert.equal(consumer("minimatch")("src/example.js", "**/*.ts"), false);
+  }
+  assert.equal(require("fast-uri/package.json").version, "3.1.9");
+  assert.equal(require("fast-uri").parse("https://example.test/path").host, "example.test");
+  assert.ok(semver.gte(require("ip-address/package.json").version, "10.7.4"));
+  assert.equal(new (require("ip-address").Address6)("2001:db8::1").correctForm(), "2001:db8::1");
+  for (const owner of ["@typescript-eslint/typescript-estree", "@ts-morph/common"]) {
+    const consumer = createRequire(require.resolve(owner));
+    assert.ok(semver.gte(consumer("minimatch/package.json").version, "11.0.1"));
+    assert.equal(consumer("minimatch").minimatch("src/example.ts", "**/*.ts"), true);
+  }
+});
+
+test("query parser is absent or every installed consumer enforces its comma-array limit", () => {
+  // shadcn 4.23 removed the final qs consumer. Verify the locked graph instead
+  // of retaining an otherwise unused parser just to satisfy this regression.
+  const lock = JSON.parse(readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"));
+  const nodes = Object.keys(lock.packages).filter(path => path.endsWith("/qs"));
+  if (!nodes.length) {
+    assert.throws(() => require.resolve("qs"), { code: "MODULE_NOT_FOUND" });
+    return;
+  }
+  for (const path of nodes) {
+    const owner = createRequire(new URL(`../${path}/package.json`, import.meta.url));
+    const qs = owner("./lib/index.js");
+    assert.ok(semver.gte(lock.packages[path].version, "6.16.0"));
+    assert.throws(() => qs.parse("a[]=1,2,3,4", {
+      comma: true, arrayLimit: 3, throwOnLimitExceeded: true,
+    }), RangeError);
+  }
 });
 
 test("runtime dependencies include the advisory fixes", () => {

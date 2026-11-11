@@ -147,8 +147,9 @@ test("PAR response requires a bounded-lived opaque request URI", () => {
 test("OIDC login redirects the initiating POST with 303, never 307", () => {
   const source = readFileSync(new URL("../app/api/auth/oidc/login/route.ts", import.meta.url), "utf8");
   assert.match(source, /NextResponse\.redirect\(buildParAuthorizationUrl\(issuer, clientId, requestUri\), \{ status: 303 \}\)/);
-  assert.match(source, /contentType \? await request\.formData\(\) : new FormData\(\)/);
-  assert.match(source, /catch \{ return new NextResponse\("Invalid form", \{ status: 400 \}\); \}/);
+  assert.match(source, /const form = await readLoginForm\(request\)/);
+  assert.doesNotMatch(source, /request\.formData\(/);
+  assert.match(source, /error instanceof LoginFormError \? error\.status : 400/);
 });
 test("OIDC transaction limits use only the validated Cloudflare client address", () => {
   const source = readFileSync(new URL("../app/api/auth/oidc/login/route.ts", import.meta.url), "utf8");
@@ -215,10 +216,12 @@ test("transitional OIDC cookie sessions can load account data and terminate cent
 });
 test("only the fixed create intent can add the Keycloak registration prompt", () => {
   const route = readFileSync(new URL("../app/api/auth/oidc/login/route.ts", import.meta.url), "utf8");
-  assert.match(route, /requestedIntent !== null && requestedIntent !== "create"/);
+  const admission = readFileSync(new URL("./oidc-login-admission.ts", import.meta.url), "utf8");
+  assert.match(route, /const form = await readLoginForm\(request\)/);
+  assert.match(admission, /intent !== undefined && intent !== "create"/);
   assert.match(route, /if \(intent === "create"\) par\.form\.set\("prompt", "create"\)/);
   assert.match(route, /entries\.length === 1 && entries\[0\]\[0\] === "intent" && entries\[0\]\[1\] === "create"/);
-  assert.match(route, /return startOidc\("create", "\/", clientAddress\(request\)\)/);
+  assert.match(route, /return await startOidc\("create", "\/", clientAddress\(request\)\)/);
 });
 test("login begins server-side and the failure page retries with a plain link", () => {
   const page = readFileSync(new URL("../app/auth/login/page.tsx", import.meta.url), "utf8");
@@ -227,7 +230,7 @@ test("login begins server-side and the failure page retries with a plain link", 
   assert.match(page, /redirect\(href\)/);
   assert.doesNotMatch(page, /useEffect|requestSubmit|<form/);
   assert.match(failure, /<a href=\{href\}/);
-  assert.match(route, /return startOidc\("login", safeReturnPath\(entries\[0\]\[1\]\), clientAddress\(request\)\)/);
+  assert.match(route, /return await startOidc\("login", safeReturnPath\(entries\[0\]\[1\]\), clientAddress\(request\)\)/);
 });
 test("frontend server calls use the pinned internal issuer without changing token issuer validation", () => {
   const login = readFileSync(new URL("../app/api/auth/oidc/login/route.ts", import.meta.url), "utf8");

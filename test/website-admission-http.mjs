@@ -89,7 +89,7 @@ if (process.argv.includes("--serve")) {
       response.end(JSON.stringify({ fixture: true, path }));
     }
   });
-  let child, secretFile, fixtureCreated = false;
+  let child, secretFile, fixtureDirectory;
   try {
     await new Promise(resolve => backend.listen(0, "127.0.0.1", resolve));
     const backendOrigin = `http://127.0.0.1:${backend.address().port}`;
@@ -100,11 +100,13 @@ if (process.argv.includes("--serve")) {
     const origin = `http://127.0.0.1:${port}`;
     const runtimeRoot = resolve(join(repo, "../local/runtime"));
     const fixtureRoot = join(runtimeRoot, "operator-transient");
-    fs.mkdirSync(fixtureRoot, { recursive: true });
-    secretFile = join(fixtureRoot, `admission-http-${pro ? "pro" : "public"}-${process.pid}.fixture`);
+    fs.mkdirSync(fixtureRoot, { recursive: true, mode: 0o700 });
+    // Atomically reserve a private, unpredictable namespace; never check a
+    // predictable file and then mutate/recycle that same pathname.
+    fixtureDirectory = fs.mkdtempSync(join(fixtureRoot, "admission-http-"));
+    secretFile = join(fixtureDirectory, "gate.fixture");
     const secret = "ab".repeat(32); // Disposable fixture, never a production credential.
-    fs.writeFileSync(secretFile, secret, { flag: "wx" });
-    fixtureCreated = true;
+    fs.writeFileSync(secretFile, secret, { flag: "wx", mode: 0o600 });
     child = spawn(process.execPath, [fileURLToPath(import.meta.url), "--serve"], {
       cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, NODE_ENV: "production", PC_FIXTURE_PORT: String(port), PC_FIXTURE_BACKEND: backendOrigin,
@@ -224,12 +226,11 @@ if (process.argv.includes("--serve")) {
     }
     backend.closeAllConnections();
     await new Promise(resolve => backend.close(resolve));
-    if (fixtureCreated) {
-      const target = fs.realpathSync(secretFile);
-      assert.equal(target, resolve(secretFile), "Fixture cleanup requires its exact resolved path");
-      assert.equal(dirname(target), fs.realpathSync(join(repo, "../local/runtime/operator-transient")), "Fixture cleanup must stay within local/runtime");
-      assert.equal(fs.lstatSync(target).isFile(), true, "Only the owned fixture file may be recycled");
-      assert.equal(fs.readFileSync(target, "utf8"), "ab".repeat(32), "Fixture contents changed before recycling");
+    if (fixtureDirectory) {
+      // Recycle only the atomically allocated directory owned by this run.
+      // Do not introduce check/use races by inspecting a file before cleanup.
+      const target = fixtureDirectory;
+      assert.equal(dirname(target), resolve(repo, "../local/runtime/operator-transient"));
       const python = process.platform === "win32" ? "C:/Python314/python.exe" : "python3";
       const recycled = spawnSync(python, ["-B", "-c", "import sys; from send2trash import send2trash; send2trash(sys.argv[1])", target], {
         windowsHide: true, timeout: 10_000, encoding: "utf8",

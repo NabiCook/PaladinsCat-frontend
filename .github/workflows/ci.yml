@@ -43,6 +43,9 @@ jobs:
         run: node -e "const f=require('node:fs');const p=require('./frontend-images.lock.json');if(!/^[a-f0-9]{40}$/.test(p.commit))throw Error('Invalid resource pin');f.appendFileSync(process.env.GITHUB_OUTPUT,'commit='+p.commit+'\n')"
 
       - name: Checkout private frontend resources
+        # Dependabot cannot read Actions secrets. Configure the same read-only
+        # deploy key as a Dependabot secret too; never use pull_request_target
+        # to execute the dependency branch with privileged credentials.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: NabiCook/paladinscat-frontend-images
@@ -70,9 +73,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify OIDC admission security regressions
+        run: npm run test:oidc
+
       - name: Dependency security regression tests
         timeout-minutes: 2
-        run: node --test scripts/security-dependencies.test.mjs scripts/security-braces.test.mjs scripts/security-braces-backport.test.mjs
+        run: npm run test:security-dependencies
 
       - name: Lint
         run: npm run lint

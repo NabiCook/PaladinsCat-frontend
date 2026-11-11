@@ -9,6 +9,7 @@ import { oidcBffServiceHeaders } from "@/lib/oidc-bff-service";
 import { oidcClientSecret } from "@/lib/oidc-client-secret";
 import { oidcFetch } from "@/lib/oidc-transport";
 import { isIP } from "node:net";
+import { admitLoginStart, LoginFormError, readLoginForm } from "@/lib/oidc-login-admission";
 import { assertOperatorConfiguration, isOperatorBff, oidcTransactionCookie } from "@/lib/operator-plane";
 
 /**
@@ -103,14 +104,20 @@ async function performOidcStart(intent: "login" | "create", returnPath: string, 
  */
 export async function POST(request: NextRequest) {
   if (!requireSameOrigin(request.headers.get("origin"), origin())) return new NextResponse("Forbidden", { status: 403 });
-  const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
-  if (contentType && contentType !== "application/x-www-form-urlencoded" && contentType !== "multipart/form-data") return new NextResponse("Unsupported media type", { status: 415 });
-  let form: FormData;
-  try { form = contentType ? await request.formData() : new FormData(); }
-  catch { return new NextResponse("Invalid form", { status: 400 }); }
-  const requestedIntent = form.get("intent");
-  if (requestedIntent !== null && requestedIntent !== "create") return new NextResponse("Invalid OIDC intent", { status: 400 });
-  return startOidc(requestedIntent === "create" ? "create" : "login", safeReturnPath(String(form.get("return") || "/")), clientAddress(request));
+  const release = admitLoginStart();
+  if (!release) return loginStartLimited();
+  try {
+    const form = await readLoginForm(request);
+    return await startOidc(form.intent, safeReturnPath(form.returnPath), clientAddress(request));
+  } catch (error) {
+    return new NextResponse("Invalid login form", { status: error instanceof LoginFormError ? error.status : 400, headers: { "Cache-Control": "private, no-store" } });
+  } finally { release(); }
+}
+
+function loginStartLimited() {
+  return new NextResponse("Too many login starts. Please try again shortly.", {
+    status: 429, headers: { "Cache-Control": "private, no-store", "Retry-After": "5" },
+  });
 }
 
 /**
@@ -119,9 +126,14 @@ export async function POST(request: NextRequest) {
  * I/O types: `request: NextRequest -> Promise<NextResponse<unknown>>`.
  */
 export async function GET(request: NextRequest) {
-  const entries = [...request.nextUrl.searchParams.entries()];
-  if (entries.length === 0) return startOidc("login", "/", clientAddress(request));
-  if (entries.length === 1 && entries[0][0] === "return") return startOidc("login", safeReturnPath(entries[0][1]), clientAddress(request));
-  if (entries.length === 1 && entries[0][0] === "intent" && entries[0][1] === "create") return startOidc("create", "/", clientAddress(request));
-  return new NextResponse("Not found", { status: 404 });
+  const release = admitLoginStart();
+  if (!release) return loginStartLimited();
+  try {
+    if (request.nextUrl.search.length > 2048) return new NextResponse("Not found", { status: 404 });
+    const entries = [...request.nextUrl.searchParams.entries()];
+    if (entries.length === 0) return await startOidc("login", "/", clientAddress(request));
+    if (entries.length === 1 && entries[0][0] === "return") return await startOidc("login", safeReturnPath(entries[0][1]), clientAddress(request));
+    if (entries.length === 1 && entries[0][0] === "intent" && entries[0][1] === "create") return await startOidc("create", "/", clientAddress(request));
+    return new NextResponse("Not found", { status: 404 });
+  } finally { release(); }
 }

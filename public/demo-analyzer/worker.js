@@ -1,7 +1,11 @@
 // Minimal file/WASM bridge; all demo reconstruction is performed by Rust.
 import init, { analyze_demo, analysis_timings } from "./pkg/paladins_demo_analyzer.js?v=metrics11-map59-documents-5";
 
-self.onmessage = async ({ data: { file } }) => {
+self.onmessage = async (event) => {
+  // This is a dedicated Worker, not a Window receiver: owner messages have no
+  // Window/MessagePort source. Reject cross-window reuse and unexpected origins.
+  if (event.source !== null || (event.origin !== "" && event.origin !== self.location.origin)) return;
+  const file = event.data?.file;
   let userMessage = "Could not analyze this recording. Try another .demo file.";
   try {
     if (!(file instanceof File) || file.size > 64 * 1024 * 1024) {
