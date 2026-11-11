@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  * Returns the stable key map consumed by localized error messages.
  * refs: none
  */
-export const PLAYERS_ERROR_KEYS = {
+const PLAYERS_ERROR_KEYS = {
   overviewConfigUnavailable: "generated.players.overviewConfigUnavailable",
   overviewUnavailable: "generated.players.overviewUnavailable",
 } as const;

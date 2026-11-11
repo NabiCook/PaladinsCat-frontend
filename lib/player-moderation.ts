@@ -1,7 +1,7 @@
 /**
- * Keep fields already supplied by a canonical page payload over a fallback lookup. · refs: none
- * Calls player moderation APIs and maps review data.
- * refs: none
+ * Read fresh player moderation and map every public review field.
+ * Coalesce queued/running badge reads only; never retain settled player results.
+ * refs: endpoints /players/bulk · /player-ext/private/bulk
  */
 /**
  * Define player moderation as `{ cheater: boolean; exploiter: boolean; susCount: number; dropper: boolean; dropperVoteCount: number; afkWintrade: boolean; afkWintradeVoteCount: number; boosted: boolean; boostedMatchCount: number; altAccount: boolean; altAccountVoteCount: number; automaticAfk: boolean; automaticAfkCount: number; wallShooterCount: number; masterFeedingCount: number; tankDiffCount: number; supportDiffCount: number; dpsDiffCount: number; flankDiffCount: number; noobCount: number; hypercarryCount: number; verified: boolean; }`.
@@ -60,19 +60,18 @@ const EMPTY: PlayerModeration = {
   customTag: null,
   customTagColor: null,
 };
-const TTL_MS = 5 * 60 * 1000;
-const cache = new Map<number, { value: PlayerModeration; expiresAt: number }>();
 const pending = new Map<number, Array<(value: PlayerModeration) => void>>();
+const inFlight = new Map<number, Array<(value: PlayerModeration) => void>>();
 let timer: ReturnType<typeof setTimeout> | null = null;
 
-/** Drop this player's cached badges after their tag preferences change.
+/** Prevent post-preference-edit callers from joining pre-edit reads; settle existing readers normally.
  *
  * I/O: in (playerId: string | number) -> out void
  *
  * refs: none
  */
 export function invalidatePlayerModeration(playerId: string | number): void {
-  cache.delete(Number(playerId));
+  inFlight.delete(Number(playerId));
 }
 
 
@@ -201,13 +200,11 @@ export async function fetchPlayerModerationBatch(playerIds: Array<string | numbe
   );
   if (!response.ok) throw new Error(MODERATION_ERROR_KEYS.unableToLoadBadges);
   const json = await response.json() as { data?: { players?: BulkPlayer[] }; players?: BulkPlayer[] };
-  const expiresAt = Date.now() + TTL_MS;
   const results = new Map<number, PlayerModeration>();
   for (const player of moderationRows(json)) {
     const id = Number(player.id);
     const value = moderationFromRow(player);
     results.set(id, value);
-    cache.set(id, { value, expiresAt: Math.min(expiresAt, player.automatic_tag_expires_at ?? expiresAt) });
   }
   return results;
 }
@@ -267,43 +264,51 @@ async function flush() {
   timer = null;
   const ids = [...pending.keys()].slice(0, 50);
   if (ids.length === 0) return;
+  const readers = new Map<number, Array<(value: PlayerModeration) => void>>();
+  for (const id of ids) {
+    const resolvers = pending.get(id)!;
+    readers.set(id, resolvers);
+    inFlight.set(id, resolvers);
+    pending.delete(id);
+  }
+  if (pending.size > 0 && !timer) timer = setTimeout(() => void flush(), 0);
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/players/bulk?ids=${ids.join(",")}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/players/bulk?ids=${ids.join(",")}`, { cache: "no-store" });
     if (!response.ok) throw new Error(MODERATION_ERROR_KEYS.unableToLoadBadges);
     const json = await response.json() as { data?: { players?: BulkPlayer[] }; players?: BulkPlayer[] };
     const results = new Map(moderationRows(json).map((player) => [Number(player.id), moderationFromRow(player)]));
-    const expiresAt = Date.now() + TTL_MS;
     for (const id of ids) {
       const value = results.get(id) ?? EMPTY;
-      const expiry = moderationRows(json).find((row) => Number(row.id) === id)?.automatic_tag_expires_at;
-      cache.set(id, { value, expiresAt: Math.min(expiresAt, expiry ?? expiresAt) });
-      const resolvers = pending.get(id) ?? [];
-      pending.delete(id);
+      const resolvers = readers.get(id)!;
+      if (inFlight.get(id) === resolvers) inFlight.delete(id);
       resolvers.forEach((resolve) => resolve(value));
     }
   } catch {
     for (const id of ids) {
-      const resolvers = pending.get(id) ?? [];
-      pending.delete(id);
+      const resolvers = readers.get(id)!;
+      if (inFlight.get(id) === resolvers) inFlight.delete(id);
       resolvers.forEach((resolve) => resolve(EMPTY));
     }
   }
 
-  if (pending.size > 0) timer = setTimeout(() => void flush(), 0);
+  if (pending.size > 0 && !timer) timer = setTimeout(() => void flush(), 0);
 }
 
 /**
- * Batches visible player-name status lookups and retains each result for five minutes. · refs: none
+ * Batch visible badge lookups and join only reads that have not settled. · refs: /players/bulk
  * I/O types: `playerId: string | number -> Promise<PlayerModeration>`.
  */
 export function fetchPlayerModeration(playerId: string | number): Promise<PlayerModeration> {
   const id = Number(playerId);
   if (!Number.isSafeInteger(id) || id <= 0) return Promise.resolve(EMPTY);
-  const cached = cache.get(id);
-  if (cached && cached.expiresAt > Date.now()) return Promise.resolve(cached.value);
 
   return new Promise((resolve) => {
+    const running = inFlight.get(id);
+    if (running) {
+      running.push(resolve);
+      return;
+    }
     const resolvers = pending.get(id) ?? [];
     resolvers.push(resolve);
     pending.set(id, resolvers);

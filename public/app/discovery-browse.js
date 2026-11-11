@@ -115,7 +115,7 @@
   }
 
   let scoreboardModule;
-  function loadScoreboard() { return scoreboardModule ||= import('./discovery-scoreboard.js?v=11').catch(error => { scoreboardModule = null; throw error; }); }
+  function loadScoreboard() { return scoreboardModule ||= import('./discovery-scoreboard.js?v=12').catch(error => { scoreboardModule = null; throw error; }); }
 
   async function matchDetail(path, match) {
     const id = match[1], view = 'match-detail-' + id, host = A.createPage(view,message('generated.players.matchValue1','Match {value1}',{value1:id}),'Matches'); window.DiscoveryScoreboard?.destroy(host.querySelector('[data-scoreboard-root]')); heading(host,message('generated.players.matchValue1','Match {value1}',{value1:id})); host.querySelector('h1').classList.add('dashboard-match-heading'); const output = el('div'); const actions = el('div','dashboard-match-actions'); const share = el('button','dashboard-share-link',message('discovery.match.share','Copy link')); share.type='button'; share.setAttribute('aria-live','polite'); share.addEventListener('click', async () => { const url = location.origin + '/matches/' + id; try { await navigator.clipboard.writeText(url); } catch { const box = el('input','dashboard-share-fallback'); box.value = url; box.readOnly = true; host.append(box); box.select(); try { document.execCommand('copy'); } catch {} box.remove(); } share.textContent = message('discovery.match.share.copied','Link copied'); setTimeout(() => { share.textContent = message('discovery.match.share','Copy link'); }, 2000); }); actions.append(share); host.append(actions, output); A.open(view);
