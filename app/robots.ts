@@ -1,14 +1,14 @@
-/**
- * Return crawler rules allowing public pages while excluding admin, authentication, search, and player-stat routes, together with the site sitemap URL.
- * refs: none
+/** Advertise both public sitemaps while preserving existing crawler exclusions.
+ * Robots directives never replace account/verified admission or block SPA resources.
+ * refs: doc: 06-reference-seo · see: lib/sitemap-data.ts
  */
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 /**
- * Return crawler rules allowing public pages while excluding admin, authentication, search, and player-stat routes, together with the site sitemap URL.
- * refs: none
- * I/O types: `none -> MetadataRoute.Robots`.
+ * Return existing crawl exclusions and both absolute public sitemap URLs.
+ * I/O: none -> MetadataRoute.Robots; no access changes or side effects.
+ * refs: doc: 06-reference-seo · endpoints: /robots.txt
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -25,6 +25,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/sitemap-google.xml`],
   };
 }

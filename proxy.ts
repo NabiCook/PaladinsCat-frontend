@@ -1,6 +1,6 @@
-/** proxy component/module.
- * Owns the UI behavior implemented in this file; data and side effects remain within its existing boundaries.
- * refs: none
+/** Own website admission, existing access guards and SPA document delivery.
+ * SEO only changes public HTML metadata; account/API entitlements remain unchanged.
+ * refs: doc: 06-reference-seo · see: lib/verified-access.ts
  */
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "node:fs";
@@ -10,6 +10,7 @@ import { serverApiBase } from "./lib/server-api";
 import { anonymousPresenceRequestAllowed } from "./lib/anonymous-presence-gate";
 import { hasProAccess } from "./lib/pro-surface";
 import { accountSessionCookie, assertOperatorConfiguration, isOperatorBff, operatorPathAllowed } from "./lib/operator-plane";
+import { renderPublicSpaHtml } from "./lib/spa-seo";
 
 const ACCESS_POLICY_PATH = "/prototype/access-policy";
 // The dashboard ships as a standalone static document under public/app. Every
@@ -115,6 +116,23 @@ function markProtectedResponse(response: NextResponse): NextResponse {
   return response;
 }
 
+/** Deliver the unchanged SPA with server-side SEO for known public content.
+ * I/O: request + forwarded headers -> Promise<NextResponse>; reads the shell.
+ * Unknown/protected pages retain the noindex rewrite; existing guards run first.
+ * refs: doc: 06-reference-seo · see: lib/spa-seo.ts
+ */
+async function spaDocumentResponse(request: NextRequest, headers?: Headers): Promise<NextResponse> {
+  const html = await renderPublicSpaHtml(request.nextUrl.pathname);
+  if (html === null) {
+    return markProtectedResponse(NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
+      request: { headers: headers ?? request.headers },
+    }));
+  }
+  return new NextResponse(request.method === "HEAD" ? null : html, {
+    headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "index, follow" },
+  });
+}
+
 /**
  * Content-Security-Policy with a per-request nonce.
  *
@@ -132,7 +150,7 @@ function markProtectedResponse(response: NextResponse): NextResponse {
  *
  * NOTE: This file was `middleware.ts` until the Next.js 16 rename to the
  * `proxy` file convention (https://nextjs.org/docs/messages/middleware-to-proxy).
- * refs: none
+ * refs: doc: 06-reference-seo · see: lib/verified-access.ts
  */
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -187,6 +205,10 @@ export async function proxy(request: NextRequest) {
     // their gateway/API owners. Public guest/Pro promotion never runs here.
     return response;
   }
+  // Exact crawler endpoints must never become the HTML shell, even with an
+  // HTML Accept header or no admission secret. Keep operator isolation above.
+  // refs: doc: 06-reference-seo · endpoints: /sitemap.xml · /sitemap-google.xml
+  if (path === "/sitemap.xml" || path === "/sitemap-google.xml") return NextResponse.next();
   const api = websiteApiPath(path);
   const protectedPage = isVerifiedOnlyPath(decodedPath) || isAccountOnlyPath(decodedPath);
   // Moderated cheater/exploit data must not be served on the public surface.
@@ -255,7 +277,10 @@ export async function proxy(request: NextRequest) {
     if (check.restricted) return accessRedirect(request, ACCESS_POLICY_PATH);
   }
   if (process.env.NODE_ENV === "development") {
-    return spaDocument ? NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url)) : NextResponse.next();
+    const response = spaDocument ? await spaDocumentResponse(request) : NextResponse.next();
+    if (spaDocument) response.headers.set("Cache-Control", "private, no-store");
+    if (path === SPA_DOCUMENT) markProtectedResponse(response);
+    return response;
   }
   const verifiedOnly = isVerifiedOnlyPath(decodedPath);
   if (protectedPage) {
@@ -403,9 +428,7 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set("Content-Security-Policy", csp);
 
   const response = spaDocument
-    ? NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
-        request: { headers: requestHeaders },
-      })
+    ? await spaDocumentResponse(request, requestHeaders)
     : NextResponse.next({
         request: { headers: requestHeaders },
       });
@@ -421,7 +444,7 @@ export async function proxy(request: NextRequest) {
       ? "public, max-age=300, stale-while-revalidate=86400"
       : "private, no-store",
   );
-  if (protectedPage) markProtectedResponse(response);
+  if (protectedPage || path === SPA_DOCUMENT) markProtectedResponse(response);
   if (!admitted && request.method === "GET" && request.headers.get("accept")?.includes("text/html")) {
     response.cookies.set(GUEST_COOKIE, issueGuest(secret, origin), {
       httpOnly: true, secure: isSecure, sameSite: "lax", path: "/", maxAge: GUEST_TTL_SECONDS,
@@ -438,6 +461,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Cover both API aliases as well as documents; static assets need no guest cookie.
   matcher: [
-    "/((?!_next/static|_next/image|_next/webpack-hmr|images/|drafts/|fonts/|locales/|robots.txt|sitemap\\.xml|ads\\.txt$|manifest\\.webmanifest).*)",
+    "/((?!_next/static|_next/image|_next/webpack-hmr|images/|drafts/|fonts/|locales/|robots.txt|sitemap(?:-google)?\\.xml$|ads\\.txt$|manifest\\.webmanifest).*)",
   ],
 };
