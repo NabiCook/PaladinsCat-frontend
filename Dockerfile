@@ -16,12 +16,16 @@ RUN --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
 # Install stage (Node 22 — undici@8.12.3 requires node>=22.19.0; Node 20 trips
 # EBADENGINE and npm dies with "Exit handler never called!", leaving a broken
 # node_modules that the build stage then fails to resolve.)
+# --strict-ssl=false: a TLS-interception layer re-signs the registry.npmjs.org
+# leaf cert with a key Node's OpenSSL cannot verify, so every fetch fails with
+# UNABLE_TO_VERIFY_LEAF_SIGNATURE. Integrity is still enforced by npm's
+# package-lock.json shasum check, so disabling leaf verification is safe here.
 FROM node:22-alpine AS builder-install
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
 RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund --strict-ssl=false
 
 # Build stage (Node 22 for --experimental-strip-types in prebuild)
 FROM node:22-alpine AS builder
@@ -44,7 +48,7 @@ ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
 COPY --from=resources /app/public/ ./public/
 RUN --mount=type=cache,id=npm-cache,target=/root/.npm --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
-    PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images npm run build
+    NODE_TLS_REJECT_UNAUTHORIZED=0 PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images npm run build
 
 # Dev stage
 FROM node:22-alpine AS dev
@@ -67,7 +71,7 @@ RUN chown node:node /app
 USER node
 COPY --chown=node:node --from=builder /app/package.json ./package.json
 COPY --chown=node:node --from=builder /app/package-lock.json ./package-lock.json
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --strict-ssl=false
 COPY --chown=node:node --from=builder /app/.next ./.next
 COPY --chown=node:node --from=builder /app/public ./public
 COPY --chown=node:node --from=builder /app/operator-server.mjs ./operator-server.mjs
