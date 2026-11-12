@@ -6,7 +6,7 @@
 ARG MODE=prod
 
 # Pinned private resource assembly; no repository credentials enter this context.
-FROM node:20-alpine AS resources
+FROM node:22-alpine AS resources
 WORKDIR /app
 COPY frontend-images.lock.json ./
 COPY scripts/prepare-frontend-images.mjs ./scripts/
@@ -14,7 +14,7 @@ RUN --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
     node scripts/prepare-frontend-images.mjs --source /frontend-images
 
 # Build stage (shared)
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_SERVER_API_URL=http://backend-rust-api:3005
@@ -28,7 +28,7 @@ ENV NEXT_PUBLIC_LOCALE_BASE_URL=${NEXT_PUBLIC_LOCALE_BASE_URL}
 ENV NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED=${NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED}
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx npm@10.9.2 ci --no-audit --no-fund
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
@@ -37,7 +37,7 @@ RUN --mount=type=cache,id=npm-cache,target=/root/.npm --mount=type=bind,from=fro
     PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images npm run build
 
 # Dev stage
-FROM node:20-alpine AS dev
+FROM node:22-alpine AS dev
 WORKDIR /app
 COPY package.json ./
 COPY vendor ./vendor
@@ -51,7 +51,7 @@ ENV PALADINSCAT_FRONTEND_IMAGES_ROOT=/frontend-images
 CMD ["sh", "-c", "npm install && npm run dev -- -H 0.0.0.0"]
 
 # Prod runtime
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 RUN chown node:node /app
 USER node
