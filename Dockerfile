@@ -28,7 +28,7 @@ ENV NEXT_PUBLIC_LOCALE_BASE_URL=${NEXT_PUBLIC_LOCALE_BASE_URL}
 ENV NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED=${NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED}
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
-RUN apk add --no-cache ca-certificates && npm install -g npm@10.9.2 && npm ci
+RUN npm ci --foreground-scripts --no-audit --no-fund
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
