@@ -127,6 +127,10 @@ jobs:
       - name: Install Chromium for auth UI tests
         run: npx playwright install --with-deps chromium
 
+      - name: Evidence page browser regressions
+        timeout-minutes: 3
+        run: node --test lib/discovery-evidence.test.mjs
+
       - name: Auth UI browser tests
         env:
           PALADINSCAT_WEBSITE_GATE_SECRET_FILE: ${{ runner.temp }}/auth-ui-gate-key
