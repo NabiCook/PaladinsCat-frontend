@@ -13,8 +13,10 @@ COPY scripts/prepare-frontend-images.mjs ./scripts/
 RUN --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
     node scripts/prepare-frontend-images.mjs --source /frontend-images
 
-# Install stage (Node 20 avoids npm exit handler bug)
-FROM node:20-alpine AS builder-install
+# Install stage (Node 22 — undici@8.12.3 requires node>=22.19.0; Node 20 trips
+# EBADENGINE and npm dies with "Exit handler never called!", leaving a broken
+# node_modules that the build stage then fails to resolve.)
+FROM node:22-alpine AS builder-install
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
