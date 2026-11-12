@@ -18,7 +18,8 @@ FROM node:20-alpine AS builder-install
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund
+RUN --mount=type=cache,id=npm-cache,target=/root/.npm \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund
 
 # Build stage (Node 22 for --experimental-strip-types in prebuild)
 FROM node:22-alpine AS builder
