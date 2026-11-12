@@ -28,7 +28,7 @@ ENV NEXT_PUBLIC_LOCALE_BASE_URL=${NEXT_PUBLIC_LOCALE_BASE_URL}
 ENV NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED=${NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED}
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
-RUN npm ci
+RUN npm install -g npm@latest && npm ci
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
