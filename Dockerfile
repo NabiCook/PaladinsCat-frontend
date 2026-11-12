@@ -13,7 +13,14 @@ COPY scripts/prepare-frontend-images.mjs ./scripts/
 RUN --mount=type=bind,from=frontend-images,target=/frontend-images,ro \
     node scripts/prepare-frontend-images.mjs --source /frontend-images
 
-# Build stage (shared)
+# Install stage (Node 20 avoids npm exit handler bug)
+FROM node:20-alpine AS builder-install
+WORKDIR /app
+COPY package.json package-lock.json tsconfig.json ./
+COPY vendor ./vendor
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund
+
+# Build stage (Node 22 for --experimental-strip-types in prebuild)
 FROM node:22-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=/api
@@ -26,9 +33,9 @@ ENV NEXT_SERVER_API_URL=${NEXT_SERVER_API_URL}
 ENV NEXT_BUILD_CPUS=${NEXT_BUILD_CPUS}
 ENV NEXT_PUBLIC_LOCALE_BASE_URL=${NEXT_PUBLIC_LOCALE_BASE_URL}
 ENV NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED=${NEXT_PUBLIC_IDENTITY_CUTOVER_ENABLED}
+COPY --from=builder-install /app/node_modules ./node_modules
 COPY package.json package-lock.json tsconfig.json ./
 COPY vendor ./vendor
-RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --ignore-scripts --no-audit --no-fund
 COPY locales /locales
 ENV PALADINSCAT_LOCALES_REPO=/locales
 COPY . .
