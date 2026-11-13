@@ -103,39 +103,67 @@
     return JSON.parse(element.dataset.discoveryI18n).map(binding => english[binding.key] || binding.fallback || '').join(' ');
   }
   const catalogs = new Map();
-  let modulesPromise;
-  const draftMessages = fetch('/app/discovery-ui-messages.json?localizationAudit=1&saveLink=1&scrollTop=1&v=surgical-4&match=1&plays=1',{signal:AbortSignal.timeout(10000)}).then(response => response.ok ? response.json() : {}).catch(() => ({}));
+  let modulesPromise, draftPromise, retryTimer;
+  function draftMessages() {
+    if (!draftPromise) draftPromise = (async () => {
+      const response = await fetch('/app/discovery-ui-messages.json?localizationAudit=1&saveLink=1&scrollTop=1&v=surgical-4&match=1&plays=1',{signal:AbortSignal.timeout(10000)});
+      if (!response.ok) throw Error('Draft messages unavailable');
+      const data = await response.json();
+      if (!data || typeof data !== 'object' || Array.isArray(data) || !Object.hasOwn(data,'en') ||
+        Object.values(data).some(part => !part || typeof part !== 'object' || Array.isArray(part) ||
+          Object.values(part).some(value => typeof value !== 'string' || value.length > 1000))) throw Error('Invalid draft messages');
+      return {messages:data,complete:true};
+    })().catch(() => { draftPromise = undefined; return {messages:{},complete:false}; });
+    return draftPromise;
+  }
   async function catalog(code) {
     if (!catalogs.has(code)) catalogs.set(code,(async () => {
-      modulesPromise ||= fetch('/locales/modules.json',{signal:AbortSignal.timeout(10000)}).then(response => { if (!response.ok) throw Error('Locale modules unavailable'); return response.json(); });
+      modulesPromise ||= fetch('/locales/modules.json',{signal:AbortSignal.timeout(10000)}).then(response => { if (!response.ok) throw Error('Locale modules unavailable'); return response.json(); }).catch(error => { modulesPromise = undefined; throw error; });
       const modules = await modulesPromise;
       const ordered = ['generated/ui',...modules.filter(module => module !== 'generated/ui')];
+      let complete = true;
       const parts = await Promise.all(ordered.map(async module => {
         try {
           const response = await fetch('/locales/'+encodeURIComponent(code)+'/'+module+'.json',{signal:AbortSignal.timeout(10000)});
-          if (!response.ok) return {};
+          if (!response.ok) throw Error('Locale module unavailable');
           const data = await response.json();
+          if (!data || typeof data !== 'object' || Array.isArray(data)) throw Error('Invalid locale module');
           return Object.fromEntries(Object.entries(data).filter(([key,value]) => typeof value === 'string' && value.length <= 1000 && (code === 'en' || Object.hasOwn(english,key))));
-        } catch { return {}; }
+        } catch { complete = false; return {}; }
       }));
-      return Object.assign({},...parts);
+      // A partial catalog can render usable labels, but cannot become a permanent cache hit.
+      if (!complete) catalogs.delete(code);
+      return {messages:Object.assign({},...parts),complete};
     })().catch(error => { catalogs.delete(code); throw error; }));
     return catalogs.get(code);
   }
-  async function load(initial = false) {
+  async function load(initial = false, retry = false) {
+    clearTimeout(retryTimer);
+    retryTimer = undefined;
     const seq = ++generation, selected = language;
+    let needsRetry = false;
     try {
-      const [base,extra] = await Promise.all([catalog('en'),draftMessages]);
-      english = {...base,...(extra.en || {})};
-      const translated = selected === 'en' ? {} : await catalog(selected);
+      const [base,draft] = await Promise.all([catalog('en'),draftMessages()]);
       if (seq !== generation) return;
-      messages = {...translated,...Object.fromEntries(Object.entries(extra[selected] || {}).filter(([key,value]) => Object.hasOwn(english,key) && typeof value === 'string' && value.length <= 1000))};
-    } catch { if (seq !== generation) return; messages = {}; }
+      const extra = draft.messages;
+      english = {...english,...base.messages,...(extra.en || {})};
+      // Target messages are filtered against English; wait for its complete key set.
+      const translated = selected === 'en' ? {messages:{},complete:true}
+        : base.complete ? await catalog(selected) : {messages:{},complete:false};
+      if (seq !== generation) return;
+      messages = {...translated.messages,...Object.fromEntries(Object.entries(extra[selected] || {}).filter(([key,value]) => Object.hasOwn(english,key) && typeof value === 'string' && value.length <= 1000))};
+      needsRetry = !base.complete || !translated.complete || !draft.complete;
+    } catch { if (seq !== generation) return; messages = {}; needsRetry = true; }
     if (initial && document.readyState === 'loading') await new Promise(resolve => document.addEventListener('DOMContentLoaded',resolve,{once:true}));
     if (seq !== generation) return;
     document.documentElement.lang = language;
     updateLabels();
     document.dispatchEvent(new CustomEvent('discovery:locale-changed',{detail:{locale:language,initial}}));
+    // Recover a transient resource failure once without an unbounded retry loop.
+    if (needsRetry && !retry) retryTimer = setTimeout(() => {
+      retryTimer = undefined;
+      if (seq === generation) void load(false,true);
+    },1000);
   }
   async function setLocale(code) {
     if (!valid(code)) return;
