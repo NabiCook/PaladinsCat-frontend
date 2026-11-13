@@ -26,6 +26,13 @@ jobs:
     steps:
       - name: Validate the immutable platform coordinate
         run: python3 -c "import os,re; assert re.fullmatch('[a-f0-9]{40}',os.environ['PLATFORM_REVISION'])"
+      - name: Match the commissioned production image store
+        uses: docker/setup-docker-action@3f1ab1ab0e29231562e4db4ca600c1a49653bac6 # v5
+        with:
+          version: v29.9.2
+          set-host: true
+          daemon-config: |
+            {"features":{"containerd-snapshotter":true}}
       - name: Checkout the exact component and locales
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
