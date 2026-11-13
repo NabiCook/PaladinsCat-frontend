@@ -72,6 +72,10 @@ USER node
 COPY --chown=node:node --from=builder /app/package.json ./package.json
 COPY --chown=node:node --from=builder /app/package-lock.json ./package-lock.json
 RUN npm ci --omit=dev --strict-ssl=false
+# Dependency installation is complete; the runtime starts its pinned Next CLI directly.
+USER root
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+USER node
 COPY --chown=node:node --from=builder /app/.next ./.next
 COPY --chown=node:node --from=builder /app/public ./public
 COPY --chown=node:node --from=builder /app/operator-server.mjs ./operator-server.mjs
@@ -79,7 +83,7 @@ COPY --chown=node:node --from=builder /app/lib/operator-plane.ts ./lib/operator-
 COPY --chown=node:node --from=builder /app/lib/operator-transport.mjs ./lib/operator-transport.mjs
 COPY --chown=node:node --from=builder /app/lib/operator-server-core.mjs ./lib/operator-server-core.mjs
 EXPOSE 3000
-CMD ["npx", "next", "start", "-p", "3000"]
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-p", "3000"]
 
 # Select final stage based on MODE
 FROM dev AS dev-final
