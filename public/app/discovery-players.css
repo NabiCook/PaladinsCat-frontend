@@ -39,7 +39,9 @@
 .players-state .reference-filter { margin-top:10px; }
 .players-subnav,.players-controls { display:flex; flex-wrap:wrap; align-items:end; gap:10px; margin-bottom:20px; }
 .players-subnav .reference-filter { text-decoration:none; }
+.players-review-actions { display:flex; flex:0 1 auto; flex-wrap:wrap; gap:10px; max-width:100%; }
 .players-field { display:grid; flex:1 1 200px; min-width:0; gap:7px; color:var(--secondary); font-size:12px; }
+.players-field[hidden] { display:none; }
 .players-field :is(input,select,textarea) { width:100%; min-height:42px; min-width:0; padding:9px 12px; border:1px solid var(--pc-glass-border); border-radius:10px; background:var(--pc-glass-bg); color:var(--text); font:inherit; font-size:14px; color-scheme:dark; }
 .players-field textarea { resize:vertical; line-height:1.6; }
 .players-view .players-panel { min-width:0; margin:0 0 20px; padding:20px; border:1px solid var(--pc-glass-border); border-radius:14px; background:var(--pc-glass-bg-subtle); -webkit-backdrop-filter:var(--pc-glass-blur-subtle); backdrop-filter:var(--pc-glass-blur-subtle); }
@@ -65,6 +67,8 @@
 .players-card-grid .players-panel { margin:0; }
 .players-note { margin:0 0 18px; padding:14px 16px; border-left:3px solid var(--accent); border-radius:12px; color:var(--secondary); font-size:14px; line-height:1.6; background:var(--pc-glass-bg-subtle); }
 .players-form { display:grid; gap:18px; max-width:800px; }
+.players-view .players-evidence-form { padding:24px; border-radius:16px; overflow-wrap:anywhere; }
+@media(max-width:639px) { .players-view .players-evidence-form { padding:16px; border-radius:14px; } }
 .players-evidence-media { display:block; width:100%; max-height:600px; margin-top:16px; object-fit:contain; border-radius:12px; }
 .players-evidence-embed { display:block; width:100%; min-height:280px; aspect-ratio:16/9; border:0; margin-top:16px; border-radius:12px; }
 .players-evidence-description { white-space:pre-wrap; }
