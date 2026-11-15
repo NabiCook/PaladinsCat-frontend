@@ -25,7 +25,7 @@
     host.classList.add('pc-ad-slot');host.dataset.adPlacement=name;host.setAttribute('aria-label','Advertisement');
     const canvas=make('div','pc-ad-canvas'),creative=make('div','pc-ad-creative'),placeholder=make('div','pc-ad-placeholder');
     creative.append(placeholder);canvas.append(creative);host.append(canvas);
-    const slot={host,name,creative,placeholder,unit:null,cancel:null,token:0,timeout:0,visible:false,active:false,failed:false,instance:'',state:'idle'};
+    const slot={host,name,creative,placeholder,unit:null,token:0,timeout:0,visible:false,active:false,failed:false,state:'idle'};
     slots.push(slot);return slot;
   }
   const homeHost=document.querySelector('[data-ad-placement="home-right"]'),heroHost=document.querySelector('[data-ad-placement="home-hero"]'),searchHost=document.querySelector('[data-ad-placement="search-rail"]');
@@ -35,7 +35,7 @@
   const spacer=make('div','pc-ad-spacer');spacer.hidden=true;spacer.setAttribute('aria-hidden','true');workspace.append(dockHost,spacer);
   function fallback(slot,message){slot.placeholder.replaceChildren();const line=make('span');line.textContent=message;slot.placeholder.append(line);slot.placeholder.hidden=false;}
   function teardown(slot){
-    clearTimeout(slot.timeout);slot.token=0;slot.cancel?.();slot.cancel=null;
+    clearTimeout(slot.timeout);slot.token=0;
     slot.creative.replaceChildren(slot.placeholder);slot.state='idle';
   }
   function choose(slot,unit,active){
@@ -76,13 +76,17 @@
     slot.timeout=setTimeout(()=>{if(slot.token===token)fail(slot);},15000);
     writer().then(postscribe=>{
       if(slot.token!==token||!slot.active)return;
-      slot.cancel=postscribe(slot.creative,function(doc){
+      // Postscribe 2.0.8's active-stream cancel calls an unavailable abort API.
+      // Detach this attempt on teardown; stale queued writes then become no-ops.
+      const attempt=make('div');slot.creative.replaceChildren(slot.placeholder,attempt);
+      postscribe(attempt,function(doc){
+        if(slot.token!==token||!slot.active)return;
         window.atOptions={key:unit.key,format:'iframe',height:unit.h,width:unit.w,params:{}};
         doc.write('<script src="https://bauval.org/22/'+unit.key+'"></script>');
       },{
-        done(){if(slot.token!==token)return;slot.cancel=null;const frame=slot.creative.querySelector('iframe');if(!frame){fail(slot);return;}clearTimeout(slot.timeout);slot.placeholder.hidden=true;slot.state='loaded';slot.host.dataset.adState='loaded';},
+        done(){if(slot.token!==token)return;const frame=attempt.querySelector('iframe');if(!frame){fail(slot);return;}clearTimeout(slot.timeout);slot.placeholder.hidden=true;slot.state='loaded';slot.host.dataset.adState='loaded';},
         error(){if(slot.token===token)fail(slot);}
-      }).cancel;
+      });
     }).catch(()=>{if(slot.token===token)fail(slot);});
   }
   function fail(slot){
@@ -99,8 +103,8 @@
     const available=phone?docWidth-16:Math.min(work.width,max)-2*gutter;
     const format=units.slice(0,3).find(u=>u.w<=available-2),dockWidth=format?format.w+2:0;
     const left=phone?(docWidth-dockWidth)/2:Math.max(0,work.left)+(work.width-dockWidth)/2;
-    const nav=phone&&rail&&getComputedStyle(rail).position==='fixed'?rail.getBoundingClientRect():null;
-    const bottom=nav?Math.max(8,window.innerHeight-nav.top+8):16;
+    const bottom=16;
+    dockHost.dataset.edge=phone?'top':'bottom';
     set('--pc-ad-dock-left',left+'px');set('--pc-ad-dock-width',dockWidth+'px');set('--pc-ad-dock-bottom',bottom+'px');
     const hasDock=Boolean(format&&!dockDismissed);
     const keyboard=window.visualViewport&&window.visualViewport.height<window.innerHeight*.75&&document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
@@ -108,7 +112,7 @@
     dockHost.dataset.suspended=String(suspended);dockHost.inert=suspended;
     choose(dock,format,hasDock);
     const dockHeight=hasDock?dockHost.getBoundingClientRect().height:0;
-    set('--pc-ad-dock-height',dockHeight+'px');set('--pc-ad-dock-space',hasDock?(dockHeight+32)+'px':'0px');set('--pc-ad-scroll-space',(dockHeight+bottom+16)+'px');
+    set('--pc-ad-dock-height',dockHeight+'px');set('--pc-ad-dock-space',hasDock?(dockHeight+(phone?16:32))+'px':'0px');set('--pc-ad-scroll-space',(dockHeight+bottom+16)+'px');
     root.classList.toggle('pc-ads-docked',hasDock);spacer.hidden=!hasDock;
     if(home&&homeColumn)choose(home,homeColumn.getBoundingClientRect().width>=302?units[3]:units[5],view==='dashboard');
     if(hero&&banner){
@@ -137,6 +141,6 @@
   document.addEventListener('visibilitychange',schedule);document.addEventListener('discovery:view-changed',schedule);banner?.addEventListener('discovery:home-banner-change',schedule);
   window.visualViewport?.addEventListener('resize',schedule);
   window.addEventListener('pagehide',event=>{if(event.persisted)return;disposed=true;cancelAnimationFrame(scheduled);slots.forEach(teardown);intersection.disconnect();resize.disconnect();state.disconnect();navigation.disconnect();dialogs.disconnect();events.forEach(name=>window.removeEventListener(name,schedule));document.removeEventListener('visibilitychange',schedule);document.removeEventListener('discovery:view-changed',schedule);banner?.removeEventListener('discovery:home-banner-change',schedule);window.visualViewport?.removeEventListener('resize',schedule);});
-  window.DiscoveryAds=Object.freeze({syncLayout:schedule,snapshot:()=>slots.map(s=>({placement:s.name,unit:s.unit?.id||null,width:s.unit?.w||0,height:s.unit?.h||0,active:s.active,visible:s.visible,state:s.state,preview}))});
+  window.DiscoveryAds=Object.freeze({syncLayout:schedule,snapshot:()=>slots.map(s=>({placement:s.name,edge:s===dock?dockHost.dataset.edge:null,unit:s.unit?.id||null,width:s.unit?.w||0,height:s.unit?.h||0,active:s.active,visible:s.visible,state:s.state,preview}))});
   schedule();
 })();

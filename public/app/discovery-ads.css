@@ -40,9 +40,13 @@ html.pc-ads-docked { scroll-padding-bottom:var(--pc-ad-scroll-space); }
   .dashboard-grid .secondary-column.pc-home-ad-column { grid-template-rows:360px auto minmax(180px,auto); }
 }
 @media(max-width:600px) {
+  html.pc-ads-docked { scroll-padding-top:calc(var(--pc-ad-dock-height) + 24px + env(safe-area-inset-top,0px)); scroll-padding-bottom:calc(98px + env(safe-area-inset-bottom,0px)); }
+  html.pc-ads-docked body { padding-top:calc(12px + var(--pc-ad-dock-space) + env(safe-area-inset-top,0px)); }
   .pc-ad-slot { border-radius:14px; }
   .home-banner-ad { padding:0 0 72px; }
   .home-banner.pc-home-ad-showing .home-banner-arrow { bottom:14px; }
-  .pc-ad-dock { bottom:var(--pc-ad-dock-bottom); }
-  .pc-ads-docked .rail .search-page-back { bottom:calc(100% + var(--pc-ad-dock-height) + 24px); }
+  .pc-ad-dock { top:calc(8px + env(safe-area-inset-top,0px)); bottom:auto; }
+  .pc-ad-spacer { display:none; }
+  .pc-ads-docked .discovery-scroll-top:not([hidden]) { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
+  .pc-ads-docked .rail .search-page-back { bottom:calc(100% + 8px); }
 }
