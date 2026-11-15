@@ -28,6 +28,7 @@
   --pc-motion-base: 200ms;
   --pc-motion-slow: 280ms;
   --pc-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --shadow-lg: 0 8px 16px oklch(0 0 0 / 0.15), 0 2px 4px oklch(0 0 0 / 0.1);
   --bg: var(--pc-bg);
   --nav: var(--pc-bg-secondary);
   --surface: var(--pc-bg-elevated);
@@ -709,9 +710,10 @@ button,input{font:inherit}button{color:inherit;cursor:default}button:focus-visib
   -webkit-backdrop-filter: var(--pc-glass-blur-subtle); backdrop-filter: var(--pc-glass-blur-subtle);
   transition: color var(--pc-motion-fast) var(--pc-ease-standard), border-color var(--pc-motion-fast) var(--pc-ease-standard), background-color var(--pc-motion-fast) var(--pc-ease-standard);
 }
+.reference-filter { border-radius:8px; }
 .reference-filter:hover,
 .wallpaper-file-input:hover::file-selector-button { color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, var(--pc-glass-border)); }
-.reference-filter.is-active { color: var(--text); border-color: color-mix(in srgb, var(--accent) 55%, var(--pc-glass-border)); background: color-mix(in srgb, var(--accent) 15%, var(--pc-glass-bg)); }
+.reference-filter.is-active { color: var(--pc-bg); border-color: var(--accent); background: var(--accent); }
 .reference-search { display: block; width: min(100%, 300px); }
 .reference-search .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .reference-search input {
