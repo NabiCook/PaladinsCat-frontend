@@ -1,6 +1,71 @@
 /* Dashboard surfaces share the footer's glass.
    Keep route-specific geometry, artwork, semantic colors, and selection states. */
+/* Native overlay foundation: values follow frontend-design-system.md and globals.css. */
+.pc-overlay-panel {
+  color: var(--pc-text);
+  border: 1px solid var(--pc-glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+.pc-overlay-panel.pc-glass {
+  background: var(--pc-glass-bg);
+  -webkit-backdrop-filter: var(--pc-glass-blur);
+  backdrop-filter: var(--pc-glass-blur);
+}
+.pc-overlay-panel.pc-glass-subtle {
+  background: var(--pc-glass-bg-subtle);
+  -webkit-backdrop-filter: var(--pc-glass-blur-subtle);
+  backdrop-filter: var(--pc-glass-blur-subtle);
+}
+.pc-overlay-panel.pc-card-flush { padding: 0; }
+.pc-overlay-panel .reference-filter,
+.pc-overlay-panel :is(.players-field,.discovery-field) :is(input,select,textarea) { border-radius: 8px; }
+.pc-overlay-panel .pc-btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--pc-text-muted); font: inherit; font-weight: 500; cursor: pointer;
+  transition: color var(--pc-motion-fast) var(--pc-ease-standard), background-color var(--pc-motion-fast) var(--pc-ease-standard);
+}
+.pc-overlay-panel .pc-btn-ghost:hover { color: var(--pc-text); background: var(--pc-bg-elevated); }
+.pc-overlay-panel .pc-btn-ghost:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: -2px; }
+.pc-overlay-menu > .pc-btn-ghost { justify-content: flex-start; color:var(--pc-text); }
+dialog.pc-overlay-panel {
+  opacity: 0; transform: translateY(16px);
+  transition-property: opacity, transform, overlay, display;
+  transition-duration: var(--pc-motion-fast);
+  transition-timing-function: var(--pc-ease-standard);
+  transition-behavior: allow-discrete;
+}
+dialog.pc-overlay-panel[open] { opacity: 1; transform: translateY(0); transition-duration: var(--pc-motion-slow); }
+dialog.pc-overlay-panel::backdrop {
+  background: var(--pc-glass-bg-dark); opacity: 0;
+  transition: opacity var(--pc-motion-fast) var(--pc-ease-standard), overlay var(--pc-motion-fast) allow-discrete, display var(--pc-motion-fast) allow-discrete;
+}
+dialog.pc-overlay-panel[open]::backdrop { opacity: 1; transition-duration: var(--pc-motion-base); }
+.pc-overlay-menu[popover] {
+  opacity:0; transition-property:opacity,overlay,display;
+  transition-duration:var(--pc-motion-fast); transition-timing-function:var(--pc-ease-standard); transition-behavior:allow-discrete;
+}
+.pc-overlay-menu[popover]:popover-open { opacity:1; transition-duration:var(--pc-motion-base); }
+@starting-style {
+  dialog.pc-overlay-panel[open] { opacity: 0; transform: translateY(16px); }
+  dialog.pc-overlay-panel[open]::backdrop { opacity: 0; }
+  .pc-overlay-menu[popover]:popover-open { opacity:0; }
+}
+details[open] > .pc-overlay-menu:not([popover]) { animation: discovery-view-fade var(--pc-motion-base) var(--pc-ease-standard); }
+@media(max-width:639px) { .pc-overlay-panel { border-radius:14px; padding:16px; } }
+@media(prefers-reduced-motion:reduce) {
+  dialog.pc-overlay-panel,dialog.pc-overlay-panel[open],dialog.pc-overlay-panel::backdrop,dialog.pc-overlay-panel[open]::backdrop,.pc-overlay-panel .pc-btn-ghost { transition:none; }
+  .pc-overlay-menu[popover],.pc-overlay-menu[popover]:popover-open { transition:none; }
+  dialog.pc-overlay-panel,dialog.pc-overlay-panel[open] { transform:none; }
+  details[open] > .pc-overlay-menu { animation:none; }
+}
 .notification-popover,
+.workspace :is(.pc-card,.pc-card-flush,.pc-mobile-panel):where(:not(.is-active,[aria-pressed="true"],[aria-selected="true"])):where(:not(:is(
+  .pc-card,.pc-card-flush,.pc-mobile-panel,.surface,.players-panel,.community-panel,
+  .stats-panel,.pc-overlay-panel
+) *)),
 .workspace :is(
   .surface:where(:not(.hero,.discovery-card)),
   .dashboard-footer,
@@ -200,4 +265,63 @@
   background: var(--pc-glass-bg-subtle);
   color: var(--text);
   font: inherit;
+}
+
+/* A responsive replacement keeps the reading surface of the desktop panel.
+   These standalone units include their headings, legends and result context.
+   Values: frontend-design-system.md, Surface levels; colors.md, Glass Classes. */
+.workspace .players-profile-recent,
+.workspace :is(.players-body,.players-profile-tab-content) > p:is(.players-copy,.players-meta),
+#stats-ecpm-page .stats-pro-source > .pc-content-fade > section:first-of-type,
+#stats-skins-page .stats-pro-source section.min-w-0,
+#site-operations-statistics-page p.text-right.text-xs.text-pc-text-muted,
+#site-operations-diminishing-page .operations-pro-source section.space-y-4 > p.text-xs.text-pc-text-muted,
+.workspace main > p:is(.stats-copy,.discovery-copy,.players-copy),
+.workspace .champion-load-status:not(:empty) {
+  min-width:0;
+  padding:24px;
+  border:1px solid var(--pc-glass-border);
+  border-radius:16px;
+  background:var(--pc-glass-bg-subtle);
+  -webkit-backdrop-filter:var(--pc-glass-blur-subtle);
+  backdrop-filter:var(--pc-glass-blur-subtle);
+}
+@media(max-width:639px) {
+  .workspace .players-profile-recent,
+  .workspace :is(.players-body,.players-profile-tab-content) > p:is(.players-copy,.players-meta),
+  #stats-ecpm-page .stats-pro-source > .pc-content-fade > section:first-of-type,
+  #stats-skins-page .stats-pro-source section.min-w-0,
+  #site-operations-statistics-page p.text-right.text-xs.text-pc-text-muted,
+  #site-operations-diminishing-page .operations-pro-source section.space-y-4 > p.text-xs.text-pc-text-muted,
+  .workspace main > p:is(.stats-copy,.discovery-copy,.players-copy),
+  .workspace .champion-load-status:not(:empty) { padding:16px; border-radius:14px; }
+}
+
+/* The enclosing reading panel owns the glass and frame. */
+.workspace .players-profile-recent .players-table-wrap,
+#stats-ecpm-page .stats-pro-source > .pc-content-fade > section:first-of-type .pc-content-fade > .border.bg-pc-bg-elevated,
+#stats-skins-page .stats-pro-source section.min-w-0 > .border.bg-pc-bg-elevated {
+  border:0; border-radius:0; background:transparent;
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+#stats-ecpm-page .stats-pro-source > .pc-content-fade > section:first-of-type .pc-content-fade > .border.bg-pc-bg-elevated { padding:0; }
+#stats-skins-page .stats-pro-source section.min-w-0 .pc-mobile-panel {
+  background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+/* Standalone async feedback uses the same glass; nested feedback shares its panel. */
+.workspace :is(.discovery-state,.players-state,.community-state,.site-state,.stats-state,.reference-status):not(:empty):where(:not(:is(
+  .surface,.discovery-panel,.players-panel,.community-panel,.community-content-card,
+  .site-panel,.stats-panel,.reference-stat-panel,.reference-detail-summary,.pc-card,
+  .pc-card-flush,.pc-overlay-panel,.discovery-state,.players-state,.community-state,
+  .site-state,.stats-state,.reference-status
+) *)) {
+  background:var(--pc-glass-bg-subtle);
+  -webkit-backdrop-filter:var(--pc-glass-blur-subtle);
+  backdrop-filter:var(--pc-glass-blur-subtle);
+}
+/* Transparent gradient stops retain a glass base beneath informational headers. */
+.workspace :is(header,section,article).border[class*="bg-gradient-"] {
+  background-color:var(--pc-glass-bg-subtle);
+  -webkit-backdrop-filter:var(--pc-glass-blur-subtle);
+  backdrop-filter:var(--pc-glass-blur-subtle);
 }

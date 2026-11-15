@@ -396,8 +396,10 @@ export async function proxy(request: NextRequest) {
   // policy is the CSP of its own script response, and /demo-analyzer/worker.js
   // is served through the nonce branch. Granting it only on documents leaves
   // the worker's WebAssembly.compile blocked.
+  // Only the standalone dashboard admits the supplied banner origin and exact
+  // integrity-pinned parser-order writer. Application/API policies stay scoped.
   const scriptSrc = isStaticSurface
-    ? "script-src 'self' 'wasm-unsafe-eval'"
+    ? "script-src 'self' 'wasm-unsafe-eval' https://bauval.org https://cdnjs.cloudflare.com/ajax/libs/postscribe/2.0.8/postscribe.min.js"
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'wasm-unsafe-eval'`;
 
   const csp = [
@@ -413,9 +415,9 @@ export async function proxy(request: NextRequest) {
     "img-src 'self' data: blob: https://hirez-api.onrender.com https://static-cdn.jtvnw.net https://raw.githubusercontent.com",
     "font-src 'self' data:",
     // Same-origin /api is the proxied backend; api.github.com powers the blog feed.
-    "connect-src 'self' https://api.github.com",
+    `connect-src 'self' https://api.github.com${isStaticSurface ? " https://bauval.org" : ""}`,
     "media-src 'self' https://medal.tv https://cdn.medal.tv https://cdn.discordapp.com https://media.discordapp.net",
-    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://clips.twitch.tv",
+    `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://clips.twitch.tv${isStaticSurface ? " https://bauval.org" : ""}`,
     "frame-ancestors 'self'",
     "form-action 'self'",
     "base-uri 'self'",

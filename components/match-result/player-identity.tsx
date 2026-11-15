@@ -98,7 +98,7 @@ export function MatchPlayerLink({ player, className = "" }: { player: MatchPlaye
     </PlayerName>
   );
 
-  const destination = href ? verifiedDestination(href, user, isLoading) : null;
+  const destination = privateId && href ? verifiedDestination(href, user, isLoading) : href;
   return href ? <Link href={destination ?? href} aria-disabled={isLoading} onClick={isLoading ? (event) => event.preventDefault() : undefined} className={className} title={privateId ? t("generated.matches.privateAccountValue1", { value1: privateId }) : player.player_name}>{content}</Link> : <span className={className}>{content}</span>;
 }
 

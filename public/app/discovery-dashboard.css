@@ -28,6 +28,7 @@
   --pc-motion-base: 200ms;
   --pc-motion-slow: 280ms;
   --pc-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --shadow-lg: 0 8px 16px oklch(0 0 0 / 0.15), 0 2px 4px oklch(0 0 0 / 0.1);
   --bg: var(--pc-bg);
   --nav: var(--pc-bg-secondary);
   --surface: var(--pc-bg-elevated);
