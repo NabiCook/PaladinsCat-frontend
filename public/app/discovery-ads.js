@@ -25,7 +25,7 @@
     host.classList.add('pc-ad-slot');host.dataset.adPlacement=name;host.setAttribute('aria-label','Advertisement');
     const canvas=make('div','pc-ad-canvas'),creative=make('div','pc-ad-creative'),placeholder=make('div','pc-ad-placeholder');
     creative.append(placeholder);canvas.append(creative);host.append(canvas);
-    const slot={host,name,creative,placeholder,unit:null,token:0,timeout:0,visible:false,active:false,failed:false,state:'idle'};
+    const slot={host,name,creative,placeholder,unit:null,token:0,timeout:0,visible:false,active:false,failed:false,observer:null,state:'idle'};
     slots.push(slot);return slot;
   }
   const homeHost=document.querySelector('[data-ad-placement="home-right"]'),heroHost=document.querySelector('[data-ad-placement="home-hero"]'),searchHost=document.querySelector('[data-ad-placement="search-rail"]');
@@ -35,7 +35,7 @@
   const spacer=make('div','pc-ad-spacer');spacer.hidden=true;spacer.setAttribute('aria-hidden','true');workspace.append(dockHost,spacer);
   function fallback(slot,message){slot.placeholder.replaceChildren();const line=make('span');line.textContent=message;slot.placeholder.append(line);slot.placeholder.hidden=false;}
   function teardown(slot){
-    clearTimeout(slot.timeout);slot.token=0;
+    clearTimeout(slot.timeout);slot.observer?.disconnect();slot.observer=null;slot.token=0;
     slot.creative.replaceChildren(slot.placeholder);slot.state='idle';
   }
   function choose(slot,unit,active){
@@ -79,12 +79,20 @@
       // Postscribe 2.0.8's active-stream cancel calls an unavailable abort API.
       // Detach this attempt on teardown; stale queued writes then become no-ops.
       const attempt=make('div');slot.creative.replaceChildren(slot.placeholder,attempt);
+      // The provider finishes its creative asynchronously after the script stream.
+      // Keep this attempt mounted until its own frame arrives or the deadline ends.
+      const ready=()=>{
+        if(slot.token!==token||!slot.active||!attempt.querySelector('iframe'))return;
+        clearTimeout(slot.timeout);slot.observer?.disconnect();slot.observer=null;
+        slot.placeholder.hidden=true;slot.state='loaded';slot.host.dataset.adState='loaded';
+      };
+      slot.observer=new MutationObserver(ready);slot.observer.observe(attempt,{childList:true,subtree:true});
       postscribe(attempt,function(doc){
         if(slot.token!==token||!slot.active)return;
         window.atOptions={key:unit.key,format:'iframe',height:unit.h,width:unit.w,params:{}};
         doc.write('<script src="https://bauval.org/22/'+unit.key+'"></script>');
       },{
-        done(){if(slot.token!==token)return;const frame=attempt.querySelector('iframe');if(!frame){fail(slot);return;}clearTimeout(slot.timeout);slot.placeholder.hidden=true;slot.state='loaded';slot.host.dataset.adState='loaded';},
+        done:ready,
         error(){if(slot.token===token)fail(slot);}
       });
     }).catch(()=>{if(slot.token===token)fail(slot);});
