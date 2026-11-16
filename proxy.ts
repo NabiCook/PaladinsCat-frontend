@@ -122,7 +122,14 @@ function markProtectedResponse(response: NextResponse): NextResponse {
  * refs: doc: 06-reference-seo · see: lib/spa-seo.ts
  */
 async function spaDocumentResponse(request: NextRequest, headers?: Headers): Promise<NextResponse> {
-  const html = await renderPublicSpaHtml(request.nextUrl.pathname);
+  let html: string | null;
+  try {
+    html = await renderPublicSpaHtml(request.nextUrl.pathname);
+  } catch {
+    return new NextResponse(request.method === "HEAD" ? null : "Public page content is temporarily unavailable.", {
+      status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store", "Retry-After": "60" },
+    });
+  }
   if (html === null) {
     return markProtectedResponse(NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
       request: { headers: headers ?? request.headers },
