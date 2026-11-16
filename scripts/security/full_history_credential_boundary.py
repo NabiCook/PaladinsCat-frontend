@@ -51,7 +51,9 @@ def scan(repository: Path) -> dict:
         return result.stdout
     if git("rev-parse", "--is-shallow-repository").strip() != b"false":
         raise ValueError("full-history check requires complete Git history")
-    paths = git("log", "--all", "--name-only", "--format=", "-z")
+    # Scan every historical pathname. Rename similarity adds no authority here;
+    # separate deletion/addition paths also retain both sides of each rename.
+    paths = git("log", "--all", "--name-only", "--format=", "-z", "--no-renames")
     for raw in paths.split(b"\0"):
         name = raw.decode("utf-8", errors="strict").strip("\n")
         if name: path_gate(name)
