@@ -5,6 +5,11 @@
   const stack = document.querySelector('.page-view-stack');
   if (!shell || !stack || window.DiscoveryApp) return;
   const routes = [], pages = new Map();
+  // The server's public document is the first usable view. Existing route
+  // renderers take over through activate(), keeping one visible content owner.
+  const initialDocument = stack.querySelector('[data-public-document]');
+  const initialDocumentTitle = initialDocument ? document.title : null, initialDocumentPath = location.pathname;
+  if (initialDocument) pages.set('public-document', { element: initialDocument, title: document.title, navGroup: '' });
   let currentPath = '/', userRequest = null, userRequestedAt = 0, restorePath = null;
   const viewPaths = new Map();
   const productHosts = new Set([location.host, 'paladinscat.com', 'paladinscat.com', '127.0.0.1:3000', 'localhost:3000', 'localhost:3101']);
@@ -31,6 +36,9 @@
   }
   function activate() {
     const view = shell.dataset.view, active = pages.get(view);
+    if (view !== 'public-document' && initialDocument?.isConnected) {
+      initialDocument.remove(); pages.delete('public-document');
+    }
     for (const [key, page] of pages) { const shown = key === view; page.element.hidden = !shown; page.element.inert = !shown; page.element.setAttribute('aria-hidden', String(!shown)); }
     shell.dataset.dynamicPage = String(Boolean(active));
     if (!active) return;
@@ -39,7 +47,8 @@
       const shown = (nav.dataset.navigationKey || nav.getAttribute('aria-label')) === active.navGroup || nav.dataset.discoveryGroup === active.navGroup;
       nav.classList.toggle('active', shown); if (shown) nav.setAttribute('aria-current', 'page'); else nav.removeAttribute('aria-current');
     }
-    document.title = (active.element.querySelector('h1')?.textContent || active.title) + ' · PaladinsCat';
+    document.title = initialDocumentTitle && new URL(currentPath, location.origin).pathname === initialDocumentPath
+      ? initialDocumentTitle : (active.element.querySelector('h1')?.textContent || active.title) + ' · PaladinsCat';
     document.dispatchEvent(new CustomEvent('discovery:view-changed', { detail: { view, path: currentPath } }));
   }
   function open(view) {
@@ -171,7 +180,7 @@
   // deep link must render that view instead of always landing on home. Deferred
   // scripts run before DOMContentLoaded, so every module has registered by then.
   const bootPath = location.pathname + location.search + location.hash;
-  const boot = () => { if (bootPath !== '/' && resolve(bootPath)) navigate(bootPath); };
+  const boot = () => { if ((bootPath !== '/' || initialDocument) && resolve(bootPath)) navigate(bootPath); };
   // Run after every module's own start-up work (some renderers anchor to home on
   // init); the load event is the last hook before first paint settles.
   if (document.readyState === 'complete') setTimeout(boot, 0);
