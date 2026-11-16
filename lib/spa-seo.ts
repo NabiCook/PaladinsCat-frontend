@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { publicDocumentCanonical } from "./sitemap-data";
 import { escapePublicHtml, getPublicDocument } from "./public-document";
+import { serializeJsonLd } from "./seo";
 
 /** Return a public document, or null to retain the excluded fallback.
  * I/O: exact pathname -> Promise<string | null>; no HTML subrequests or user data.
@@ -19,11 +20,12 @@ export async function renderPublicSpaHtml(path: string): Promise<string | null> 
   const content = await getPublicDocument(path);
   if (!content) return null;
   const template = readFileSync(join(process.cwd(), "public", "app", "index.html"), "utf8");
+  const data = content.data ? '<script type="application/json" id="public-document-data">' + serializeJsonLd(content.data) + '</script>' : "";
   const initial = `<main class="discovery-page public-document" data-public-document aria-label="${escapePublicHtml(content.title)}"><article class="discovery-panel discovery-copy">${content.html}</article></main>`;
   return template.replace(/<title>[^<]*<\/title>/, `<title>${escapePublicHtml(content.title)}</title>`)
     .replace('<meta name="robots" content="noindex, nofollow">',
       `<meta name="robots" content="index, follow">\n  <meta name="description" content="${escapePublicHtml(content.description)}">\n  <link rel="canonical" href="${escapePublicHtml(canonical)}">\n  <link rel="stylesheet" href="/app/discovery-public-document.css?v=1">`)
     .replace('data-view="dashboard"', 'data-view="public-document" data-dynamic-page="true"')
     .replace('<div class="page-view-stack">', `<div class="page-view-stack">${initial}`)
-    .replace(/(src="\/app\/discovery-app\.js[^"\s]*)/, "$1&publicDocument=1");
+    .replace("</head>", data + "</head>");
 }

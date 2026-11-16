@@ -9,14 +9,16 @@ import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
 import { getAllPosts, getPostLink, resolveBlogAssetUrl, resolveBlogLink } from "./blog";
 import type { ChampionData } from "./champion-data";
-import { getFeatureDocument } from "./feature-document";
+import { getFeatureDocument, type FeatureDocument } from "./feature-document";
 import seo from "./localization/catalog/seo/metadata.json";
+import homeCopy from "./localization/catalog/pages/home.json";
+import featureCopy from "./localization/catalog/pages/features.json";
 import { fetchServerJsonStatic } from "./server-api";
 import { SITE_NAME } from "./seo";
 import { STATIC_CHAMPIONS } from "./static-champions";
 import { championSlug } from "./utils";
 
-type PublicDocument = { title: string; description: string; html: string };
+type PublicDocument = { title: string; description: string; html: string; data?: { features: FeatureDocument } };
 type SourcePage = { html: string; source: string; sourceSha256: string };
 type MatchSummary = { match_id: string | number; map: string; entry_datetime: string; region: string };
 type Release = { component: string; componentVersion?: string; version: string; deployedAt: string; changelog: string };
@@ -105,11 +107,15 @@ export async function getPublicDocument(path: string): Promise<PublicDocument | 
     if (path.startsWith("/blog/")) {
       const post = posts.find(entry => getPostLink(entry.slug) === path);
       if (!post) return null;
-      return document(post.title, post.excerpt, paragraph(`By ${post.author}`)
-        + markdown(post.content, post.sourcePath) + link("/blog", "All PaladinsCat articles"));
+      return document(post.title, post.excerpt, '<div class="text-sm text-pc-text-muted mb-8"><span>'
+        + escapePublicHtml(post.author) + '</span> · <span>' + escapePublicHtml(post.date) + '</span></div>'
+        + '<div class="blog-markdown">' + markdown(post.content, post.sourcePath) + '</div>'
+        + link("/blog", "All PaladinsCat articles"));
     }
-    const articles = posts.map(post => `<article><h2>${link(getPostLink(post.slug), post.title)}</h2>${paragraph(post.excerpt)}</article>`).join("");
-    if (path === "/blog") return document("PaladinsCat Blog", "PaladinsCat guides, research, news, and updates.", articles);
+    const articles = posts.map(post => '<article data-blog-category="' + escapePublicHtml(post.category) + '"><div><span>'
+      + escapePublicHtml(post.author) + '</span> · <span>' + escapePublicHtml(post.date) + '</span></div><h2>'
+      + link(getPostLink(post.slug), post.title) + '</h2>' + paragraph(post.excerpt) + '</article>').join("");
+    if (path === "/blog") return document("PaladinsCat Blog", "PaladinsCat guides, research, news, and updates.", articles, "Blog");
     return document(seo["seo.home.hub.title"], seo["seo.home.hub.description"], paragraph(seo["seo.home.hub.description"])
       + `<nav aria-label="Public PaladinsCat pages">${list([["/champions", "Champions"], ["/matches", "Recent matches"], ["/blog", "Guides and research"], ["/features", "New features"], ["/about", "About PaladinsCat"]].map(([href, title]) => link(href, title)))}</nav>`
       + articles);
@@ -117,9 +123,12 @@ export async function getPublicDocument(path: string): Promise<PublicDocument | 
   if (path === "/features") {
     const feed = await getFeatureDocument();
     if (!feed) throw new Error("Feature document unavailable");
-    const description = feed.entries[0]?.summary || "Latest PaladinsCat features and improvements.";
-    return document("New Features", description, feed.entries.map(entry => `<article><h2>${entry.href ? link(entry.href, entry.title) : escapePublicHtml(entry.title)}</h2>`
-      + paragraph(entry.summary) + paragraph(`${entry.kind} · ${entry.category} · ${entry.status}`) + "</article>").join(""));
+    const introduction = homeCopy["home.newFeaturesIntro"];
+    const description = feed.entries[0]?.summary || introduction;
+    const entries = feed.entries.map(entry => `<article><h2>${entry.href ? link(entry.href, entry.title) : escapePublicHtml(entry.title)}</h2>`
+      + paragraph(entry.summary) + paragraph(`${entry.kind} · ${entry.category} · ${entry.status}`) + "</article>").join("");
+    return { ...document(homeCopy["home.newFeatures"], description, paragraph(introduction)
+      + (entries || paragraph(featureCopy["features.empty"]))), data: { features: feed } };
   }
   if (path === "/matches") {
     const feed = await matchOverview();

@@ -9,6 +9,24 @@
   // renderers take over through activate(), keeping one visible content owner.
   const initialDocument = stack.querySelector('[data-public-document]');
   const initialDocumentTitle = initialDocument ? document.title : null, initialDocumentPath = location.pathname;
+  const publicDocuments = new Map();
+  const documentData = host => { const source = host.getElementById('public-document-data'); return source ? JSON.parse(source.textContent) : {}; };
+  if (initialDocument) publicDocuments.set(initialDocumentPath, { html: initialDocument.outerHTML, data: documentData(document), expires: Date.now() + 300000 });
+  // Blog/features clients consume the same public representation as navigation.
+  // The initial document avoids a second fetch; refresh retains normal admission.
+  async function readPublicDocument(input, { refresh = false } = {}) {
+    const url = new URL(input, location.origin);
+    if (url.origin !== location.origin || !(url.pathname === '/features' || url.pathname === '/blog' || url.pathname.startsWith('/blog/'))) throw new Error('Invalid public document');
+    const cached = publicDocuments.get(url.pathname);
+    if (!refresh && cached && cached.expires > Date.now()) return cached;
+    const response = await fetch(url.pathname, { headers: { Accept: 'text/html' }, credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    if (!response.ok || response.redirected) throw new Error('Public document unavailable');
+    const source = new DOMParser().parseFromString(await response.text(), 'text/html'), main = source.querySelector('[data-public-document]');
+    if (!main) throw new Error('Public document unavailable');
+    const value = { html: main.outerHTML, data: documentData(source), expires: Date.now() + 300000 };
+    publicDocuments.set(url.pathname, value);
+    return value;
+  }
   if (initialDocument) pages.set('public-document', { element: initialDocument, title: document.title, navGroup: '' });
   let currentPath = '/', userRequest = null, userRequestedAt = 0, restorePath = null;
   const viewPaths = new Map();
@@ -166,7 +184,7 @@
     icon.classList.add('navigation-arrow');
     return icon;
   }
-  window.DiscoveryApp = { registerRoute, navigate, createPage, open, request, getUser, record, scopedPath, scopedFetch, setLobbyTier, createNavigationArrow,
+  window.DiscoveryApp = { registerRoute, navigate, createPage, open, request, readPublicDocument, getUser, record, scopedPath, scopedFetch, setLobbyTier, createNavigationArrow,
     t: (...args) => window.DiscoveryLocale.t(...args), locale: () => window.DiscoveryLocale.locale(),
     message: (...args) => window.DiscoveryLocale.message(...args), setText: (...args) => window.DiscoveryLocale.setText(...args),
     formatNumber: (...args) => window.DiscoveryLocale.formatNumber(...args), formatDate: (...args) => window.DiscoveryLocale.formatDate(...args),
