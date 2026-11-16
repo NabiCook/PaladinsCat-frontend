@@ -5,7 +5,7 @@
   const shell = document.querySelector(".dashboard-shell");
   const stack = document.querySelector(".page-view-stack");
   if (!shell || !stack) return;
-  const names = { "site-settings": "Settings", "site-community": "Community", "site-community-post": "Community", "site-chat": "Community chat", "site-blog": "Blog", "site-blog-post": "Blog", "site-notifications": "Notifications", "site-account": "Account" };
+  const names = { "site-settings": "Settings", "site-community": "Community", "site-community-post": "Community", "site-chat": "Community chat", "site-blog": "Blog", "site-blog-post": "Blog", "site-notifications": "Notifications" };
   const categories = [["all", "All"], ["public-release", "Public releases"], ["q-and-a", "Q & A"], ["guide", "Guides"], ["operational-report", "Operational reports"]];
   const pages = new Map(), tokens = new Map(), requests = new Map();
   let blogLoaded = false, communityLoaded = false;
@@ -62,10 +62,10 @@
   }
   function open(view) {
     if (!page(view).children.length) {
-      const loaders = { "site-blog": loadBlog, "site-community": loadCommunity, "site-settings": renderSettings, "site-account": renderAccount, "site-chat": loadChat, "site-notifications": loadNotifications };
+      const loaders = { "site-blog": loadBlog, "site-community": loadCommunity, "site-settings": renderSettings, "site-chat": loadChat, "site-notifications": loadNotifications };
       if (loaders[view]) void loaders[view]();
     }
-    const app = window.DiscoveryApp, path = view === "site-blog" ? "/blog" + (selectedCategory === "all" ? "" : "?category=" + encodeURIComponent(selectedCategory)) : view === "site-blog-post" ? selectedBlogPath : null;
+    const app = window.DiscoveryApp, path = view === "site-settings" ? app?.currentPath() || "/settings" : view === "site-blog" ? "/blog" + (selectedCategory === "all" ? "" : "?category=" + encodeURIComponent(selectedCategory)) : view === "site-blog-post" ? selectedBlogPath : null;
     const previous = app?.snapshot(view), routeChange = Boolean(path && previous?.path && previous.path !== path), restore = Boolean(path && app?.isRestoring(path));
     if (shell.dataset.view !== view || routeChange) document.dispatchEvent(new CustomEvent("discovery:open-view", { detail: { view, routeChange, restore } }));
     if (path) app?.record(view, path);
@@ -168,6 +168,7 @@
           if (!alive || !current(view, sequence) || revision !== accountRevision || !user || !(Number(user.id ?? user.user_id) > 0)) return;
           const accountState = { body: account, current: () => alive && current(view, sequence) && revision === accountRevision, visible: () => alive && current(view, sequence) && revision === accountRevision && shell.dataset.view === view, onDispose: close => { if (alive) settingsCleanup.push(close); else close(); } };
           if (owner?.renderAccount) await owner.renderAccount(accountState);
+          if (accountState.visible() && new URL(window.DiscoveryApp.currentPath(), location.origin).hash === '#invitation') account.querySelector('#invitation')?.scrollIntoView({ block: 'start' });
         } catch { if (alive && current(view, sequence) && revision === accountRevision) state(account, M('async.couldNotLoad', undefined, 'Account settings could not be loaded.'), syncAccount); }
       };
       document.addEventListener('discovery:session-changed', syncAccount);
@@ -179,10 +180,6 @@
         catch { if (wallpaperState.current()) state(wallpaper, M('async.couldNotLoad', undefined, 'Wallpaper settings could not be loaded.'), () => void renderSettings(true)); }
       } else state(wallpaper, M('async.couldNotLoad', undefined, 'Wallpaper settings could not be loaded.'), () => void renderSettings(true));
     } catch { if (alive && current(view, sequence)) state(body, M("async.couldNotLoad",undefined,"Settings could not be loaded."), () => void renderSettings(true)); }
-  }
-  function renderAccount() {
-    const view = "site-account", host = page(view); host.replaceChildren(header(view));
-    const content = section("Your PaladinsCat account"); content.append(paragraph("Sign in to manage your profile and linked Paladins account."), external("Open account", "https://paladinscat.com/account")); host.append(content);
   }
   function filterBar(label, value, change) { const wrap = node("label", "site-field site-search", label); const input = document.createElement("input"); input.type = "search"; input.value = value; siteAttribute(input, "aria-label", label); siteAttribute(input, "placeholder", label); input.addEventListener("input", () => change(input.value)); wrap.append(input); return wrap; }
   function blogIndex(html) {
