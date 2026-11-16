@@ -227,7 +227,7 @@ async function fetchPostFromGitHub(sourcePath: string): Promise<BlogPost | null>
     cache: "no-store",
     signal: AbortSignal.timeout(BLOG_FETCH_TIMEOUT_MS),
   });
-  if (!response.ok) return null;
+  if (!response.ok) throw new Error(`GitHub article ${response.status}: ${response.statusText}`);
   return parsePost(sourcePath, await response.text());
 }
 
