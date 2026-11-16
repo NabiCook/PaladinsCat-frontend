@@ -184,12 +184,12 @@
   function filterBar(label, value, change) { const wrap = node("label", "site-field site-search", label); const input = document.createElement("input"); input.type = "search"; input.value = value; siteAttribute(input, "aria-label", label); siteAttribute(input, "placeholder", label); input.addEventListener("input", () => change(input.value)); wrap.append(input); return wrap; }
   function blogIndex(html) {
     const document = new DOMParser().parseFromString(html, "text/html");
-    const articles = [...document.querySelectorAll("article")].map(article => {
-      const link = article.closest("a"), href = safeUrl(link?.getAttribute("href"));
+    const articles = [...document.querySelectorAll("article")].filter(article => !article.querySelector("article")).map(article => {
+      const link = article.closest("a") || article.querySelector("h2 a[href]"), href = safeUrl(link?.getAttribute("href"));
       const title = article.querySelector("h2")?.textContent?.trim();
       if (!title || !href || !href.pathname.startsWith("/blog/")) return null;
       const metadata = [...(article.firstElementChild?.querySelectorAll("span") || [])].map(el => el.textContent.trim());
-      return { title, path: href.pathname, excerpt: article.querySelector("p")?.textContent?.trim() || "", author: metadata[0] || "", date: metadata[1] || "" };
+      return { title, path: href.pathname, excerpt: article.querySelector("p")?.textContent?.trim() || "", author: metadata[0] || "", date: metadata[1] || "", category: article.dataset.blogCategory || "public-release" };
     }).filter(Boolean);
     const blogTitle = document.querySelector("h1")?.textContent?.trim();
     if (!["Blog", window.DiscoveryLocale.t("generated.blog.title", undefined, "Blog")].includes(blogTitle)) throw new Error("Invalid blog response");
@@ -207,8 +207,8 @@
     const list = node("div", "site-post-list"); host.append(list); state(list, M("async.loading",undefined,"Loading blog posts…")); window.DiscoveryLoading?.show(list, "rows", "site-post-card");
     try {
       await window.DiscoveryLocale.ready;
-      const payload = await request("/preview/blog" + (category === "all" ? "" : "?category=" + category), refresh);
-      const posts = blogIndex(payload.html); if (!current(view, sequence)) return;
+      const payload = await window.DiscoveryApp.readPublicDocument("/blog", { refresh });
+      const posts = blogIndex(payload.html).filter(post => category === "all" || post.category === category); if (!current(view, sequence)) return;
       blogPosts = posts; blogLoaded = true; drawBlog();
     } catch { if (current(view, sequence)) state(list, M("async.couldNotLoad",undefined,"Blog posts could not be loaded."), () => void loadBlog(true)); }
   }
@@ -245,7 +245,7 @@
     const content = node("article", "site-panel site-markdown"); host.append(content); state(content, M("async.loading",undefined,"Loading article…"));
     try {
       if (!/^\/blog\/[A-Za-z0-9%_./-]+$/.test(articlePath) || articlePath.includes("..")) throw new Error("Invalid article path");
-      const payload = await request("/preview" + articlePath, refresh);
+      const payload = await window.DiscoveryApp.readPublicDocument(articlePath, { refresh });
       const source = new DOMParser().parseFromString(payload.html, "text/html"), article = source.querySelector("article .blog-markdown");
       if (!article) throw new Error("Article unavailable"); if (!visible()) return;
       const title = source.querySelector("article > h1")?.textContent || post.title; window.DiscoveryLocale.setText(host.querySelector("h1"), title);
