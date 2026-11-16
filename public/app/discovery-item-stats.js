@@ -1,16 +1,5 @@
 (() => {
   "use strict";
-  // The rail uses the shared Items navigation glyph.
-  void fetch("/drafts/discovery-credit-icon.svg?v=2", { signal: AbortSignal.timeout(5000) })
-    .then(response => { if (!response.ok) throw new Error("Credit icon unavailable"); return response.text(); })
-    .then(source => {
-      const icon = new DOMParser().parseFromString(source, "image/svg+xml").documentElement;
-      if (icon.localName !== "svg" || icon.querySelector("parsererror")) return;
-      icon.classList.add("lucide");
-      const target = document.querySelector('.rail-button[data-items-trigger] > svg');
-      target?.replaceWith(document.importNode(icon, true));
-    }).catch(() => {});
-
   // Reuse lib/api-client.ts item contracts, including zero-based levels and
   // ranked-only detail. The dashboard reference controls remain the owner.
   window.createDiscoveryItemStats = function ({ itemGroups, itemsPage, itemDetailContent, getItems, getLevel, openItem }) {
