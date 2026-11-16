@@ -163,6 +163,7 @@ test("PaladinsCat login entry points use native links into the server-side OIDC 
   const nav = readFileSync(new URL("../components/nav.tsx", import.meta.url), "utf8");
   const register = readFileSync(new URL("../app/auth/register/route.ts", import.meta.url), "utf8");
   const account = readFileSync(new URL("../app/account/page.tsx", import.meta.url), "utf8");
+  const accountSettings = readFileSync(new URL("../public/app/discovery-community.js", import.meta.url), "utf8");
   const accountRoute = readFileSync(new URL("../app/api/auth/oidc/account/route.ts", import.meta.url), "utf8");
   const apiClient = readFileSync(new URL("./api-client.ts", import.meta.url), "utf8");
   assert.equal(isIdentityCutoverEnabled(undefined), false);
@@ -180,8 +181,8 @@ test("PaladinsCat login entry points use native links into the server-side OIDC 
   assert.doesNotMatch(nav, /action="\/api\/auth\/oidc\/login"/);
   assert.match(register, /process\.env\.PALADINSCAT_PUBLIC_ORIGIN \|\| new URL\(request\.url\)\.origin/);
   assert.match(register, /NextResponse\.redirect\(new URL\("\/api\/auth\/oidc\/login\?intent=create", publicOrigin\), 307\)/);
-  assert.match(account, /href="https:\/\/auth\.paladinscat\.com\/realms\/paladinscat\/account\/"/);
-  assert.match(account, /if \(authLoading\) return/);
+  assert.match(account, /permanentRedirect\("\/settings"\)/);
+  assert.match(accountSettings, /safeExternal\(t\("generated\.account\.changePassword"\),"https:\/\/auth\.paladinscat\.com\/realms\/paladinscat\/account\/"\)/);
   assert.match(accountRoute, /requireSameOrigin/);
   assert.match(accountRoute, /keycloakAccountUrl\(process\.env\.OIDC_ISSUER\)/);
 });
