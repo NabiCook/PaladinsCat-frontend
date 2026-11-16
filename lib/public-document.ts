@@ -11,6 +11,8 @@ import { getAllPosts, getPostLink, resolveBlogAssetUrl, resolveBlogLink } from "
 import type { ChampionData } from "./champion-data";
 import { getFeatureDocument } from "./feature-document";
 import seo from "./localization/catalog/seo/metadata.json";
+import homeCopy from "./localization/catalog/pages/home.json";
+import featureCopy from "./localization/catalog/pages/features.json";
 import { fetchServerJsonStatic } from "./server-api";
 import { SITE_NAME } from "./seo";
 import { STATIC_CHAMPIONS } from "./static-champions";
@@ -117,9 +119,12 @@ export async function getPublicDocument(path: string): Promise<PublicDocument | 
   if (path === "/features") {
     const feed = await getFeatureDocument();
     if (!feed) throw new Error("Feature document unavailable");
-    const description = feed.entries[0]?.summary || "Latest PaladinsCat features and improvements.";
-    return document("New Features", description, feed.entries.map(entry => `<article><h2>${entry.href ? link(entry.href, entry.title) : escapePublicHtml(entry.title)}</h2>`
-      + paragraph(entry.summary) + paragraph(`${entry.kind} · ${entry.category} · ${entry.status}`) + "</article>").join(""));
+    const introduction = homeCopy["home.newFeaturesIntro"];
+    const description = feed.entries[0]?.summary || introduction;
+    const entries = feed.entries.map(entry => `<article><h2>${entry.href ? link(entry.href, entry.title) : escapePublicHtml(entry.title)}</h2>`
+      + paragraph(entry.summary) + paragraph(`${entry.kind} · ${entry.category} · ${entry.status}`) + "</article>").join("");
+    return document(homeCopy["home.newFeatures"], description, paragraph(introduction)
+      + (entries || paragraph(featureCopy["features.empty"])));
   }
   if (path === "/matches") {
     const feed = await matchOverview();
