@@ -1,9 +1,9 @@
 /* Fixed-size advertising shares the dashboard glass and reserves its own space. */
-.pc-ad-slot { width:calc(var(--pc-ad-width) + 2px); min-width:0; overflow:hidden; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg-subtle); -webkit-backdrop-filter:var(--pc-glass-blur-subtle); backdrop-filter:var(--pc-glass-blur-subtle); }
+.pc-ad-slot { position:relative; width:calc(var(--pc-ad-width) + 2px); min-width:0; overflow:hidden; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg-subtle); -webkit-backdrop-filter:var(--pc-glass-blur-subtle); backdrop-filter:var(--pc-glass-blur-subtle); }
 .pc-ad-slot[hidden],.pc-ad-dock[hidden],.pc-ad-spacer[hidden],.pc-ad-frame[hidden] { display:none!important; }
-.home-banner-page[hidden] { display:none!important; }
 .pc-ad-canvas { display:flex; min-width:0; padding:0; overflow:hidden; border-radius:inherit; }
-.pc-ad-creative { position:relative; flex:none; width:var(--pc-ad-width); height:var(--pc-ad-height); overflow:hidden; }
+.pc-ad-creative { position:relative; z-index:0; flex:none; width:var(--pc-ad-width); height:var(--pc-ad-height); overflow:hidden; }
+.pc-ad-label { position:absolute; z-index:1; top:4px; left:4px; max-width:calc(100% - 56px); overflow:hidden; padding:1px 5px; border-radius:4px; background:var(--pc-glass-bg); color:var(--text); font-size:12px; line-height:16px; white-space:nowrap; text-overflow:ellipsis; pointer-events:none; }
 .pc-ad-creative iframe { display:block; border:0; }
 .pc-ad-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:8px; color:var(--secondary); background:var(--pc-bg-secondary); text-align:center; overflow-wrap:anywhere; }
 .pc-ad-placeholder strong { color:var(--accent); font-size:18px; font-weight:600; }
@@ -27,10 +27,6 @@ html.pc-ads-docked { scroll-padding-bottom:var(--pc-ad-scroll-space); }
 .pc-home-ad-column .home-esports { min-height:160px; }
 .dashboard-grid.pc-home-ad-stacked { grid-template-columns:minmax(0,1fr); }
 .dashboard-grid.pc-home-ad-stacked .secondary-column.pc-home-ad-column { grid-template-rows:360px auto minmax(180px,auto); }
-.home-banner.pc-home-ad-hero { min-height:384px; }
-.home-banner-ad { display:grid; place-items:center; padding:0 0 64px; background:var(--pc-glass-bg); }
-.home-banner-ad .pc-ad-slot { width:var(--pc-ad-width); border:0; border-radius:0; background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none; }
-.home-banner.pc-home-ad-showing .home-banner-arrow { top:auto; bottom:18px; transform:none; }
 
 /* Search controls remain together; the rail never spans their individual rows. */
 .search-page-content { min-width:0; }
@@ -43,8 +39,6 @@ html.pc-ads-docked { scroll-padding-bottom:var(--pc-ad-scroll-space); }
   html.pc-ads-docked { scroll-padding-top:calc(var(--pc-ad-dock-height) + 24px + env(safe-area-inset-top,0px)); scroll-padding-bottom:calc(98px + env(safe-area-inset-bottom,0px)); }
   html.pc-ads-docked body { padding-top:calc(12px + var(--pc-ad-dock-space) + env(safe-area-inset-top,0px)); }
   .pc-ad-slot { border-radius:14px; }
-  .home-banner-ad { padding:0 0 72px; }
-  .home-banner.pc-home-ad-showing .home-banner-arrow { bottom:14px; }
   .pc-ad-dock { top:calc(8px + env(safe-area-inset-top,0px)); bottom:auto; }
   .pc-ad-spacer { display:none; }
   .pc-ads-docked .discovery-scroll-top:not([hidden]) { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }

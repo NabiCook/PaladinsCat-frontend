@@ -14,24 +14,21 @@
 
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let current = 0, hovering = false, focused = false, inViewport = true, timer;
-  const available = () => slides.map((slide,index) => ({slide,index})).filter(({slide}) => !slide.hasAttribute('data-banner-ad') || slide.dataset.adEligible === 'true').map(({index}) => index);
   function show(index) {
-    const eligible = available();
-    current = eligible.includes(index) ? index : eligible[0];
+    current = (index + slides.length) % slides.length;
     slides.forEach((slide, i) => {
       const active = i === current;
-      slide.hidden = !eligible.includes(i);
+      slide.hidden = false;
       slide.dataset.active = String(active);
       slide.inert = !active;
       slide.setAttribute('aria-hidden', String(!active));
-      if (eligible.includes(i)) slide.setAttribute('aria-label', (eligible.indexOf(i) + 1) + ' of ' + eligible.length + (slide.hasAttribute('data-banner-ad') ? ' · Advertisement' : ''));
+      slide.setAttribute('aria-label', (i + 1) + ' of ' + slides.length);
     });
-    pages.forEach((button, i) => { button.hidden = !eligible.includes(i); button.setAttribute('aria-pressed', String(i === current)); });
+    pages.forEach((button, i) => button.setAttribute('aria-pressed', String(i === current)));
     banner.dispatchEvent(new CustomEvent('discovery:home-banner-change', { detail: { index: current } }));
   }
   function advance(direction) {
-    const eligible = available(), position = eligible.indexOf(current);
-    show(eligible[(position + direction + eligible.length) % eligible.length]);
+    show(current + direction);
     schedule();
   }
   function schedule() {
@@ -49,7 +46,6 @@
   document.addEventListener('visibilitychange', schedule);
   document.addEventListener('discovery:view-changed', schedule);
   motion.addEventListener('change', schedule);
-  banner.addEventListener('discovery:ad-availability', () => { show(current); schedule(); });
   const visibility = new IntersectionObserver(entries => { inViewport = entries[0].isIntersecting; schedule(); });
   visibility.observe(banner);
   window.addEventListener('pagehide', event => { if(!event.persisted){ window.clearTimeout(timer); visibility.disconnect(); } });
