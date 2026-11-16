@@ -46,6 +46,10 @@
 html{scrollbar-gutter:stable}
 @supports not (scrollbar-gutter:stable){html{overflow-y:scroll}}
 body{margin:0;min-height:100vh;padding:22px clamp(16px,2.7vw,52px) 30px;color:var(--text);font:14px/1.5 var(--pc-dashboard-font);background:linear-gradient(115deg,rgba(15,18,22,.85),rgba(15,18,22,.62)),url('/images/wallpaper-new/Brightmarsh_Loading.avif') center/cover fixed}
+body.pc-wallpaper-rotating { isolation:isolate; }
+.pc-wallpaper-layer { position:fixed; inset:0; z-index:-1; pointer-events:none; background-position:center; background-size:cover; background-repeat:no-repeat; transition:opacity var(--pc-wallpaper-fade-duration,0ms) cubic-bezier(.4,0,.2,1); }
+body[data-site-wallpaper="false"] .pc-wallpaper-layer { display:none; }
+@media(prefers-reduced-motion:reduce) { .pc-wallpaper-layer { transition:none!important; } }
 a { text-decoration: none !important; }
 button,input{font:inherit}button{color:inherit;cursor:default}button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:4px}button{border:0}img{max-width:100%;display:block}h1,h2,h3,p{margin:0}button .lucide{pointer-events:none}.lucide{display:block;width:21px;height:21px;stroke-width:2;flex:none}
 
