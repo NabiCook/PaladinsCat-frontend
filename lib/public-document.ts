@@ -12,6 +12,7 @@ import type { ChampionData } from "./champion-data";
 import { getFeatureDocument } from "./feature-document";
 import seo from "./localization/catalog/seo/metadata.json";
 import { fetchServerJsonStatic } from "./server-api";
+import { SITE_NAME } from "./seo";
 import { STATIC_CHAMPIONS } from "./static-champions";
 import { championSlug } from "./utils";
 
@@ -31,7 +32,7 @@ const link = (href: string, text: string) => `<a href="${escapePublicHtml(href)}
 const list = (items: string[]) => `<ul>${items.map(item => `<li>${item}</li>`).join("")}</ul>`;
 const section = (title: string, body: string) => `<section><h2>${escapePublicHtml(title)}</h2>${body}</section>`;
 const document = (title: string, description: string, body: string, heading = title): PublicDocument => ({
-  title: `${title} | PaladinsCat`, description,
+  title: [title, SITE_NAME].join(" | "), description,
   html: `<h1>${escapePublicHtml(heading)}</h1>${body}`,
 });
 const plainText = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/&(?:nbsp|amp|quot|#39|lt|gt);/g, entity => ({
@@ -139,7 +140,7 @@ export async function getPublicDocument(path: string): Promise<PublicDocument | 
     const source = staticSourcePages()[path];
     if (!source?.html.includes("<h1")) throw new Error("Public page content unavailable");
     const paragraphs = [...source.html.matchAll(/<p\b[^>]*>(.*?)<\/p>/gs)].map(match => plainText(match[1]));
-    return { title: `${titles[path]} | PaladinsCat`, description: paragraphs.find(text => text.length >= 60) || titles[path],
+    return { title: [titles[path], SITE_NAME].join(" | "), description: paragraphs.find(text => text.length >= 60) || titles[path],
       html: `<div class="footer-pro-source">${source.html.replace(/^<main\b[^>]*>|<\/main>$/g, "")}</div>` };
   }
   return null;
