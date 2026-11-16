@@ -10,6 +10,10 @@ import { getSitemapEntries } from "@/lib/sitemap-data";
  */
 export const revalidate = 300;
 
+// Match the standard sitemap: reuse cached content at request time so a source
+// rate limit cannot block an otherwise valid application image build.
+export const dynamic = "force-dynamic";
+
 const escapeXml = (value: string) => value.replace(/[<>&"']/g, character => ({
   "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;",
 })[character]!);
