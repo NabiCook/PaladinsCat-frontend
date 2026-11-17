@@ -1,0 +1,46 @@
+/* Fixed-size advertising shares the dashboard glass and reserves its own space. */
+.pc-ad-slot { position:relative; width:calc(var(--pc-ad-width) + 2px); min-width:0; overflow:hidden; border:1px solid var(--pc-glass-border); border-radius:16px; background:var(--pc-glass-bg-subtle); -webkit-backdrop-filter:var(--pc-glass-blur-subtle); backdrop-filter:var(--pc-glass-blur-subtle); }
+.pc-ad-slot[hidden],.pc-ad-dock[hidden],.pc-ad-spacer[hidden],.pc-ad-frame[hidden] { display:none!important; }
+.pc-ad-canvas { display:flex; min-width:0; padding:0; overflow:hidden; border-radius:inherit; }
+.pc-ad-creative { position:relative; z-index:0; flex:none; width:var(--pc-ad-width); height:var(--pc-ad-height); overflow:hidden; }
+.pc-ad-label { position:absolute; z-index:1; top:4px; left:4px; max-width:calc(100% - 56px); overflow:hidden; padding:1px 5px; border-radius:4px; background:var(--pc-glass-bg); color:var(--text); font-size:12px; line-height:16px; white-space:nowrap; text-overflow:ellipsis; pointer-events:none; }
+.pc-ad-creative iframe { display:block; border:0; }
+.pc-ad-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:8px; color:var(--secondary); background:var(--pc-bg-secondary); text-align:center; overflow-wrap:anywhere; }
+.pc-ad-placeholder strong { color:var(--accent); font-size:18px; font-weight:600; }
+.pc-ad-placeholder span { font-size:12px; line-height:18px; }
+.pc-ad-placeholder[hidden] { display:none; }
+.pc-ad-dock { position:fixed; z-index:80; overflow:hidden; left:var(--pc-ad-dock-left); bottom:var(--pc-ad-dock-bottom,16px); width:var(--pc-ad-dock-width); }
+.pc-ad-dock[data-suspended="true"] { visibility:hidden; pointer-events:none; }
+.pc-ad-close { position:absolute; z-index:1; top:2px; right:2px; display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; border:1px solid var(--pc-glass-border); border-radius:8px; background:var(--pc-glass-bg); color:var(--secondary); padding:8px; font:inherit; font-size:12px; cursor:pointer; }
+.pc-ad-close:hover { color:var(--text); background:var(--pc-bg-elevated); }
+.pc-ad-close:focus-visible { outline:2px solid var(--accent); outline-offset:-3px; }
+.pc-ad-spacer { flex:none; height:var(--pc-ad-dock-space,0px); }
+html.pc-ads-docked { scroll-padding-bottom:var(--pc-ad-scroll-space); }
+.pc-ads-docked .discovery-scroll-top:not([hidden]) { bottom:calc(var(--pc-ad-dock-bottom) + var(--pc-ad-dock-height) + 12px); }
+
+/* Streams, advertisement and esports stay three independent cards. */
+@media(min-width:941px) {
+  .dashboard-grid.pc-home-ad-layout { grid-template-columns:minmax(0,2.25fr) minmax(304px,.95fr); }
+}
+.dashboard-grid .secondary-column.pc-home-ad-column { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(360px,1fr) auto minmax(160px,.55fr); gap:18px; align-items:stretch; }
+.pc-home-ad-column > .pc-ad-slot { align-self:start; justify-self:center; }
+.pc-home-ad-column .home-esports { min-height:160px; }
+.dashboard-grid.pc-home-ad-stacked { grid-template-columns:minmax(0,1fr); }
+.dashboard-grid.pc-home-ad-stacked .secondary-column.pc-home-ad-column { grid-template-rows:360px auto minmax(180px,auto); }
+
+/* Search controls remain together; the rail never spans their individual rows. */
+.search-page-content { min-width:0; }
+.search-page.pc-ad-search-layout { display:grid; grid-template-columns:minmax(0,1fr) 162px; gap:24px; align-items:start; align-content:start; }
+.pc-ad-search-rail { position:sticky; top:24px; align-self:start; }
+@media(max-width:940px) {
+  .dashboard-grid .secondary-column.pc-home-ad-column { grid-template-rows:360px auto minmax(180px,auto); }
+}
+@media(max-width:600px) {
+  html.pc-ads-docked { scroll-padding-top:calc(var(--pc-ad-dock-height) + 24px + env(safe-area-inset-top,0px)); scroll-padding-bottom:calc(98px + env(safe-area-inset-bottom,0px)); }
+  html.pc-ads-docked body { padding-top:calc(12px + var(--pc-ad-dock-space) + env(safe-area-inset-top,0px)); }
+  .pc-ad-slot { border-radius:14px; }
+  .pc-ad-dock { top:calc(8px + env(safe-area-inset-top,0px)); bottom:auto; }
+  .pc-ad-spacer { display:none; }
+  .pc-ads-docked .discovery-scroll-top:not([hidden]) { bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
+  .pc-ads-docked .rail .search-page-back { bottom:calc(100% + 8px); }
+}

@@ -122,7 +122,14 @@ function markProtectedResponse(response: NextResponse): NextResponse {
  * refs: doc: 06-reference-seo · see: lib/spa-seo.ts
  */
 async function spaDocumentResponse(request: NextRequest, headers?: Headers): Promise<NextResponse> {
-  const html = await renderPublicSpaHtml(request.nextUrl.pathname);
+  let html: string | null;
+  try {
+    html = await renderPublicSpaHtml(request.nextUrl.pathname);
+  } catch {
+    return new NextResponse(request.method === "HEAD" ? null : "Public page content is temporarily unavailable.", {
+      status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store", "Retry-After": "60" },
+    });
+  }
   if (html === null) {
     return markProtectedResponse(NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
       request: { headers: headers ?? request.headers },
@@ -396,8 +403,15 @@ export async function proxy(request: NextRequest) {
   // policy is the CSP of its own script response, and /demo-analyzer/worker.js
   // is served through the nonce branch. Granting it only on documents leaves
   // the worker's WebAssembly.compile blocked.
+  // The standalone dashboard admits the supplied banner origin and pinned writer.
+  // Adsterra writes inline script elements inside its own about:blank frame,
+  // which inherits this document's CSP. Grant that element permission only on
+  // this ad-enabled surface. Its creative bootstrap also evaluates template
+  // scripts; keep inline event handlers blocked. These permissions apply to the
+  // parent dashboard too, not just the provider frame.
+  // Non-dashboard Next/API policies keep their nonce/strict-dynamic behavior.
   const scriptSrc = isStaticSurface
-    ? "script-src 'self' 'wasm-unsafe-eval'"
+    ? "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://bauval.org https://cdnjs.cloudflare.com/ajax/libs/postscribe/2.0.8/postscribe.min.js"
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'wasm-unsafe-eval'`;
 
   const csp = [
@@ -405,17 +419,21 @@ export async function proxy(request: NextRequest) {
     // 'unsafe-inline' below is a legacy fallback only; browsers that support
     // 'strict-dynamic' ignore it.
     scriptSrc,
+    ...(isStaticSurface ? [
+      "script-src-elem 'self' 'unsafe-inline' https://bauval.org https://cdnjs.cloudflare.com/ajax/libs/postscribe/2.0.8/postscribe.min.js",
+      "script-src-attr 'none'",
+    ] : []),
     // Next.js injects inline styles (Tailwind, PostCSS, next/font) server-side.
     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
     // Player avatars, live-stream previews, and repository-owned blog images
     // are rendered from these fixed upstreams. Keep this an explicit allowlist;
     // do not broaden it to arbitrary HTTPS image hosts.
-    "img-src 'self' data: blob: https://hirez-api.onrender.com https://static-cdn.jtvnw.net https://raw.githubusercontent.com",
+    `img-src 'self' data: blob: https://hirez-api.onrender.com https://static-cdn.jtvnw.net https://raw.githubusercontent.com${isStaticSurface ? " https://bauval.org https://cdn.storageimagedisplay.com https://static.nresystems.com" : ""}`,
     "font-src 'self' data:",
     // Same-origin /api is the proxied backend; api.github.com powers the blog feed.
-    "connect-src 'self' https://api.github.com",
+    `connect-src 'self' https://api.github.com${isStaticSurface ? " https://bauval.org" : ""}`,
     "media-src 'self' https://medal.tv https://cdn.medal.tv https://cdn.discordapp.com https://media.discordapp.net",
-    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://clips.twitch.tv",
+    `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://clips.twitch.tv${isStaticSurface ? " https://bauval.org" : ""}`,
     "frame-ancestors 'self'",
     "form-action 'self'",
     "base-uri 'self'",

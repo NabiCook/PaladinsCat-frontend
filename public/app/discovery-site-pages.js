@@ -5,7 +5,7 @@
   const shell = document.querySelector(".dashboard-shell");
   const stack = document.querySelector(".page-view-stack");
   if (!shell || !stack) return;
-  const names = { "site-settings": "Settings", "site-community": "Community", "site-community-post": "Community", "site-chat": "Community chat", "site-blog": "Blog", "site-blog-post": "Blog", "site-notifications": "Notifications", "site-account": "Account" };
+  const names = { "site-settings": "Settings", "site-community": "Community", "site-community-post": "Community", "site-chat": "Community chat", "site-blog": "Blog", "site-blog-post": "Blog", "site-notifications": "Notifications" };
   const categories = [["all", "All"], ["public-release", "Public releases"], ["q-and-a", "Q & A"], ["guide", "Guides"], ["operational-report", "Operational reports"]];
   const pages = new Map(), tokens = new Map(), requests = new Map();
   let blogLoaded = false, communityLoaded = false;
@@ -62,10 +62,10 @@
   }
   function open(view) {
     if (!page(view).children.length) {
-      const loaders = { "site-blog": loadBlog, "site-community": loadCommunity, "site-settings": renderSettings, "site-account": renderAccount, "site-chat": loadChat, "site-notifications": loadNotifications };
+      const loaders = { "site-blog": loadBlog, "site-community": loadCommunity, "site-settings": renderSettings, "site-chat": loadChat, "site-notifications": loadNotifications };
       if (loaders[view]) void loaders[view]();
     }
-    const app = window.DiscoveryApp, path = view === "site-blog" ? "/blog" + (selectedCategory === "all" ? "" : "?category=" + encodeURIComponent(selectedCategory)) : view === "site-blog-post" ? selectedBlogPath : null;
+    const app = window.DiscoveryApp, path = view === "site-settings" ? app?.currentPath() || "/settings" : view === "site-blog" ? "/blog" + (selectedCategory === "all" ? "" : "?category=" + encodeURIComponent(selectedCategory)) : view === "site-blog-post" ? selectedBlogPath : null;
     const previous = app?.snapshot(view), routeChange = Boolean(path && previous?.path && previous.path !== path), restore = Boolean(path && app?.isRestoring(path));
     if (shell.dataset.view !== view || routeChange) document.dispatchEvent(new CustomEvent("discovery:open-view", { detail: { view, routeChange, restore } }));
     if (path) app?.record(view, path);
@@ -168,6 +168,7 @@
           if (!alive || !current(view, sequence) || revision !== accountRevision || !user || !(Number(user.id ?? user.user_id) > 0)) return;
           const accountState = { body: account, current: () => alive && current(view, sequence) && revision === accountRevision, visible: () => alive && current(view, sequence) && revision === accountRevision && shell.dataset.view === view, onDispose: close => { if (alive) settingsCleanup.push(close); else close(); } };
           if (owner?.renderAccount) await owner.renderAccount(accountState);
+          if (accountState.visible() && new URL(window.DiscoveryApp.currentPath(), location.origin).hash === '#invitation') account.querySelector('#invitation')?.scrollIntoView({ block: 'start' });
         } catch { if (alive && current(view, sequence) && revision === accountRevision) state(account, M('async.couldNotLoad', undefined, 'Account settings could not be loaded.'), syncAccount); }
       };
       document.addEventListener('discovery:session-changed', syncAccount);
@@ -180,19 +181,15 @@
       } else state(wallpaper, M('async.couldNotLoad', undefined, 'Wallpaper settings could not be loaded.'), () => void renderSettings(true));
     } catch { if (alive && current(view, sequence)) state(body, M("async.couldNotLoad",undefined,"Settings could not be loaded."), () => void renderSettings(true)); }
   }
-  function renderAccount() {
-    const view = "site-account", host = page(view); host.replaceChildren(header(view));
-    const content = section("Your PaladinsCat account"); content.append(paragraph("Sign in to manage your profile and linked Paladins account."), external("Open account", "https://paladinscat.com/account")); host.append(content);
-  }
   function filterBar(label, value, change) { const wrap = node("label", "site-field site-search", label); const input = document.createElement("input"); input.type = "search"; input.value = value; siteAttribute(input, "aria-label", label); siteAttribute(input, "placeholder", label); input.addEventListener("input", () => change(input.value)); wrap.append(input); return wrap; }
   function blogIndex(html) {
     const document = new DOMParser().parseFromString(html, "text/html");
-    const articles = [...document.querySelectorAll("article")].map(article => {
-      const link = article.closest("a"), href = safeUrl(link?.getAttribute("href"));
+    const articles = [...document.querySelectorAll("article")].filter(article => !article.querySelector("article")).map(article => {
+      const link = article.closest("a") || article.querySelector("h2 a[href]"), href = safeUrl(link?.getAttribute("href"));
       const title = article.querySelector("h2")?.textContent?.trim();
       if (!title || !href || !href.pathname.startsWith("/blog/")) return null;
       const metadata = [...(article.firstElementChild?.querySelectorAll("span") || [])].map(el => el.textContent.trim());
-      return { title, path: href.pathname, excerpt: article.querySelector("p")?.textContent?.trim() || "", author: metadata[0] || "", date: metadata[1] || "" };
+      return { title, path: href.pathname, excerpt: article.querySelector("p")?.textContent?.trim() || "", author: metadata[0] || "", date: metadata[1] || "", category: article.dataset.blogCategory || "public-release" };
     }).filter(Boolean);
     const blogTitle = document.querySelector("h1")?.textContent?.trim();
     if (!["Blog", window.DiscoveryLocale.t("generated.blog.title", undefined, "Blog")].includes(blogTitle)) throw new Error("Invalid blog response");
@@ -210,8 +207,8 @@
     const list = node("div", "site-post-list"); host.append(list); state(list, M("async.loading",undefined,"Loading blog posts…")); window.DiscoveryLoading?.show(list, "rows", "site-post-card");
     try {
       await window.DiscoveryLocale.ready;
-      const payload = await request("/preview/blog" + (category === "all" ? "" : "?category=" + category), refresh);
-      const posts = blogIndex(payload.html); if (!current(view, sequence)) return;
+      const payload = await window.DiscoveryApp.readPublicDocument("/blog", { refresh });
+      const posts = blogIndex(payload.html).filter(post => category === "all" || post.category === category); if (!current(view, sequence)) return;
       blogPosts = posts; blogLoaded = true; drawBlog();
     } catch { if (current(view, sequence)) state(list, M("async.couldNotLoad",undefined,"Blog posts could not be loaded."), () => void loadBlog(true)); }
   }
@@ -248,7 +245,7 @@
     const content = node("article", "site-panel site-markdown"); host.append(content); state(content, M("async.loading",undefined,"Loading article…"));
     try {
       if (!/^\/blog\/[A-Za-z0-9%_./-]+$/.test(articlePath) || articlePath.includes("..")) throw new Error("Invalid article path");
-      const payload = await request("/preview" + articlePath, refresh);
+      const payload = await window.DiscoveryApp.readPublicDocument(articlePath, { refresh });
       const source = new DOMParser().parseFromString(payload.html, "text/html"), article = source.querySelector("article .blog-markdown");
       if (!article) throw new Error("Article unavailable"); if (!visible()) return;
       const title = source.querySelector("article > h1")?.textContent || post.title; window.DiscoveryLocale.setText(host.querySelector("h1"), title);

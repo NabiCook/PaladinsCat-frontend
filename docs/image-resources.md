@@ -18,3 +18,13 @@ CI uses the read-only `FRONTEND_IMAGES_DEPLOY_KEY` Actions secret to check out t
 Update resources in their private repository first. Commit the reviewed resource manifest, update this frontend's commit/digest lock, then verify both variants through their own build paths. Preserve AVIF/original fallbacks, animated WebP/PNG loading-frame behavior and native vectors. Served URLs, user uploads and provider media keep their existing runtime contracts. Repository privacy controls source access; deployed artwork remains browser-accessible.
 
 Existing public Git history is preserved by owner decision. The code-only guard applies to current/future source trees, including artwork added outside `public/`.
+
+The dashboard's default background uses the ten `wallpaper-new` scene pairs from
+`lib/wallpaper-images.ts`, shuffled on startup and rotated hourly with a 2.1-second
+crossfade. The same owner supplies both the React component and the separately
+marked browser export in `public/app/discovery-community-art.js`; its catalog
+parity is checked by `test/wallpaper-images.test.mjs`. Preserve the other generated
+sections when refreshing that export. AVIF loads retry the matching PNG on failure.
+Browser-local custom wallpapers retain priority and their selected interval;
+disabling wallpaper removes the rotating layers. Existing tint and surface tokens
+remain in the dashboard stylesheet.

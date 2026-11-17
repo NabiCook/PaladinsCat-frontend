@@ -11,6 +11,10 @@ import { getSitemapEntries } from "@/lib/sitemap-data";
  */
 export const revalidate = 300;
 
+// Resolve the current source inventory at request time. The blog owner's cache
+// retains the five-minute cadence without requiring GitHub during image builds.
+export const dynamic = "force-dynamic";
+
 /** Return public canonical entries for Next's sitemap XML serializer.
  * I/O: none -> Promise<MetadataRoute.Sitemap>; no access or data writes.
  * refs: doc: 06-reference-seo · endpoints: /sitemap.xml

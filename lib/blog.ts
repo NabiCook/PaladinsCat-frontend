@@ -227,7 +227,7 @@ async function fetchPostFromGitHub(sourcePath: string): Promise<BlogPost | null>
     cache: "no-store",
     signal: AbortSignal.timeout(BLOG_FETCH_TIMEOUT_MS),
   });
-  if (!response.ok) return null;
+  if (!response.ok) throw new Error(`GitHub article ${response.status}: ${response.statusText}`);
   return parsePost(sourcePath, await response.text());
 }
 
@@ -272,11 +272,12 @@ async function loadCachedPosts(): Promise<BlogPost[]> {
 }
 
 /**
- * Load cached GitHub blog posts and return a new array sorted newest publication first, breaking ties by slug. Log loading failures and return an empty array so an upstream outage does not fail the blog page.
+ * Load cached posts sorted newest first. Existing callers retain the empty-state
+ * fallback; indexing callers can reject an outage instead of publishing removals.
  * refs: none
- * I/O types: `none -> Promise<BlogPost[]>`.
+ * I/O types: `{ throwOnError?: boolean } -> Promise<BlogPost[]>`.
  */
-export async function getAllPosts(): Promise<BlogPost[]> {
+export async function getAllPosts({ throwOnError = false }: { throwOnError?: boolean } = {}): Promise<BlogPost[]> {
   try {
     const posts = await loadCachedPosts();
     return [...posts].sort((a, b) => {
@@ -284,6 +285,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
       return newestFirst || a.slug.localeCompare(b.slug);
     });
   } catch (error) {
+    if (throwOnError) throw error;
     // A GitHub outage or rate limit must not turn /blog into a server error.
     console.error("[blog] unable to load GitHub posts", error);
     return [];

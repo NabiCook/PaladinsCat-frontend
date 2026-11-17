@@ -12,7 +12,7 @@ import {
   type ResolvedCustomWallpaper,
   WALLPAPER_CHANGE_EVENT,
 } from "@/lib/wallpaper-preference";
-import { DEFAULT_WALLPAPERS, randomizeWallpaperOrder, type BuiltInWallpaper } from "@/lib/wallpaper-images";
+import { BUILT_IN_WALLPAPER_INTERVAL_MS, WALLPAPER_TRANSITION_MS, DEFAULT_WALLPAPERS, randomizeWallpaperOrder, type BuiltInWallpaper } from "@/lib/wallpaper-images";
 import {
   extractWallpaperAccents,
   HOME_CAT_ACCENT_PROPERTY,
@@ -22,8 +22,6 @@ import {
 } from "@/lib/wallpaper-accent";
 
 type WallpaperSlide = BuiltInWallpaper | string;
-
-const BUILT_IN_WALLPAPER_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
  * MapSlideshow — rotating background slideshow of Paladins maps.
@@ -180,7 +178,7 @@ export default function MapSlideshow() {
           initial={reduceMotion ? undefined : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={reduceMotion ? undefined : { opacity: 0 }}
-          transition={reduceMotion ? undefined : { duration: 2.1, ease: [0.4, 0, 0.2, 1] }}
+          transition={reduceMotion ? undefined : { duration: WALLPAPER_TRANSITION_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
           className="pc-wallpaper-image"
           style={{
             position: "absolute",

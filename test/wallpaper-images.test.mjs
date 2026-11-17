@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import test from "node:test";
-import { DEFAULT_WALLPAPERS, randomizeWallpaperOrder } from "../lib/wallpaper-images.ts";
+import { BUILT_IN_WALLPAPER_INTERVAL_MS, WALLPAPER_TRANSITION_MS, DEFAULT_WALLPAPERS, randomizeWallpaperOrder } from "../lib/wallpaper-images.ts";
 
 const publicRoot = path.resolve(import.meta.dirname, "../public");
 
@@ -28,4 +29,15 @@ test("built-in wallpaper order starts on a randomized wallpaper after hydration"
     order.map((wallpaper) => wallpaper.avif).sort(),
     DEFAULT_WALLPAPERS.map((wallpaper) => wallpaper.avif).sort(),
   );
+});
+
+test("standalone wallpaper catalog matches its canonical TypeScript owner", async () => {
+  const browser = await import("../public/app/discovery-community-art.js");
+  const source = (await readFile(new URL("../lib/wallpaper-images.ts", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+  const generated = await readFile(new URL("../public/app/discovery-community-art.js", import.meta.url), "utf8");
+  assert(generated.includes(`// lib/wallpaper-images.ts SHA256 ${createHash("sha256").update(source).digest("hex")}`));
+  assert.deepEqual(browser.DEFAULT_WALLPAPERS, DEFAULT_WALLPAPERS);
+  assert.equal(browser.BUILT_IN_WALLPAPER_INTERVAL_MS, BUILT_IN_WALLPAPER_INTERVAL_MS);
+  assert.equal(browser.WALLPAPER_TRANSITION_MS, WALLPAPER_TRANSITION_MS);
+  assert.deepEqual(browser.randomizeWallpaperOrder(browser.DEFAULT_WALLPAPERS, () => 0), randomizeWallpaperOrder(DEFAULT_WALLPAPERS, () => 0));
 });

@@ -10,6 +10,9 @@
  */
 export type BuiltInWallpaper = { avif: string; png: string };
 
+export const BUILT_IN_WALLPAPER_INTERVAL_MS = 60 * 60 * 1000;
+export const WALLPAPER_TRANSITION_MS = 2100;
+
 const WALLPAPER_IDS = [
   "Frog_Isle_Loading",
   "Frozen_Guard_Loading",

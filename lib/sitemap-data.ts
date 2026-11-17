@@ -37,7 +37,7 @@ export async function publicDocumentCanonical(path: string): Promise<string | nu
     || STATIC_CHAMPIONS.some(champion => path === `/champions/${championSlug(champion.name)}`)) {
     return `${SITE_URL}${path}`;
   }
-  if (path.startsWith("/blog/") && (await getAllPosts()).some(post => getPostLink(post.slug) === path)) {
+  if (path.startsWith("/blog/") && (await getAllPosts({ throwOnError: true })).some(post => getPostLink(post.slug) === path)) {
     return `${SITE_URL}${path}`;
   }
   return null;
@@ -54,7 +54,7 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE_URL}/champions/${championSlug(champion.name)}`,
       changeFrequency: "daily" as const, priority: 0.78,
     })),
-    ...(await getAllPosts()).map(post => ({
+    ...(await getAllPosts({ throwOnError: true })).map(post => ({
       url: `${SITE_URL}${getPostLink(post.slug)}`,
       changeFrequency: "monthly" as const, priority: 0.7,
     })),

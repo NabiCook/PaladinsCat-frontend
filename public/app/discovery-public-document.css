@@ -1,0 +1,13 @@
+/* Initial public content uses existing page, glass-surface and text tokens. */
+.public-document { grid-column:1 / -1; }
+.public-document .discovery-panel { margin-top:0; }
+.public-document a { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+.public-document h2 { margin-top:28px; }
+.public-document h3 { margin:20px 0 8px; color:var(--text); font-size:16px; }
+.public-document p { margin:10px 0; }
+.public-document ul,.public-document ol { padding-left:24px; }
+.public-document li { margin:8px 0; }
+.public-document dl { display:grid; grid-template-columns:max-content 1fr; gap:8px 20px; }
+.public-document dd { margin:0; color:var(--text); }
+.public-document pre,.public-document table { max-width:100%; overflow:auto; }
+.public-document img { max-width:100%; height:auto; }
