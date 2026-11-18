@@ -109,7 +109,7 @@ if ($LocalAuthBypass) {
 # (which already sets https://localhost).
 if (-not $LocalOidc) {
   $startInfo.Environment['PALADINSCAT_PUBLIC_ORIGIN'] = "http://localhost:$Port"
-  $startInfo.Environment['PALADINSCAT_WEBSITE_GATE_SECRET_FILE'] = (Join-Path $frontendRoot 'secrets\website-gate.txt')
+  $startInfo.Environment['PALADINSCAT_WEBSITE_GATE_SECRET_FILE'] = (Join-Path (Split-Path -Parent $frontendRoot) 'local\runtime\secrets\website-gate.txt')
 }
 
 $process = [System.Diagnostics.Process]::Start($startInfo)
