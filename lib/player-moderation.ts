@@ -121,8 +121,7 @@ export function mergePlayerModeration(
   };
 }
 
-type BulkPlayer = {
-  id: string | number;
+export type PlayerModerationFields = {
   cheater?: boolean;
   exploiter?: boolean;
   sus_count?: number;
@@ -150,11 +149,14 @@ type BulkPlayer = {
   custom_tag_color?: string | null;
 };
 
+type BulkPlayer = PlayerModerationFields & { id: string | number };
+
 function moderationRows(json: { data?: { players?: BulkPlayer[] }; players?: BulkPlayer[] }): BulkPlayer[] {
   return json.data?.players ?? json.players ?? [];
 }
 
-function moderationFromRow(player: BulkPlayer): PlayerModeration {
+/** Map stored badge fields from a bulk or owning page response. · refs: none */
+export function moderationFromRow(player: PlayerModerationFields): PlayerModeration {
   return {
     cheater: Boolean(player.cheater),
     exploiter: Boolean(player.exploiter),

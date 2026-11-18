@@ -4,13 +4,14 @@
 
 import { fetchJson } from "./api-client";
 import { API_ERROR_KEYS, ApiRequestError } from "./api-errors";
+import { moderationFromRow, type PlayerModeration, type PlayerModerationFields } from "./player-moderation";
 
 /**
  * Describe a friend snapshot and provider freshness. I/O: JSON object -> PlayerFriendsResponse.
  * refs: endpoints: GET /players/{id}/friends
  */
 export type PlayerFriendsResponse = {
-  friends: Array<{ id: string; name: string; platform: string | null; status: "Friend" | "Blocked" }>;
+  friends: Array<{ id: string; name: string; platform: string | null; status: "Friend" | "Blocked"; moderation?: PlayerModeration }>;
   total: number;
   status: "ready" | "private" | "unavailable";
   freshness: { ttl_seconds: number; refreshed_at: string | null; expires_at: string | null; expired: boolean; remaining_seconds: number };
@@ -23,7 +24,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Reject incomplete snapshots instead of silently filtering unclassified rows away. */
-function isPlayerFriendsResponse(value: unknown): value is PlayerFriendsResponse {
+type PlayerFriendsWireResponse = Omit<PlayerFriendsResponse, "friends"> & {
+  friends: Array<Omit<PlayerFriendsResponse["friends"][number], "moderation"> & { moderation?: PlayerModerationFields }>;
+};
+
+function isPlayerFriendsResponse(value: unknown): value is PlayerFriendsWireResponse {
   if (!isRecord(value) || !Array.isArray(value.friends) || !isRecord(value.freshness)) return false;
   const { friends, freshness } = value;
   return (value.status === "ready" || value.status === "private" || value.status === "unavailable")
@@ -57,5 +62,11 @@ export async function fetchPlayerFriends(id: string, options?: { refresh?: boole
       kind: "invalid-response", method: "GET", endpoint,
     });
   }
-  return response;
+  return {
+    ...response,
+    friends: response.friends.map(({ moderation, ...friend }) => ({
+      ...friend,
+      ...(isRecord(moderation) ? { moderation: moderationFromRow(moderation) } : {}),
+    })),
+  };
 }

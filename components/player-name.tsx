@@ -69,6 +69,8 @@ export function VerifiedPlayerBadge({ className = "", iconClassName = "h-3.5 w-3
  */
 export type PlayerModerationTagProps = {
   playerId: string | number;
+  /** Null marks an owning response without badge data; only omitted values permit fallback. */
+  moderation?: PlayerModeration | null;
   cheater?: boolean;
   exploiter?: boolean;
   susCount?: number;
@@ -120,9 +122,10 @@ export function PlayerModerationTag({
   verified,
   customTag,
   customTagColor,
+  moderation: loadedModeration,
 }: PlayerModerationTagProps) {
   const { user } = useAuth();
-  const canLookup = user?.linkedPlayerId != null;
+  const canLookup = loadedModeration === undefined && user?.linkedPlayerId != null;
   const { t } = useLocalization();
   const suppliedModeration = {
     cheater,
@@ -142,7 +145,7 @@ export function PlayerModerationTag({
     altAccountVoteCount,
     verified,
   };
-  const [moderation, setModeration] = useState<PlayerModeration>(() => (
+  const [fallbackModeration, setModeration] = useState<PlayerModeration>(() => (
     mergePlayerModeration(EMPTY_MODERATION, suppliedModeration)
   ));
 
@@ -163,6 +166,7 @@ export function PlayerModerationTag({
     return () => { active = false; };
   }, [canLookup, afkWintrade, afkWintradeVoteCount, altAccount, altAccountVoteCount, automaticAfk, automaticAfkCount, boosted, boostedMatchCount, cheater, dropper, dropperVoteCount, exploiter, masterFeedingCount, playerId, susCount, verified, wallShooterCount]);
 
+  const moderation = loadedModeration === undefined ? fallbackModeration : loadedModeration ?? EMPTY_MODERATION;
   const communityAfk = moderation.afkWintrade && hasPlayerTag(moderation.afkWintradeVoteCount);
   const automaticAfkTagged = moderation.automaticAfk;
   const automaticTags = ([

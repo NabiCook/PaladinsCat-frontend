@@ -10,6 +10,7 @@ import { hasPlayerTag } from "./player-tag-threshold";
 import { normalizeMatchPerformanceTags, type PerformanceMatchTag } from "./player-match-tags";
 import type { GamePerformanceMetric, PerformanceScope } from "./performance-selection";
 import { API_ERROR_KEYS, ApiRequestError } from "./api-errors";
+import { moderationFromRow, type PlayerModeration, type PlayerModerationFields } from "./player-moderation";
 export { API_ERROR_KEYS, ApiRequestError };
 export { formatApiErrorMessage, isApiErrorKey } from "./api-errors";
 export type { ApiErrorKey, ApiRequestFailureKind } from "./api-errors";
@@ -1924,6 +1925,7 @@ export interface BestDuoSummary {
 export interface PlayerRelationshipRow {
   otherPlayerId: string;
   otherPlayerName: string;
+  moderation?: PlayerModeration;
   matchCount: number;
   metricMatchCount: number;
   wins: number;
@@ -1972,6 +1974,7 @@ export interface PlayerRelationshipSummary {
 type RawRelationshipRow = {
   other_player_id?: string | number;
   other_player_name?: string | null;
+  moderation?: PlayerModerationFields | null;
   match_count?: string | number | null;
   metric_match_count?: string | number | null;
   wins?: string | number | null;
@@ -2004,6 +2007,7 @@ function mapRelationshipRow(row: RawRelationshipRow): PlayerRelationshipRow {
   return {
     otherPlayerId: String(row.other_player_id),
     otherPlayerName: String(row.other_player_name ?? `Player ${row.other_player_id}`),
+    ...(row.moderation ? { moderation: moderationFromRow(row.moderation) } : {}),
     matchCount: Number(row.match_count ?? 0),
     metricMatchCount: Number(row.metric_match_count ?? 0),
     wins: Number(row.wins ?? 0),

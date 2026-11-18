@@ -55,7 +55,7 @@ export default function PlayerFriendsPage() {
           {entries.map(friend => <li key={friend.id} className="min-w-0 border-b border-pc-border">
             <Link href={`/players/${friend.id}`} className="flex min-h-14 min-w-0 items-center gap-2 py-3 text-pc-text hover:text-pc-accent">
               <PlatformIcon platform={friend.platform} />
-              <PlayerName playerId={friend.id} className={PLAYER_NAME_UNCLIPPED_CLASS}>{friend.name}</PlayerName>
+              <PlayerName playerId={friend.id} moderation={friend.moderation ?? null} className={PLAYER_NAME_UNCLIPPED_CLASS}>{friend.name}</PlayerName>
             </Link>
           </li>)}
         </ul>}
