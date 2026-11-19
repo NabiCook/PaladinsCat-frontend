@@ -49,7 +49,7 @@
   }
   function timeDuration(value) {if(num(value)==null)return '—';const seconds=Math.max(0,Math.round(num(value)));return Math.floor(seconds/60)+'m '+seconds%60+'s';}
   function safeUrl(value) {if(typeof value!=='string'||!/^https?:\/\//i.test(value.trim()))return null;try{const url=new URL(value.trim());return ['http:','https:'].includes(url.protocol)?url:null;}catch{return null;}}
-  function mediaUrl(value) {if(typeof value!=='string')return null;if(value.startsWith('/cheaters/evidence/'))return '/api/v1'+value;const url=safeUrl(value);return url?url.href:null;}
+  function mediaUrl(value) {if(typeof value!=='string')return null;if(value.startsWith('/cheaters/evidence/'))return window.DiscoveryApi.path(value);const url=safeUrl(value);return url?url.href:null;}
 
   const tr = (key, fallback, variables = {}) => t(key, variables, fallback);
   const active = ctx => ctx.current() && ctx.main.isConnected && !ctx.main.inert;
@@ -515,7 +515,37 @@
     if(Array.isArray(data.cosmeticEvidence)&&data.cosmeticEvidence.length){const section=panel(ui('moderation.cosmeticEvidenceTitle','Cosmetics'));table(section,[ui('moderation.cosmeticEvidenceType','Type'),ui('generated.champions.name','Name'),ui('moderation.evidenceReason','Reason'),ui('generated.players.observed','Observed')],data.cosmeticEvidence.map(row=>[row.kind,row.name,row.reason,date(row.observedDate)]),ui('moderation.cosmeticEvidenceTitle','Cosmetic evidence'));host.append(section);}
     if(Array.isArray(data.flags)&&data.flags.length){const section=panel(ui('moderation.evidenceSystem','Flags'));table(section,[ui('moderation.cosmeticEvidenceType','Type'),ui('moderation.evidenceReason','Reason'),ui('generated.players.firstObserved','Created')],data.flags.map(row=>[row.voteType,row.reason,date(row.createdAt)]),ui('moderation.evidenceSystem','Recorded flags'));host.append(section);}
   }
-  App.registerRoute(/^\/evidence\/([1-9]\d*)$/,async(path,match)=>{const id=match[1];await loadView('players-evidence-subject-'+id,ui('moderation.evidence','Player evidence'),'/evidence',async()=>{try{return await App.request('/players/exploiters/'+id);}catch(error){if(Number(error.status)!==404)throw error;return App.request('/cheaters/'+id);}},(ctx,data)=>{renderPlayerEvidence(ctx,data,id);});});
+  function evidenceAccountRequirement(user) {
+    if(!hasUser(user))return 'login';
+    if(!positive(user.linked_player_id??user.linkedPlayerId))return 'link';
+    if((user.invitation_required??user.invitationRequired)!==false&&(user.invitation_active??user.invitationActive)!==true)return 'invite';
+    return null;
+  }
+
+  function showEvidenceAccountRequirement(host,requirement,path,forSubmission=false) {
+    if(requirement==='login'){
+      state(host,forSubmission?tr('moderation.signInSubmitEvidence','Sign in to submit evidence.'):tr('generated.auth.signIn','Sign in'));
+      host.append(link(tr('generated.auth.signIn','Sign in'),'/auth/login?redirect='+encodeURIComponent(path),'reference-filter'));
+    } else if(requirement==='link'){
+      const message=forSubmission?ui('discovery.players.linkBeforeEvidence','Link your player account and complete account verification before submitting evidence.'):tr('invitation.linkAccount','Link account');
+      host.append(n('p','players-note',message),link(tr('invitation.linkAccount','Link account'),'/link-account','reference-filter'));
+    } else {
+      host.append(n('p','players-note',tr('invitation.description','Redeem an invitation code.')),link(tr('invitation.title','Invitation access'),'/settings#invitation','reference-filter'));
+    }
+  }
+
+  App.registerRoute(/^\/evidence\/([1-9]\d*)$/,async(path,match)=>{
+    const id=match[1];
+    await loadView('players-evidence-subject-'+id,ui('moderation.evidence','Player evidence'),'/evidence',async()=>{
+      const requirement=evidenceAccountRequirement(await session());
+      if(requirement)return {requirement};
+      try{return {data:await App.request('/players/exploiters/'+id)};}
+      catch(error){if(Number(error.status)!==404)throw error;return {data:await App.request('/cheaters/'+id)};}
+    },(ctx,{data,requirement})=>{
+      if(requirement)showEvidenceAccountRequirement(ctx.body,requirement,path);
+      else renderPlayerEvidence(ctx,data,id);
+    });
+  });
   App.registerRoute(/^\/players\/([1-9]\d*)(?:\/(matches|champions|loadouts|friends|relationships|evidence))?$/,showProfile);
 
   async function exportDeck(ctx,target,deck,status,control) {
@@ -589,7 +619,7 @@
 
   function evidenceNav(host,selected) {const nav=n('nav','players-subnav');nav.setAttribute('aria-label',ui('moderation.evidence','Evidence sections'));nav.append(link(ui('moderation.evidence','Reports'),'/evidence','reference-filter'+(selected==='feed'?' is-active':'')),link(ui('moderation.submitEvidence','Submit'),'/evidence/submit','reference-filter'+(selected==='submit'?' is-active':'')));host.append(nav);void session(true).then(user=>{if(nav.isConnected&&permitted(user,'admin'))nav.append(link(ui('moderation.evidenceReview','Review'),'/evidence/review','reference-filter'+(selected==='review'?' is-active':'')));}).catch(()=>{});}
   let evidenceLayoutRequest;
-  function evidenceLayout() {return evidenceLayoutRequest??=(import('./discovery-evidence.js?v=1').then(()=>window.DiscoveryEvidence).catch(error=>{evidenceLayoutRequest=null;throw error;}));}
+  function evidenceLayout() {return evidenceLayoutRequest??=(import('./discovery-evidence.js?v=2').then(()=>window.DiscoveryEvidence).catch(error=>{evidenceLayoutRequest=null;throw error;}));}
   async function evidenceFeed(path) {
     window.DiscoveryEvidence?.dispose();
     const url=new URL(path,location.origin),p=Math.max(1,Number(url.searchParams.get('page'))||1),ctx=begin('players-evidence',ui('moderation.evidence','Evidence'),'/players');
@@ -609,9 +639,11 @@
   async function session(refresh=false) {if(window.DiscoveryCommunity?.session)return window.DiscoveryCommunity.session(refresh);try{const user=await App.request('/auth/me');return user&&String(user.id??user.user_id??'').trim()?user:null;}catch(error){if([401,403].includes(Number(error.status)))return null;throw error;}}
   async function evidenceSubmit(path) {
     const ctx=begin('players-evidence-submit',tr('moderation.submitEvidence','Submit evidence'),'/evidence');evidenceNav(ctx.main,'submit');ctx.main.insertBefore(ctx.main.lastChild,ctx.body);
-    try{const user=await session(true);if(!ctx.current())return;ctx.body.replaceChildren();if(!hasUser(user)){state(ctx.body,tr('moderation.signInSubmitEvidence','Sign in to submit evidence.'));ctx.body.append(link(tr('generated.auth.signIn','Sign in'),'/auth/login?redirect='+encodeURIComponent(path),'reference-filter'));return;}
-      if(!positive(user.linked_player_id??user.linkedPlayerId)){ctx.body.append(n('p','players-note',ui('discovery.players.linkBeforeEvidence','Link your player account and complete account verification before submitting evidence.')),link(tr('invitation.linkAccount','Link account'),'/link-account','reference-filter'));return;}
-      if((user.invitation_required??user.invitationRequired)!==false&&(user.invitation_active??user.invitationActive)!==true){ctx.body.append(n('p','players-note',tr('invitation.description','Redeem an invitation code.')),link(tr('invitation.title','Invitation access'),'/settings#invitation','reference-filter'));return;}
+    try{
+      const requirement=evidenceAccountRequirement(await session(true));
+      if(!ctx.current())return;
+      ctx.body.replaceChildren();
+      if(requirement){showEvidenceAccountRequirement(ctx.body,requirement,path,true);return;}
       const form=n('form','players-form players-panel players-evidence-form');let selected=null;const playerSearch=field(tr('moderation.playerNameOrId','Player name or ID'),'',()=>{selected=null;});playerSearch.input.required=true;playerSearch.input.minLength=2;playerSearch.input.maxLength=100;const candidates=n('div','players-inline-list');let searchSequence=0,timer;
       playerSearch.input.addEventListener('input',()=>{clearTimeout(timer);const query=playerSearch.input.value.trim();const seq=++searchSequence;candidates.replaceChildren();if(query.length<2)return;timer=setTimeout(async()=>{try{const data=await App.request('/players/search?q='+encodeURIComponent(query));if(seq!==searchSequence||!ctx.current())return;candidates.replaceChildren(...rows(data).slice(0,8).map(row=>button(row.name+' · '+row.id,()=>{selected=row;playerSearch.input.value=row.name;candidates.replaceChildren(paragraph(ui('generated.players.player','Selected player')+' '+row.id));})));}catch(error){if(seq===searchSequence)failure(candidates,error,()=>playerSearch.input.dispatchEvent(new Event('input')));}},200);});
       const preset=new URL(path,location.origin).searchParams.get('playerId');if(positive(preset)){try{const data=await App.request('/players/search?q='+preset);selected=rows(data).find(row=>String(row.id)===preset)||null;if(selected)playerSearch.input.value=selected.name;}catch{}}
