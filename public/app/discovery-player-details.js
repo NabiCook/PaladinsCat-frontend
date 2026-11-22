@@ -36,9 +36,10 @@
     })().catch(error=>{profileCache.delete(id);throw error;}));
     return profileCache.get(id);
   }
-  function tabs(host,id,selected='') {
+  function tabs(host,id,selected='',keys=null) {
     const nav=n('nav','players-subnav players-profile-tabs');nav.setAttribute('aria-label',ui('nav.players','Player sections'));
     for(const [key,label,translation] of [['','Stats','common.metrics.title'],['matches','Matches','generated.players.matches'],['loadouts','Loadouts','generated.players.loadouts'],['champions','Champion stats','common.playerChampions.title'],['friends','Friends','playerFriends.title'],['relationships','Relationships','common.relationships.title']]){
+      if(keys&&!keys.includes(key))continue;
       const item=link(tr(translation,label),'/players/'+id+(key?'/'+key:''),'reference-filter'+(key===selected?' is-active':''));if(key===selected)item.setAttribute('aria-current','page');nav.append(item);
     }host.append(nav);return nav;
   }
@@ -438,35 +439,90 @@
   // Paladins account level from XP: T(L) = 10,000 x L x (L+3) XP to reach L+1.
   // level = 1 + floor((sqrt(9 + xp/2500) - 3) / 2), capped at 999.
   function accountLevel(xp){const value=num(xp);if(value==null||value<0)return null;return Math.min(999,1+Math.floor((Math.sqrt(9+value/2500)-3)/2));}
-  function mctsText(value,fallback='—'){const text=value==null?'':String(value).trim();return text||fallback;}
-  function mctsNumber(value,fallback='—'){const number=num(value);return number==null?mctsText(value,fallback):fmt(number);}
-  function renderMctsProfile(ctx,id,data) {
-    const hero=n('section','players-profile-hero'),copy=n('div','players-profile-copy'),line=n('div','players-profile-name-line');
+  function privateSeconds(value){const seconds=num(value);return seconds==null||seconds<0?null:Math.round(seconds);}
+  function privatePlaytime(seconds){return seconds==null?'—':Math.floor(seconds/3600)+'h '+Math.floor(seconds%3600/60)+'m';}
+  function privateKda(kills,deaths,assists){return [kills,deaths,assists].every(value=>num(value)!=null)?((num(kills)+num(assists)/2)/Math.max(num(deaths),1)).toFixed(2):'—';}
+  function privateKdaText(row){const value=num(row.kda);return value!=null?fmt(value):privateKda(row.kills,row.deaths,row.assists);}
+  function privateResult(row){return profileMatchResult({win_status:row.win===true?'winner':row.win===false?'loser':''});}
+  function privateQueueName(row){return Number(row.queue_id)===486?tr('generated.players.ranked','Ranked'):num(row.queue_id)!=null?tr('generated.players.casual','Casual'):tr('generated.players.unknown','Unknown');}
+  function privateQueue(row){return n('div','players-match-queue',privateQueueName(row));}
+  function privateMatches(data) {
+    const seen=new Map();
+    (data.matches||[]).forEach((row,index)=>{if(row&&typeof row==='object')seen.set(row.match_id==null?'#'+index:String(row.match_id),row);});
+    return [...seen.values()].sort((a,b)=>(Date.parse(b.entry_datetime)||0)-(Date.parse(a.entry_datetime)||0));
+  }
+  function privateTotals(data,matches) {
+    const stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'),sum=(list,key)=>list.reduce((total,row)=>total+(num(row[key])??0),0),known=(list,key)=>list.some(row=>num(row[key])!=null),decisive=matches.filter(row=>typeof row.win==='boolean');
+    let wins=null,losses=null,games=null;
+    if(stats.length){if(known(stats,'wins'))wins=sum(stats,'wins');if(known(stats,'losses'))losses=sum(stats,'losses');games=known(stats,'games')?sum(stats,'games'):wins!=null&&losses!=null?wins+losses:null;}
+    else if(decisive.length){wins=decisive.filter(row=>row.win===true).length;losses=decisive.filter(row=>row.win===false).length;games=decisive.length;}
+    const combat=stats.length&&known(stats,'kills')?stats:matches,kills=known(combat,'kills')?sum(combat,'kills'):null,deaths=known(combat,'deaths')?sum(combat,'deaths'):null,assists=known(combat,'assists')?sum(combat,'assists'):null;
+    const timed=matches.filter(row=>privateSeconds(row.duration_seconds)!=null),captured=timed.reduce((total,row)=>total+privateSeconds(row.duration_seconds),0),whole=games==null||matches.length>=games,seconds=timed.length&&whole?captured:null;
+    const roster=stats.length?stats:matches,championIds=new Set(roster.map(row=>row.champion_id).filter(value=>num(value)!=null));
+    return {matches:matches.length,games,wins,losses,winRate:wins!=null&&losses!=null&&wins+losses>0?100*wins/(wins+losses):null,kills,deaths,assists,kda:privateKda(kills,deaths,assists),seconds,champions:championIds.size||null};
+  }
+  function privateChampions(data,matches) {
+    const stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'),byName=(a,b)=>String(a.champion_name||'').localeCompare(String(b.champion_name||''),locale());
+    if(stats.length){const xp=new Map((data.champions||[]).map(row=>[Number(row.champion_id),num(row.xp)])),merged=new Map(),pick=(row,key)=>{const value=num(row[key]);return value==null?0:value;};
+      for(const row of stats){const key=row.champion_id==null?String(row.champion_name||''):String(row.champion_id);if(!key)continue;const entry=merged.get(key)||{champion_id:row.champion_id,champion_name:row.champion_name,games:0,wins:0,losses:0,kills:null,deaths:null,assists:null,level:null};
+        entry.games+=pick(row,'games');entry.wins+=pick(row,'wins');entry.losses+=pick(row,'losses');
+        for(const field of ['kills','deaths','assists'])if(num(row[field])!=null)entry[field]=(entry[field]??0)+num(row[field]);
+        merged.set(key,entry);}
+      return [...merged.values()].map(row=>{const value=xp.get(Number(row.champion_id));return {...row,level:value!=null?masteryLevel(value):null,winRate:recordWinRate(row.wins,row.games,null)};}).sort((a,b)=>(num(b.games)??0)-(num(a.games)??0)||byName(a,b));}
+    const entries=new Map();
+    for(const row of matches){const key=row.champion_id==null?String(row.champion_name||''):String(row.champion_id);if(!key)continue;const entry=entries.get(key)||{champion_id:row.champion_id,champion_name:row.champion_name,games:0,wins:0,losses:0,kills:null,deaths:null,assists:null,level:null};entry.games+=1;if(row.win===true)entry.wins+=1;else if(row.win===false)entry.losses+=1;if(num(row.kills)!=null||num(row.deaths)!=null||num(row.assists)!=null){entry.kills=(entry.kills??0)+(num(row.kills)??0);entry.deaths=(entry.deaths??0)+(num(row.deaths)??0);entry.assists=(entry.assists??0)+(num(row.assists)??0);}entries.set(key,entry);}
+    return [...entries.values()].map(row=>({...row,winRate:row.wins+row.losses>0?100*row.wins/(row.wins+row.losses):null})).sort((a,b)=>b.games-a.games||byName(a,b));
+  }
+  function privateMatchSection(matches,title) {
+    const section=n('section','players-profile-recent'),heading=n('h2','players-section-title',title),output=n('div');section.append(heading,output);
+    if(!matches.length){output.append(paragraph(tr('generated.players.noMatchesRecordedYet','No matches recorded yet.')));return section;}
+    table(output,[tr('generated.players.match.0335207','Match'),tr('generated.players.champion','Champion'),tr('generated.players.queue','Queue'),tr('common.playerChampions.killsShort','K'),tr('common.playerChampions.deathsShort','D'),tr('common.playerChampions.assistsShort','A'),tr('common.metrics.kda','KDA'),tr('generated.players.result','Result'),tr('generated.players.time','Time'),tr('generated.players.played','Played')],matches.map(row=>[row.paladinscat_match===true&&positive(row.match_id)?link('#'+String(row.match_id),'/matches/'+row.match_id):n('span','','#'+String(row.match_id??'—')),profileChampionCell(row),privateQueue(row),fmt(row.kills),fmt(row.deaths),fmt(row.assists),profileMatchKda(row),privateResult(row),profileMatchClock(row.duration_seconds),date(row.entry_datetime)]),title);
+    const list=n('div','players-profile-mobile-matches');
+    for(const row of matches){const card=row.paladinscat_match===true&&positive(row.match_id)?link('','/matches/'+row.match_id,'players-profile-mobile-match'):n('div','players-profile-mobile-match'),copy=n('span','players-profile-mobile-copy'),headingRow=n('span','players-match-mobile-heading'),scores=n('span','players-profile-mobile-scores');headingRow.append(n('strong','',row.champion_name||'—'),privateResult(row));copy.append(n('span','players-profile-mobile-id','#'+String(row.match_id??'—')),headingRow,n('span','players-meta',privateQueueName(row)+' · '+date(row.entry_datetime)));scores.append(n('strong','',[row.kills,row.deaths,row.assists].map(fmt).join(' / ')),n('span','players-meta',profileMatchKda(row)+' '+tr('generated.players.kda','KDA')),n('span','players-meta',profileMatchClock(row.duration_seconds)));card.append(profileMatchIcon(row.champion_name),copy,scores);list.append(card);}
+    output.append(list);return section;
+  }
+  function privateOverview(host,data,id,matches,champions) {
+    const totals=privateTotals(data,matches),level=num(data.account_level)??accountLevel(data.xp_level),grid=n('div','players-profile-grid'),left=n('div','players-profile-left'),right=n('aside','players-profile-right');
+    const card=panel();card.classList.add('players-profile-account');card.setAttribute('aria-label',tr('playerProfile.accountOverview','Account overview'));
+    const columns=n('div','players-profile-account-columns'),info=n('div'),overall=n('div','players-profile-overall'),top=n('div','players-profile-account-top');
+    for(const value of [level!=null?'Lv '+fmt(level):null,tr('generated.players.privateAccount','Private account')]){if(!value)continue;if(top.childNodes.length)top.append(n('span','players-profile-separator','·'));top.append(n('span','players-meta',String(value)));}
+    info.append(top);
+    profileStats(info,[[tr('generated.players.playtime','Playtime'),privatePlaytime(totals.seconds)],[tr('generated.champions.champions','Champions'),fmt(totals.champions)],[tr('generated.players.playerId','Player ID'),String(data.player_id??id)]]);
+    overall.append(n('h3','',tr('generated.players.overall','Overall')));
+    profileStats(overall,[[tr('generated.players.totalMatches','Matches'),fmt(totals.games)],[tr('generated.players.totalWins','Wins'),fmt(totals.wins)],[tr('generated.players.totalLosses','Losses'),fmt(totals.losses)],[tr('common.metrics.winRate','Win rate'),rate(totals.winRate)],[tr('generated.players.kda','KDA'),totals.kda]]);
+    columns.append(info,overall);card.append(columns);left.append(card);
+    if(champions.length){const block=panel(tr('generated.champions.champions','Champions'));block.classList.add('players-profile-top-champions');table(block,[tr('generated.champions.name','Champion'),tr('generated.players.matches','Matches'),tr('common.metrics.winRate','Win rate'),tr('common.metrics.kda','KDA')],champions.slice(0,5).map(row=>[profileChampionCell(row),fmt(row.games),rate(row.winRate),privateKdaText(row)]),tr('generated.champions.champions','Champions'));left.append(block);}
+    if(totals.kills!=null||totals.deaths!=null||totals.assists!=null){const combat=panel(tr('common.metrics.kda','KDA'));metrics(combat,[[tr('common.playerChampions.killsShort','K'),fmt(totals.kills)],[tr('common.playerChampions.deathsShort','D'),fmt(totals.deaths)],[tr('common.playerChampions.assistsShort','A'),fmt(totals.assists)],[tr('common.metrics.kda','KDA'),totals.kda]]);right.append(combat);}
+    grid.append(left,right);host.append(grid);
+    if(matches.length)host.append(privateMatchSection(matches.slice(0,25),tr('generated.players.recentMatches','Recent matches')));
+  }
+  function privateChampionStats(host,data,matches,champions) {
+    const totals=privateTotals(data,matches),heading=n('div','players-tab-heading');heading.append(n('h2','players-section-title',tr('common.playerChampions.title','Champion stats')));host.append(heading);
+    if(!champions.length){host.append(paragraph(tr('generated.players.noMatchesRecordedYet','No matches recorded yet.')));return;}
+    const summary=n('dl','players-metrics players-champion-summary');
+    for(const [label,value] of [[tr('generated.champions.champions','Champions'),fmt(champions.length)],[tr('generated.players.matches','Matches'),fmt(totals.games)],[tr('common.metrics.winRate','Win rate'),rate(totals.winRate)]]){const pair=n('div');pair.append(n('dt','',label),n('dd','',value));summary.append(pair);}
+    const card=panel(tr('common.playerChampions.title','Champion stats'));
+    table(card,[tr('generated.champions.name','Champion'),tr('common.playerChampions.sortLevel','Level'),tr('generated.players.matches','Matches'),tr('common.playerChampions.winsShort','Wins'),tr('common.playerChampions.lossesShort','Losses'),tr('common.metrics.winRate','Win rate'),tr('common.playerChampions.kdaShort','K / D / A'),tr('common.metrics.kda','KDA')],champions.map(row=>[profileChampionCell(row),row.level==null?'—':fmt(row.level),fmt(row.games),fmt(row.wins),fmt(row.losses),rate(row.winRate),[row.kills,row.deaths,row.assists].map(fmt).join(' / '),privateKdaText(row)]),tr('common.playerChampions.title','Player champion statistics'));
+    host.append(summary,card);
+  }
+  function privateHero(ctx,id,data) {
+    const hero=n('section','players-panel players-profile-hero'),person=n('div','players-profile-person'),art=n('div','players-profile-art'),copy=n('div','players-profile-copy'),toolbar=n('div','players-controls players-profile-toolbar'),line=n('div','players-profile-name-line'),name=ctx.main.querySelector('h1'),level=num(data.account_level)??accountLevel(data.xp_level);
+    if(name)line.append(name);
     line.append(n('span','players-directory-tag',tr('generated.players.privateAccount','Private account')));
-    copy.append(line);hero.append(copy);ctx.body.append(hero);
-    const championRows=(data.champions||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.level),mctsNumber(row.xp)]);
-    const loadoutRows=(data.loadouts||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsText(row.name,'Loadout '+mctsText(row.loadout_id)),mctsText(row.talent_id),(row.items||[]).length?fmt((row.items||[]).length):'—']);
-    const inventoryRows=data.inventory||[],currencyRows=data.currency||[];
-    // MCTS aggregate statistics: career totals per champion x queue, imported from the
-    // same reply that carries the match list. Rates arrive pre-derived by the backend.
-    const statsRows=(data.champion_stats||[]).map(row=>[mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),mctsNumber(row.games),num(row.win_rate)==null?'—':rate(num(row.win_rate)),num(row.kda)==null?'—':fmt(num(row.kda),{maximumFractionDigits:2}),mctsNumber(row.kills),mctsNumber(row.deaths),mctsNumber(row.assists)]);
-    // A match already ingested from the public API is linkable; an MCTS-only match
-    // has no scoreboard in PaladinsCat and is shown as plain text.
-    const matchRows=(data.matches||[]).map(row=>{const id=row.match_id;return[row.paladinscat_match?link(String(id),'/matches/'+id):mctsText(id),mctsText(row.champion_name,'Champion '+mctsText(row.champion_id)),row.win===true?'Win':row.win===false?'Loss':'—',[mctsNumber(row.kills),mctsNumber(row.deaths),mctsNumber(row.assists)].join(' / '),num(row.duration_seconds)==null?'—':timeDuration(row.duration_seconds)];});
-    const capturedLevel=num(data.account_level),level=capturedLevel!=null?capturedLevel:accountLevel(data.xp_level);
-    const facts=panel(tr('generated.players.overview','Overview'));
-    metrics(facts,[[tr('generated.players.playerId','Player ID'),mctsText(data.player_id??id)],[tr('generated.players.accountLevel','Account level'),level==null?'—':fmt(level)]]);
-    // Mark the id itself as private, not just the header: a copied id must stay
-    // self-describing wherever it is pasted.
-    facts.querySelector('.players-metrics dd')?.append(' ',n('span','players-directory-tag',tr('generated.matches.private','Private')));
-    ctx.body.append(facts);
-    if(!championRows.length&&!loadoutRows.length&&!inventoryRows.length&&!currencyRows.length&&!statsRows.length&&!matchRows.length){facts.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
-    if(statsRows.length){const stats=panel(tr('common.playerChampions.title','Champion stats'));table(stats,[tr('generated.champions.name','Champion'),tr('generated.stats.plays','Games'),tr('common.metrics.winRate','Win rate'),tr('common.metrics.kda','KDA'),'K','D','A'],statsRows,tr('common.playerChampions.title','Champion stats'));ctx.body.append(stats);}
-    if(matchRows.length){const matches=panel(tr('generated.players.matches','Matches'));table(matches,[tr('generated.matches.match','Match'),tr('generated.matches.champion','Champion'),tr('generated.matches.result','Result'),'K / D / A',tr('generated.matches.duration','Duration')],matchRows,tr('generated.players.matches','Matches'));ctx.body.append(matches);}
-    if(championRows.length){const champions=panel(tr('common.playerChampions.title','Champion stats'));table(champions,[tr('generated.champions.name','Champion'),tr('generated.players.level','Level'),tr('generated.players.xp','XP')],championRows,tr('common.playerChampions.title','Champion stats'));ctx.body.append(champions);}
-    if(loadoutRows.length){const loadouts=panel(tr('generated.players.loadouts','Loadouts'));table(loadouts,[tr('generated.champions.name','Champion'),tr('generated.players.loadout','Loadout'),tr('generated.players.talent','Talent'),tr('generated.players.cards','Cards')],loadoutRows,tr('generated.players.loadouts','Loadouts'));ctx.body.append(loadouts);}
-    if(inventoryRows.length){const inventory=panel(tr('generated.players.inventory','Inventory'));table(inventory,[tr('generated.players.item','Item'),tr('generated.players.level','Level'),tr('generated.players.remainingTime','Remaining')],inventoryRows.map(row=>[mctsText(row.item_id),mctsNumber(row.level),row.remaining_seconds==null?'—':timeDuration(row.remaining_seconds)]),tr('generated.players.inventory','Inventory'));ctx.body.append(inventory);}
-    if(currencyRows.length){const currency=panel(tr('generated.players.currency','Currency'));table(currency,[tr('generated.players.currencyType','Currency'),tr('generated.players.amount','Amount')],currencyRows.map(row=>[mctsText(row.currency_type_value_id),mctsNumber(row.currency_value)]),tr('generated.players.currency','Currency'));ctx.body.append(currency);}
+    copy.append(line,paragraph('Default Ally Team'));
+    if(level!=null)copy.append(n('p','players-meta',tr('generated.players.level','Level')+' '+fmt(level)));
+    person.append(art,copy);hero.append(person,toolbar);ctx.body.append(hero);
+    void identityArt(ctx,art,{name:data.name||data.gamer_tag||String(data.player_id??id),loading_frame:'Default Ally Team'});
+  }
+  async function renderMctsProfile(ctx,id,data,child='') {
+    const matches=privateMatches(data),champions=privateChampions(data,matches),keys=matches.length||champions.length?['','matches','champions']:[''],selected=keys.includes(child)?child:'';
+    privateHero(ctx,id,data);ctx.main.querySelector('.players-hub-header')?.remove();
+    tabs(ctx.body,id,selected,keys);
+    const content=n('div','players-profile-tab-content');ctx.body.append(content);ctx.body=content;
+    if(keys.length===1){content.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
+    if(selected==='matches'){content.append(privateMatchSection(matches,tr('generated.players.recentMatches','Recent matches')));return;}
+    if(selected==='champions'){privateChampionStats(content,data,matches,champions);return;}
+    privateOverview(content,data,id,matches,champions);
   }
   async function profileShell(ctx,id,raw,player,selected) {
     await profileControls(ctx,id,raw,player);if(!ctx.current())return null;
@@ -477,7 +533,7 @@
     const id=match[1],child=match[2]||'',url=new URL(path,location.origin),view='player-'+id+(child?'-'+child:'-overview');
     const ctx=begin(view,ui('generated.players.player','Player')+' '+id,child?'/players/'+id:'/players');const shellBody=ctx.body;
     try {
-      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();if(player.mcts){renderMctsProfile(ctx,id,raw.mcts,player);return;}await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
+      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();if(player.mcts){await renderMctsProfile(ctx,id,raw.mcts,child);return;}await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
       if(!child) {
         renderProfileOverview(ctx,id,raw,player);
       } else if(child==='matches') {
