@@ -198,8 +198,6 @@ async function buildItemData(): Promise<Pick<BuildReferenceData, "items" | "item
   const items = ACTIVE_ITEMS.map((item) => {
     const key = normalizeName(item.name);
     const dbRow = dbByName.get(key);
-    const localRow = localByName.get(key);
-    const row = dbRow ?? localRow;
     // The bundled file contains historical item IDs. Use it for descriptions
     // and images only; current IDs come from the database or the maintained
     // fallback roster so removed/reused store entries cannot collide.
@@ -210,7 +208,9 @@ async function buildItemData(): Promise<Pick<BuildReferenceData, "items" | "item
       category: item.category,
       description: item.tiers[0].description,
       descriptionKey: null,
-      iconUrl: row?.icon_url ?? row?.iconUrl ?? itemIconPath(item.name),
+      // The active roster has owned artwork. Legacy reference URLs can point
+      // at the retired web2.hirez.com host even when metadata is available.
+      iconUrl: itemIconPath(item.name),
       tiers: item.tiers.map((tier) => ({ ...tier })),
       sourceUrl: `https://paladins.fandom.com/wiki/${item.wikiSlug}`,
     };
@@ -237,7 +237,7 @@ async function buildItemData(): Promise<Pick<BuildReferenceData, "items" | "item
     itemLookupById.set(id, {
       id,
       name,
-      iconUrl: row.icon_url ?? row.iconUrl ?? localRow?.icon_url ?? localRow?.iconUrl ?? itemIconPath(name),
+      iconUrl: activeItem?.iconUrl ?? row.icon_url ?? row.iconUrl ?? localRow?.icon_url ?? localRow?.iconUrl ?? itemIconPath(name),
       category: activeItem && normalizeName(activeItem.name) === normalizeName(name) ? activeItem.category : undefined,
     });
   }
