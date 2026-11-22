@@ -41,7 +41,7 @@ type Props = { team1Players: MatchPlayerDetail[]; team2Players: MatchPlayerDetai
 
 // Reuse the exact resolver and source data used by champion/build pages.
 // Cache per champion so the 10 match rows do not issue duplicate reference requests.
-const referenceByChampion = new Map<number, Promise<BuildReferenceData>>();
+const referenceByChampion = new Map<string, Promise<BuildReferenceData>>();
 const itemMetricsByChampionScope = new Map<string, Promise<ItemStat[]>>();
 const itemDetailByChampionScope = new Map<string, ReturnType<typeof fetchItemDetail>>();
 const loadoutMetricsByChampionTalentScope = new Map<string, Promise<{
@@ -64,16 +64,18 @@ function normalizeName(value: string | null | undefined) {
 }
 
 function getBuildReference(championId: number, championName: string) {
-  let promise = referenceByChampion.get(championId);
+  const slug = championSlug(championName);
+  const referenceKey = `${championId}:${slug}`;
+  let promise = referenceByChampion.get(referenceKey);
   if (!promise) {
-    const cacheKey = `${RESULT_CACHE_PREFIX}:reference:${championId}`;
+    const cacheKey = `${RESULT_CACHE_PREFIX}:reference:${referenceKey}`;
     const cached = readBrowserResult<BuildReferenceData>(cacheKey);
     promise = cached
       ? Promise.resolve(cached)
-      : loadBuildReferenceData(championId, championSlug(championName))
+      : loadBuildReferenceData(championId, slug)
           .then((value) => writeBrowserResult(cacheKey, value, REFERENCE_CACHE_TTL_MS))
           .catch(() => ({ championId, items: [], cards: [], talents: [] }));
-    referenceByChampion.set(championId, promise);
+    referenceByChampion.set(referenceKey, promise);
   }
   return promise;
 }
