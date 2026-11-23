@@ -71,6 +71,20 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Versioned /app/ asset URLs carry a `?v=`
+        // token, so a year-long immutable cache is pinned to the build that asked for it and
+        // only removes the per-visit revalidation. Unversioned imports retain revalidation. The document route keeps its own no-store
+        // policy: it mints the guest cookie.
+        source: "/app/:path*",
+        has: [{ type: "query", key: "v", value: ".+" }],
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
         source: "/images/:path*",
         headers: [
           {

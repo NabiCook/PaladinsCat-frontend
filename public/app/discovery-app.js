@@ -83,11 +83,21 @@
   // the dashboard's view-history manager (discovery-dashboard.js), which already
   // owns back/forward and scroll restoration: each entry carries its path and
   // that path is published as the URL there, so the router only resolves here.
+  let navAttempt = 0;
   function navigate(input) {
     window.DiscoveryViewScroll?.capture();
     const path = canonical(input), found = resolve(path);
     shell.dataset.route = path;
+    const attempt = ++navAttempt;
     if (!found) {
+      // A route that belongs to a module index.html appends after the first route paint can
+      // be clicked before that module lands: hold the navigation until it registers instead
+      // of painting the unavailable page.
+      const pendingModules = window.DiscoveryRouteModulesReady;
+      if (pendingModules && !pendingModules.discoverySettled) {
+        pendingModules.then(() => { if (attempt === navAttempt) navigate(path); });
+        return true;
+      }
       const host = createPage('route-unavailable', 'Page unavailable', '');
       const heading = node('h1'), description = node('p', 'discovery-copy');
       window.DiscoveryLocale.bind(host, 'discovery.route.unavailable', 'Page unavailable', 'aria-label');
@@ -233,12 +243,19 @@
   registerRoute('/', () => document.querySelector('[data-search-home]')?.click());
   // The dashboard is served at the site root now, so a hard navigation to a
   // deep link must render that view instead of always landing on home. Deferred
-  // scripts run before DOMContentLoaded, so every module has registered by then.
+  // scripts run before DOMContentLoaded, so every module has registered by then —
+  // except the route modules that index.html appends after the first route paint.
   const bootPath = location.pathname + location.search + location.hash;
   const boot = () => { if ((bootPath !== '/' || initialDocument) && resolve(bootPath)) navigate(bootPath); };
+  const routeModules = window.DiscoveryRouteModulesReady;
+  const enterRoute = () => {
+    if (resolve(bootPath)) boot();
+    else if (routeModules) routeModules.then(boot, boot);
+    else boot();
+  };
   // Enter the route after deferred modules and history restoration initialize.
-  if (document.readyState === 'complete') setTimeout(boot, 0);
-  else document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0), { once: true });
+  if (document.readyState === 'complete') setTimeout(enterRoute, 0);
+  else document.addEventListener('DOMContentLoaded', () => setTimeout(enterRoute, 0), { once: true });
   document.querySelector('[data-discovery-features-trigger]')?.addEventListener('click',() => navigate('/features'));
   document.addEventListener('discovery:locale-changed', event => {
     const locale = window.DiscoveryLocale;

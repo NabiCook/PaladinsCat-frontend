@@ -22,6 +22,17 @@ const SPA_BYPASS_PREFIXES = [
   "/app/", "/api", "/_pc", "/_next/", "/dev/", "/operations/", "/prototype/",
   "/discord-preview/", "/match-images/", "/player-avatars/",
 ] as const;
+// A match deep link activates its route as soon as the shell is parsed and asks
+// for the match and the scoreboard pair right away, so name both modules on the
+// document response. This is a header-only hint: the shell body, its script
+// tags and the DOM stay byte-identical, so the painted result is unchanged —
+// only the downloads start earlier. Keep the query in step with the import in
+// public/app/discovery-browse.js (scoreboard) and the format module's import.
+const MATCH_DOCUMENT_PATH = /^\/matches\/[1-9]\d{0,11}$/;
+const MATCH_MODULE_PRELOADS = [
+  "</app/discovery-scoreboard.js?v=13>; rel=modulepreload",
+  "</app/discovery-match-format.js>; rel=modulepreload",
+].join(", ");
 type AccountSessionState = "guest" | "unverified" | "uninvited" | "verified" | "rate-limited" | "unavailable";
 type AccountSessionCheck = { state: AccountSessionState; retryAfter?: string; restricted?: boolean; invitationRequired?: boolean; pro?: boolean };
 
@@ -131,9 +142,13 @@ async function spaDocumentResponse(request: NextRequest, headers?: Headers): Pro
     });
   }
   if (html === null) {
-    return markProtectedResponse(NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
+    const response = markProtectedResponse(NextResponse.rewrite(new URL(SPA_DOCUMENT, request.url), {
       request: { headers: headers ?? request.headers },
     }));
+    if (request.method === "GET" && MATCH_DOCUMENT_PATH.test(request.nextUrl.pathname)) {
+      response.headers.set("Link", MATCH_MODULE_PRELOADS);
+    }
+    return response;
   }
   return new NextResponse(request.method === "HEAD" ? null : html, {
     headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "index, follow" },
