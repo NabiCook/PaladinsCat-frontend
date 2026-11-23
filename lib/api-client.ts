@@ -4602,7 +4602,7 @@ export async function fetchUniversalSearch(
  * Request `GET '/players/${id}/matches${query.toString() ? '?${query.toString()}' : ''}'` through the shared API transport. Uncaught network/API errors reject the returned promise.
  * I/O types: `id: string; params?: { limit?: string; offset?: string } -> Promise<MatchRecord[]>`.
  */
-export async function fetchPlayerMatches(id: string, params?: { limit?: string; offset?: string }): Promise<MatchRecord[]> {
+export async function fetchPlayerMatches(id: string, params?: { limit?: string; offset?: string }, options?: { older?: boolean; signal?: AbortSignal }): Promise<MatchRecord[]> {
   const query = new URLSearchParams();
   if (params) {
     for (const [key, value] of Object.entries(params)) {
@@ -4629,7 +4629,7 @@ export async function fetchPlayerMatches(id: string, params?: { limit?: string; 
     authoritative?: boolean;
     performance_tags?: unknown;
     entry_datetime: string;
-  }>>(`/players/${id}/matches${query.toString() ? `?${query.toString()}` : ''}`);
+  }>>(`${options?.older ? '/archive' : ''}/players/${encodeURIComponent(id)}/matches${query.toString() ? `?${query.toString()}` : ''}`, { signal: options?.signal });
 
   // Transitional storage can expose the same match through more than one
   // authoritative table. Preserve the newest API ordering and render it once.
@@ -4652,6 +4652,16 @@ export async function fetchPlayerMatches(id: string, params?: { limit?: string; 
     authoritative: m.authoritative === true,
     performanceTags: normalizeMatchPerformanceTags(m.performance_tags),
   }));
+}
+
+/** Load older history only from an explicit user action; reuse the normal row contract. */
+export function fetchArchivedPlayerMatches(id: string, params?: { limit?: string; offset?: string }, signal?: AbortSignal) {
+  return fetchPlayerMatches(id, params, { older: true, signal });
+}
+
+/** Exact-ID older search has the same admission and result contract as recent search. */
+export function fetchArchivedMatchSearch(matchId: string, signal?: AbortSignal) {
+  return fetchJson<UniversalSearchResponse>(`/archive/search/matches/${encodeURIComponent(matchId)}`, { unwrapData: false, signal, retries: 0, timeoutMs: 30_000 });
 }
 
 /**
@@ -7740,8 +7750,15 @@ function mapGlickoHistory(raw: PlayerChartRow[]): GlickoHistoryEntry[] {
  *
  * refs: none
  */
-export async function fetchPlayerChartHistory(playerId: string, days: number = 30, limit: number = 50) {
-  const raw = await fetchJson<PlayerChartRow[]>(playerChartPath(playerId, days, limit));
+export async function fetchPlayerChartHistory(playerId: string, days: number = 30, limit: number = 50, signal?: AbortSignal) {
+  const raw = await fetchJson<PlayerChartRow[]>(playerChartPath(playerId, days, limit), { signal });
+  return { kda: mapKdaHistory(raw), dpm: mapDpmHistory(raw), glicko: mapGlickoHistory(raw) };
+}
+
+/** Older chart pages are requested separately and never warmed by normal chart loading. */
+export async function fetchArchivedPlayerChartHistory(playerId: string, limit = 50, offset = 0, signal?: AbortSignal) {
+  const query = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  const raw = await fetchJson<PlayerChartRow[]>(`/archive/players/${encodeURIComponent(playerId)}/charts?${query}`, { signal, timeoutMs: 30_000, retries: 0 });
   return { kda: mapKdaHistory(raw), dpm: mapDpmHistory(raw), glicko: mapGlickoHistory(raw) };
 }
 
@@ -8539,7 +8556,7 @@ export async function fetchNonrankedDroppedMatches(params?: {
  * Request `GET '/matches/${matchId}'` through the shared API transport. Uncaught network/API errors reject the returned promise.
  * I/O types: `matchId: number -> Promise<MatchDetailWithBans | null>`.
  */
-export async function fetchMatchDetail(matchId: number): Promise<MatchDetailWithBans | null> {
+export async function fetchMatchDetail(matchId: number, options?: { older?: boolean; signal?: AbortSignal }): Promise<MatchDetailWithBans | null> {
   const raw = await fetchJson<{
     matches: MatchDetailWithBans[];
     count: number;
@@ -8550,8 +8567,8 @@ export async function fetchMatchDetail(matchId: number): Promise<MatchDetailWith
     dataHash?: string;
     access?: MatchDetailAccess;
   }>(
-    `/matches/${matchId}`,
-    { timeoutMs: 130_000, retries: 0 },
+    `${options?.older ? '/archive' : ''}/matches/${matchId}`,
+    { timeoutMs: options?.older ? 30_000 : 130_000, retries: 0, signal: options?.signal },
   );
   if (raw.matches.length === 0) return null;
   const detail = raw.matches[0];
@@ -8562,6 +8579,11 @@ export async function fetchMatchDetail(matchId: number): Promise<MatchDetailWith
     dataHash: detail.dataHash ?? raw.dataHash,
     access: detail.access ?? raw.access,
   });
+}
+
+/** Explicit older-match action; normal match reads always use the recent endpoint. */
+export function fetchArchivedMatchDetail(matchId: number, signal?: AbortSignal) {
+  return fetchMatchDetail(matchId, { older: true, signal });
 }
 
 /**
