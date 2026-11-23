@@ -444,25 +444,40 @@
   function privateKda(kills,deaths,assists){return [kills,deaths,assists].every(value=>num(value)!=null)?((num(kills)+num(assists)/2)/Math.max(num(deaths),1)).toFixed(2):'—';}
   function privateKdaText(row){const value=num(row.kda);return value!=null?fmt(value):privateKda(row.kills,row.deaths,row.assists);}
   function privateResult(row){return profileMatchResult({win_status:row.win===true?'winner':row.win===false?'loser':''});}
-  function privateQueueName(row){return Number(row.queue_id)===486?tr('generated.players.ranked','Ranked'):num(row.queue_id)!=null?tr('generated.players.casual','Casual'):tr('generated.players.unknown','Unknown');}
-  function privateQueue(row){return n('div','players-match-queue',privateQueueName(row));}
+  // Queue registry mirrors paladinscat-wiki/documents/04-game-data/queue-ids.md: id -> [resolved name, scope].
+  const PRIVATE_QUEUES={423:['Custom Siege — Stone Keep','special'],424:['Casual Siege','casual'],425:['Siege Training','special'],426:['Custom Siege — Bazaar','special'],427:['Practice','special'],428:['Competitive GamePad','ranked'],429:['Retired queue','special'],430:['Custom Siege — Timber Mill','special'],431:['Custom Siege — Fish Market','special'],432:['Custom Siege — Frozen Guard','special'],433:['Custom Siege — Frog Isle','special'],434:['Shooting Range','special'],437:['Payload','special'],438:['Custom Siege — Jaguar Falls','special'],439:['Custom Siege — Ice Mines','special'],440:['Custom Siege — Serpent Beach','special'],441:['Challenge TP','special'],442:['Challenge FP','special'],443:['Challenge IP','special'],444:['Tutorial','special'],446:['PvE — Hands That Bind','special'],447:['PvE — Los Pollos Fernandos','special'],448:['PvE — High Rollers','special'],449:['PvE — HnS','special'],450:['PvE — Leap Frogs','special'],451:['PvE — Survival','special'],452:['Casual Onslaught','onslaught'],453:['Onslaught Training','special'],454:['Custom Onslaught — Snowfall Junction','special'],455:['Custom Onslaught — Primal Court','special'],458:['Custom Siege — Brightmarsh','special'],459:['Custom Siege — Splitstone Quarry','special'],462:['Custom Onslaught — Foreman Rise','special'],464:['Custom Onslaught — Magistrate Archives','special'],465:['Classic Siege','special'],468:['Custom TDM — Trade District','special'],469:['Team Deathmatch','tdm'],470:['TDM Training','special'],471:['Custom TDM — Foreman Rise','special'],472:['Custom TDM — Magistrate Archives','special'],473:['Custom Siege — Ascension Peak','special'],474:['Battlegrounds Solo','special'],475:['Battlegrounds Duo','special'],476:['Battlegrounds Quad','special'],477:['Event — Ascension Peak','special'],478:['Event — Rise of Furia','special'],479:['Custom TDM — Abyss','special'],480:['Custom TDM — Throne','special'],483:['Custom Onslaught — Marauder Port','special'],484:['Custom TDM — Dragon Arena','special'],485:['Custom Siege — Warder Gate','special'],486:['Ranked Siege','ranked'],487:['Custom Siege — Shattered Desert','special'],488:['Event — End Times','special'],489:['Custom Event — End Times','special'],999:['Multi Queue','special'],10210:['Custom Siege — Stone Keep (Night)','special'],10219:['Custom Siege — WIP East Watch','special'],10220:['Custom Siege — WIP Moss Garden','special'],10221:['Custom Siege — WIP Salt','special'],10222:['Custom Siege — WIP Sand Bridge','special'],10223:['Custom Siege — WIP Sierra','special'],10224:['Custom Siege — WIP Undercity','special'],10225:['Custom Siege — WIP Waterway','special'],10256:['Custom Siege — LIVE Dawnforge','special'],10297:['TDM Training','special'],10332:['Arcade','special'],10348:['Wave Defense Party Beta','special'],10362:['Wave Defense Public Beta','special'],10367:['Newcomer','special'],10369:['Experiment — Subclasses','special']};
+  function privateQueueInfo(row) {
+    const id=num(row&&row.queue_id),hit=id==null?null:PRIVATE_QUEUES[id];
+    return {id,name:hit?hit[0]:id==null?tr('generated.players.unknown','Unknown'):tr('generated.players.queueId','Queue')+' #'+id,scope:hit?hit[1]:'special'};
+  }
+  function privateScopeName(scope) {
+    return scope==='ranked'?tr('generated.players.ranked','Ranked'):scope==='casual'?tr('generated.players.casual','Casual'):scope==='tdm'?tr('generated.players.teamDeathmatch','Team Deathmatch'):scope==='onslaught'?tr('generated.players.onslaught','Onslaught'):scope==='special'?tr('generated.players.special','Special'):tr('generated.players.allQueues','All queues');
+  }
+  function privateScopeOf(row){return privateQueueInfo(row).scope;}
+  function privateQueueName(row){return privateQueueInfo(row).name;}
+  function privateQueue(row) {
+    const info=privateQueueInfo(row),box=n('div','players-match-queue');
+    box.append(n('span','',info.name),n('span','players-meta',privateScopeName(info.scope)));
+    return box;
+  }
   function privateMatches(data) {
     const seen=new Map();
     (data.matches||[]).forEach((row,index)=>{if(row&&typeof row==='object')seen.set(row.match_id==null?'#'+index:String(row.match_id),row);});
     return [...seen.values()].sort((a,b)=>(Date.parse(b.entry_datetime)||0)-(Date.parse(a.entry_datetime)||0));
   }
-  function privateTotals(data,matches) {
-    const stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'),sum=(list,key)=>list.reduce((total,row)=>total+(num(row[key])??0),0),known=(list,key)=>list.some(row=>num(row[key])!=null),decisive=matches.filter(row=>typeof row.win==='boolean');
+  function privateTotals(data,matches,scope='all') {
+    const inScope=row=>scope==='all'||privateScopeOf(row)===scope,scoped=scope==='all'?matches:matches.filter(inScope);
+    const stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'&&inScope(row)),sum=(list,key)=>list.reduce((total,row)=>total+(num(row[key])??0),0),known=(list,key)=>list.some(row=>num(row[key])!=null),decisive=scoped.filter(row=>typeof row.win==='boolean');
     let wins=null,losses=null,games=null;
     if(stats.length){if(known(stats,'wins'))wins=sum(stats,'wins');if(known(stats,'losses'))losses=sum(stats,'losses');games=known(stats,'games')?sum(stats,'games'):wins!=null&&losses!=null?wins+losses:null;}
     else if(decisive.length){wins=decisive.filter(row=>row.win===true).length;losses=decisive.filter(row=>row.win===false).length;games=decisive.length;}
-    const combat=stats.length&&known(stats,'kills')?stats:matches,kills=known(combat,'kills')?sum(combat,'kills'):null,deaths=known(combat,'deaths')?sum(combat,'deaths'):null,assists=known(combat,'assists')?sum(combat,'assists'):null;
-    const timed=matches.filter(row=>privateSeconds(row.duration_seconds)!=null),captured=timed.reduce((total,row)=>total+privateSeconds(row.duration_seconds),0),whole=games==null||matches.length>=games,seconds=timed.length&&whole?captured:null;
-    const roster=stats.length?stats:matches,championIds=new Set(roster.map(row=>row.champion_id).filter(value=>num(value)!=null));
-    return {matches:matches.length,games,wins,losses,winRate:wins!=null&&losses!=null&&wins+losses>0?100*wins/(wins+losses):null,kills,deaths,assists,kda:privateKda(kills,deaths,assists),seconds,champions:championIds.size||null};
+    const combat=stats.length&&known(stats,'kills')?stats:scoped,kills=known(combat,'kills')?sum(combat,'kills'):null,deaths=known(combat,'deaths')?sum(combat,'deaths'):null,assists=known(combat,'assists')?sum(combat,'assists'):null;
+    const timed=scoped.filter(row=>privateSeconds(row.duration_seconds)!=null),captured=timed.reduce((total,row)=>total+privateSeconds(row.duration_seconds),0),whole=games==null||scoped.length>=games,seconds=timed.length&&whole?captured:null;
+    const roster=stats.length?stats:scoped,championIds=new Set(roster.map(row=>row.champion_id).filter(value=>num(value)!=null));
+    return {matches:scoped.length,games,wins,losses,winRate:wins!=null&&losses!=null&&wins+losses>0?100*wins/(wins+losses):null,kills,deaths,assists,kda:privateKda(kills,deaths,assists),seconds,champions:championIds.size||null};
   }
-  function privateChampions(data,matches) {
-    const stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'),byName=(a,b)=>String(a.champion_name||'').localeCompare(String(b.champion_name||''),locale());
+  function privateChampions(data,matches,scope='all') {
+    const inScope=row=>scope==='all'||privateScopeOf(row)===scope,stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'&&inScope(row)),byName=(a,b)=>String(a.champion_name||'').localeCompare(String(b.champion_name||''),locale());
     if(stats.length){const xp=new Map((data.champions||[]).map(row=>[Number(row.champion_id),num(row.xp)])),merged=new Map(),pick=(row,key)=>{const value=num(row[key]);return value==null?0:value;};
       for(const row of stats){const key=row.champion_id==null?String(row.champion_name||''):String(row.champion_id);if(!key)continue;const entry=merged.get(key)||{champion_id:row.champion_id,champion_name:row.champion_name,games:0,wins:0,losses:0,kills:null,deaths:null,assists:null,level:null};
         entry.games+=pick(row,'games');entry.wins+=pick(row,'wins');entry.losses+=pick(row,'losses');
@@ -470,8 +485,31 @@
         merged.set(key,entry);}
       return [...merged.values()].map(row=>{const value=xp.get(Number(row.champion_id));return {...row,level:value!=null?masteryLevel(value):null,winRate:recordWinRate(row.wins,row.games,null)};}).sort((a,b)=>(num(b.games)??0)-(num(a.games)??0)||byName(a,b));}
     const entries=new Map();
-    for(const row of matches){const key=row.champion_id==null?String(row.champion_name||''):String(row.champion_id);if(!key)continue;const entry=entries.get(key)||{champion_id:row.champion_id,champion_name:row.champion_name,games:0,wins:0,losses:0,kills:null,deaths:null,assists:null,level:null};entry.games+=1;if(row.win===true)entry.wins+=1;else if(row.win===false)entry.losses+=1;if(num(row.kills)!=null||num(row.deaths)!=null||num(row.assists)!=null){entry.kills=(entry.kills??0)+(num(row.kills)??0);entry.deaths=(entry.deaths??0)+(num(row.deaths)??0);entry.assists=(entry.assists??0)+(num(row.assists)??0);}entries.set(key,entry);}
+    for(const row of scope==='all'?matches:matches.filter(inScope)){const key=row.champion_id==null?String(row.champion_name||''):String(row.champion_id);if(!key)continue;const entry=entries.get(key)||{champion_id:row.champion_id,champion_name:row.champion_name,games:0,wins:0,losses:0,kills:null,deaths:null,assists:null,level:null};entry.games+=1;if(row.win===true)entry.wins+=1;else if(row.win===false)entry.losses+=1;if(num(row.kills)!=null||num(row.deaths)!=null||num(row.assists)!=null){entry.kills=(entry.kills??0)+(num(row.kills)??0);entry.deaths=(entry.deaths??0)+(num(row.deaths)??0);entry.assists=(entry.assists??0)+(num(row.assists)??0);}entries.set(key,entry);}
     return [...entries.values()].map(row=>({...row,winRate:row.wins+row.losses>0?100*row.wins/(row.wins+row.losses):null})).sort((a,b)=>b.games-a.games||byName(a,b));
+  }
+  function privateScopes(data,matches) {
+    const present=new Set([...(data.champion_stats||[]),...matches].map(row=>privateScopeOf(row)));
+    return ['all',...['ranked','casual','tdm','onslaught','special'].filter(key=>present.has(key))];
+  }
+  function privateScopeBar(id,tab,scope,available) {
+    const bar=n('div','players-profile-segment');
+    for(const key of available){const b=button(privateScopeName(key),()=>App.navigate('/players/'+id+'/'+tab+(key==='all'?'':'?scope='+key)));b.classList.toggle('is-active',scope===key);b.setAttribute('aria-pressed',String(scope===key));bar.append(b);}
+    return bar;
+  }
+  function privateQueueRows(data,matches,scope='all') {
+    const inScope=row=>scope==='all'||privateScopeOf(row)===scope,stats=(data.champion_stats||[]).filter(row=>row&&typeof row==='object'&&inScope(row)),groups=new Map(),ensure=row=>{const info=privateQueueInfo(row),key=info.id==null?'?':String(info.id);let group=groups.get(key);if(!group){group={queue_id:info.id,name:info.name,scope:info.scope,games:0,wins:0,losses:0,kills:0,deaths:0,assists:0};groups.set(key,group);}return group;};
+    if(stats.length){for(const row of stats){const group=ensure(row);for(const field of ['games','wins','losses','kills','deaths','assists'])group[field]+=num(row[field])??0;}}
+    else for(const row of (scope==='all'?matches:matches.filter(inScope))){const group=ensure(row);group.games+=1;if(row.win===true)group.wins+=1;else if(row.win===false)group.losses+=1;for(const field of ['kills','deaths','assists'])group[field]+=num(row[field])??0;}
+    return [...groups.values()].map(group=>({...group,winRate:group.wins+group.losses>0?100*group.wins/(group.wins+group.losses):null,kda:privateKda(group.kills,group.deaths,group.assists)})).sort((a,b)=>b.games-a.games||String(a.name).localeCompare(String(b.name),locale()));
+  }
+  function privateQueuePanel(data,matches,scope,title,compact=false) {
+    const rows=privateQueueRows(data,matches,scope);
+    if(!rows.length)return null;
+    const card=panel(title||tr('generated.players.queues','Queues'));
+    if(compact){table(card,[tr('generated.players.queue','Queue'),tr('generated.players.matches','Matches'),tr('common.metrics.winRate','Win rate')],rows.map(row=>[n('span','',row.name),fmt(row.games),rate(row.winRate)]),tr('generated.players.queues','Queues'));return card;}
+    table(card,[tr('generated.players.queue','Queue'),tr('generated.players.matches','Matches'),tr('common.playerChampions.winsShort','Wins'),tr('common.playerChampions.lossesShort','Losses'),tr('common.metrics.winRate','Win rate'),tr('common.metrics.kda','KDA')],rows.map(row=>[n('span','',row.name),fmt(row.games),fmt(row.wins),fmt(row.losses),rate(row.winRate),row.kda]),tr('generated.players.queues','Queues'));
+    return card;
   }
   function privateMatchSection(matches,title) {
     const section=n('section','players-profile-recent'),heading=n('h2','players-section-title',title),output=n('div');section.append(heading,output);
@@ -494,16 +532,21 @@
     if(champions.length){const block=panel(tr('generated.champions.champions','Champions'));block.classList.add('players-profile-top-champions');table(block,[tr('generated.champions.name','Champion'),tr('generated.players.matches','Matches'),tr('common.metrics.winRate','Win rate'),tr('common.metrics.kda','KDA')],champions.slice(0,5).map(row=>[profileChampionCell(row),fmt(row.games),rate(row.winRate),privateKdaText(row)]),tr('generated.champions.champions','Champions'));left.append(block);}
     if(totals.kills!=null||totals.deaths!=null||totals.assists!=null){const combat=panel(tr('common.metrics.kda','KDA'));metrics(combat,[[tr('common.playerChampions.killsShort','K'),fmt(totals.kills)],[tr('common.playerChampions.deathsShort','D'),fmt(totals.deaths)],[tr('common.playerChampions.assistsShort','A'),fmt(totals.assists)],[tr('common.metrics.kda','KDA'),totals.kda]]);right.append(combat);}
     grid.append(left,right);host.append(grid);
+    const queueOverview=privateQueuePanel(data,matches,'all');if(queueOverview)host.append(queueOverview);
     if(matches.length)host.append(privateMatchSection(matches.slice(0,25),tr('generated.players.recentMatches','Recent matches')));
   }
-  function privateChampionStats(host,data,matches,champions) {
-    const totals=privateTotals(data,matches),heading=n('div','players-tab-heading');heading.append(n('h2','players-section-title',tr('common.playerChampions.title','Champion stats')));host.append(heading);
+  function privateChampionStats(host,data,matches,scope,id) {
+    const totals=privateTotals(data,matches,scope),champions=privateChampions(data,matches,scope),heading=n('div','players-tab-heading');heading.append(n('h2','players-section-title',tr('common.playerChampions.title','Champion stats')));host.append(heading,privateScopeBar(id,'champions',scope,privateScopes(data,matches)));
     if(!champions.length){host.append(paragraph(tr('generated.players.noMatchesRecordedYet','No matches recorded yet.')));return;}
     const summary=n('dl','players-metrics players-champion-summary');
     for(const [label,value] of [[tr('generated.champions.champions','Champions'),fmt(champions.length)],[tr('generated.players.matches','Matches'),fmt(totals.games)],[tr('common.metrics.winRate','Win rate'),rate(totals.winRate)]]){const pair=n('div');pair.append(n('dt','',label),n('dd','',value));summary.append(pair);}
     const card=panel(tr('common.playerChampions.title','Champion stats'));
-    table(card,[tr('generated.champions.name','Champion'),tr('common.playerChampions.sortLevel','Level'),tr('generated.players.matches','Matches'),tr('common.playerChampions.winsShort','Wins'),tr('common.playerChampions.lossesShort','Losses'),tr('common.metrics.winRate','Win rate'),tr('common.playerChampions.kdaShort','K / D / A'),tr('common.metrics.kda','KDA')],champions.map(row=>[profileChampionCell(row),row.level==null?'—':fmt(row.level),fmt(row.games),fmt(row.wins),fmt(row.losses),rate(row.winRate),[row.kills,row.deaths,row.assists].map(fmt).join(' / '),privateKdaText(row)]),tr('common.playerChampions.title','Player champion statistics'));
-    host.append(summary,card);
+    const showLevel=champions.some(row=>row.level!=null),head=[tr('generated.champions.name','Champion'),...(showLevel?[tr('common.playerChampions.sortLevel','Level')]:[]),tr('generated.players.matches','Matches'),tr('common.playerChampions.winsShort','Wins'),tr('common.playerChampions.lossesShort','Losses'),tr('common.metrics.winRate','Win rate'),tr('common.playerChampions.kdaShort','K / D / A'),tr('common.metrics.kda','KDA')],rows=champions.map(row=>[profileChampionCell(row),...(showLevel?[fmt(row.level)]:[]),fmt(row.games),fmt(row.wins),fmt(row.losses),rate(row.winRate),[row.kills,row.deaths,row.assists].map(fmt).join(' / '),privateKdaText(row)]);
+    table(card,head,rows,tr('common.playerChampions.title','Player champion statistics'));
+    const queues=privateQueuePanel(data,matches,scope);
+    host.append(summary);
+    if(queues)host.append(queues);
+    host.append(card);
   }
   function privateHero(ctx,id,data) {
     const hero=n('section','players-panel players-profile-hero'),person=n('div','players-profile-person'),art=n('div','players-profile-art'),copy=n('div','players-profile-copy'),toolbar=n('div','players-controls players-profile-toolbar'),line=n('div','players-profile-name-line'),name=ctx.main.querySelector('h1'),level=num(data.account_level)??accountLevel(data.xp_level);
@@ -514,14 +557,14 @@
     person.append(art,copy);hero.append(person,toolbar);ctx.body.append(hero);
     void identityArt(ctx,art,{name:data.name||data.gamer_tag||String(data.player_id??id),loading_frame:'Default Ally Team'});
   }
-  async function renderMctsProfile(ctx,id,data,child='') {
-    const matches=privateMatches(data),champions=privateChampions(data,matches),keys=matches.length||champions.length?['','matches','champions']:[''],selected=keys.includes(child)?child:'';
+  async function renderMctsProfile(ctx,id,data,child='',url=null) {
+    const matches=privateMatches(data),champions=privateChampions(data,matches),keys=matches.length||champions.length?['','matches','champions']:[''],selected=keys.includes(child)?child:'',available=privateScopes(data,matches),requested=url&&url.searchParams?url.searchParams.get('scope'):'',scope=available.includes(requested)?requested:'all';
     privateHero(ctx,id,data);ctx.main.querySelector('.players-hub-header')?.remove();
     tabs(ctx.body,id,selected,keys);
     const content=n('div','players-profile-tab-content');ctx.body.append(content);ctx.body=content;
     if(keys.length===1){content.append(n('p','players-note',tr('generated.players.privateProfileEmpty','No champion, loadout or inventory records are available for this account yet.')));return;}
-    if(selected==='matches'){content.append(privateMatchSection(matches,tr('generated.players.recentMatches','Recent matches')));return;}
-    if(selected==='champions'){privateChampionStats(content,data,matches,champions);return;}
+    if(selected==='matches'){content.append(privateScopeBar(id,'matches',scope,available),privateMatchSection(scope==='all'?matches:matches.filter(row=>privateScopeOf(row)===scope),tr('generated.players.recentMatches','Recent matches')));return;}
+    if(selected==='champions'){privateChampionStats(content,data,matches,scope,id);return;}
     privateOverview(content,data,id,matches,champions);
   }
   async function profileShell(ctx,id,raw,player,selected) {
@@ -533,7 +576,7 @@
     const id=match[1],child=match[2]||'',url=new URL(path,location.origin),view='player-'+id+(child?'-'+child:'-overview');
     const ctx=begin(view,ui('generated.players.player','Player')+' '+id,child?'/players/'+id:'/players');const shellBody=ctx.body;
     try {
-      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();if(player.mcts){await renderMctsProfile(ctx,id,raw.mcts,child);return;}await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
+      const {raw,player}=await profile(id);if(!ctx.current())return;const playerTitle=player.name||ui('generated.players.player','Player')+' '+id;ctx.main.querySelector('h1').textContent=playerTitle;if(document.querySelector('.dashboard-shell')?.dataset.view===view)document.title=playerTitle+' · PaladinsCat';ctx.body.replaceChildren();if(player.mcts){await renderMctsProfile(ctx,id,raw.mcts,child,url);return;}await profileShell(ctx,id,raw,player,child);if(!ctx.current())return;
       if(!child) {
         renderProfileOverview(ctx,id,raw,player);
       } else if(child==='matches') {
