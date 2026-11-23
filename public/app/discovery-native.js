@@ -21,6 +21,7 @@
   window.addEventListener("paladinscat:time-zone-change",observationLabel);
   function homeActivity(){
     const panel=document.querySelector('.activity-strip');if(!panel)return;
+    const home=!window.location||window.location.pathname==='/';
     const metrics=panel.querySelectorAll('.activity-metric'),windowLabel=panel.querySelector('.activity-title > div > span'),chart=panel.querySelector('.activity-chart');
     if(windowLabel)A.setText(windowLabel,text('discovery.home.last24Hours','Last 24 hours'));
     panel.querySelectorAll('.change').forEach(el=>el.remove());
@@ -31,8 +32,21 @@
       if (!metric) return;
       A.setText(metric.querySelector('.metric-label'),label);
       const value = metric.querySelector('strong');
-      void A.request(request).then(data => numberText(value,valueFrom(data))).catch(() => numberText(value,null));
+      const load = () => void A.request(request).then(data => numberText(value,valueFrom(data))).catch(() => numberText(value,null));
+      if (home) load(); else pending.push(load);
     };
+    const pending = [];
+    function flushActivity(){
+      if (!pending.length || !panel.getClientRects().length || getComputedStyle(panel).visibility === 'hidden') return;
+      for (const load of pending.splice(0)) load();
+    }
+    // The strip sits inside the dashboard grid, which the router hides as soon as a deep link
+    // opens another view: on a deep link these two reads wait until the strip is rendered
+    // instead of riding the boot request burst. Home keeps its immediate read.
+    if (!home) {
+      document.addEventListener('discovery:view-changed', flushActivity);
+      setTimeout(flushActivity, 1500);
+    }
     update(0,text('discovery.home.publicPlayers','Observed public players'),'/stats/presence?view=activity-v4',presence => {
       observation = presence;
       observationLabel();
