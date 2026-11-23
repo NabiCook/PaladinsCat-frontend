@@ -1,5 +1,5 @@
 // Browser logic from lib/search-reference.ts; dashboard markup remains the owning renderer.
-// Source SHA256: 9b109ab129c6de3a63758ee856c4a35ff902675891f3d89378636c82aedcd696
+// Source SHA256: b523dd42ffd70aa861a8ad555a50e9ce194e4c6739c4ce3e4c498b79f37a5c59
 async function fetchReferenceChampions() { const response = await window.DiscoveryApp.request("/reference/champions"); return Array.isArray(response) ? response : response.data || []; }
 import { foldSearchTerm, normalize } from "./discovery-search-state.js";
 let staticReferencePromise = null;
@@ -30,9 +30,9 @@ function uniqueByName(rows) {
 export async function loadStaticReferenceIndex() {
     if (!staticReferencePromise) {
         staticReferencePromise = Promise.all([
-            fetch("/data/paladins-items-reference.json").then((res) => res.ok ? res.json() : []),
-            fetch("/data/paladins-card-reference.json").then((res) => res.ok ? res.json() : []),
-            fetch("/data/paladins-talent-reference.json").then((res) => res.ok ? res.json() : []),
+            fetch("/data/paladins-items-reference.json", { signal: AbortSignal.timeout(10000) }).then((res) => res.ok ? res.json() : []),
+            fetch("/data/paladins-card-reference.json", { signal: AbortSignal.timeout(10000) }).then((res) => res.ok ? res.json() : []),
+            fetch("/data/paladins-talent-reference.json", { signal: AbortSignal.timeout(10000) }).then((res) => res.ok ? res.json() : []),
             fetchReferenceChampions().catch(() => []),
         ]).then(([items, cards, talents, champions]) => {
             const championNames = new Map(champions.map((champion) => [Number(champion.id), champion.name]));
@@ -46,7 +46,7 @@ export async function loadStaticReferenceIndex() {
                 talents: uniqueByName(talents),
                 championNames,
             };
-        });
+        }).catch(error => { staticReferencePromise = null; throw error; });
     }
     return staticReferencePromise;
 }

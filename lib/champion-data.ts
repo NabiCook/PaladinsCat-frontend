@@ -89,12 +89,15 @@ async function loadChampionDataMap(): Promise<ChampionDataMap> {
     // keeping production memory bounded for the 2GB VPS Docker stack.
     // Version the static URL when its data semantics change so CDN/browser
     // caches do not serve an older champion snapshot.
-    championDataPromise = fetch("/data/champion-data.json?v=ultimate-slots-2")
+    championDataPromise = fetch("/data/champion-data.json?v=ultimate-slots-2", { signal: AbortSignal.timeout(10_000) })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Failed to load champion data: ${response.status}`);
         }
         return response.json() as Promise<ChampionDataMap>;
+      }).catch(error => {
+        championDataPromise = null;
+        throw error;
       });
   }
   return championDataPromise;

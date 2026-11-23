@@ -19,18 +19,26 @@
   function observationLabel(){const label=document.querySelector(".activity-title > div > span");if(!label||!observation)return;A.setText(label,text("discovery.home.window","{hours}-hour observation window",{hours:fmt(observation.window_hours)}));attribute(label,"title",text("moderation.lastObserved","Observed at {value1}",{value1:A.formatDate(observation.observed_at)}));}
   document.addEventListener("discovery:locale-changed",()=>{for(const element of document.querySelectorAll("[data-native-number]"))numberText(element,element.dataset.nativeNumber);observationLabel();});
   window.addEventListener("paladinscat:time-zone-change",observationLabel);
-  async function homeActivity(){
+  function homeActivity(){
     const panel=document.querySelector('.activity-strip');if(!panel)return;
     const metrics=panel.querySelectorAll('.activity-metric'),windowLabel=panel.querySelector('.activity-title > div > span'),chart=panel.querySelector('.activity-chart');
     if(windowLabel)A.setText(windowLabel,text('discovery.home.last24Hours','Last 24 hours'));
     panel.querySelectorAll('.change').forEach(el=>el.remove());
     metrics.forEach(el=>{const value=el.querySelector('strong');if(value)value.textContent='…';});
     if(chart){chart.removeAttribute('role');chart.removeAttribute('aria-label');chart.replaceChildren();const action=n('button','reference-filter',text("discovery.home.activity","View activity"));action.type='button';action.addEventListener('click',()=>A.navigate('/stats/activity'));chart.append(action);}
-    try{const [presence,overview]=await Promise.all([A.request('/stats/presence?view=activity-v4'),A.request('/matches/overview?view=activity-v3')]);
-      if(metrics[0]){A.setText(metrics[0].querySelector('.metric-label'),text('discovery.home.publicPlayers','Observed public players'));numberText(metrics[0].querySelector('strong'),presence.public_players);}
-      if(metrics[1]){A.setText(metrics[1].querySelector('.metric-label'),text('discovery.home.matchesPlayed','Matches played'));numberText(metrics[1].querySelector('strong'),overview.hourly?.allQueuesTotal24h);}
-      observation=presence;observationLabel();
-    }catch{metrics.forEach(el=>{const value=el.querySelector('strong');if(value)value.textContent='—';});}
+    const update = (index, label, request, valueFrom) => {
+      const metric = metrics[index];
+      if (!metric) return;
+      A.setText(metric.querySelector('.metric-label'),label);
+      const value = metric.querySelector('strong');
+      void A.request(request).then(data => numberText(value,valueFrom(data))).catch(() => numberText(value,null));
+    };
+    update(0,text('discovery.home.publicPlayers','Observed public players'),'/stats/presence?view=activity-v4',presence => {
+      observation = presence;
+      observationLabel();
+      return presence.public_players;
+    });
+    update(1,text('discovery.home.matchesPlayed','Matches played'),'/matches/overview?view=activity-v3',overview => overview.hourly?.allQueuesTotal24h);
   }
   void homeActivity();
 })();

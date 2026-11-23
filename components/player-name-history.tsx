@@ -43,7 +43,7 @@ export default function PlayerNameHistory({ playerId }: { playerId: string | num
   useEffect(() => {
     const controller = new AbortController();
     fetch(`${API_BASE}/player-ext/name-history/${encodeURIComponent(playerId)}?page=${page}&perPage=${PAGE_SIZE}`, {
-      signal: controller.signal,
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]),
     }).then(async (response) => {
       // Keep the existing API access policy; do not expose restricted history.
       if (response.status === 401 || response.status === 403) return [];

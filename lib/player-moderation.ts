@@ -196,7 +196,7 @@ export async function fetchPlayerModerationBatch(playerIds: Array<string | numbe
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL || "/api"}/players/bulk?ids=${ids.join(",")}`,
-    { cache: "no-store" },
+    { cache: "no-store", signal: AbortSignal.timeout(10_000) },
   );
   if (!response.ok) throw new Error(MODERATION_ERROR_KEYS.unableToLoadBadges);
   const json = await response.json() as { data?: { players?: BulkPlayer[] }; players?: BulkPlayer[] };
@@ -226,7 +226,7 @@ export async function fetchPrivateAccountModerationBatch(
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL || "/api"}/player-ext/private/bulk?ids=${ids.join(",")}`,
-    { cache: "no-store" },
+    { cache: "no-store", signal: AbortSignal.timeout(10_000) },
   );
   if (!response.ok) throw new Error(MODERATION_ERROR_KEYS.unableToLoadPrivateBadges);
   const json = await response.json() as {
@@ -274,7 +274,7 @@ async function flush() {
   if (pending.size > 0 && !timer) timer = setTimeout(() => void flush(), 0);
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/players/bulk?ids=${ids.join(",")}`, { cache: "no-store" });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "/api"}/players/bulk?ids=${ids.join(",")}`, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
     if (!response.ok) throw new Error(MODERATION_ERROR_KEYS.unableToLoadBadges);
     const json = await response.json() as { data?: { players?: BulkPlayer[] }; players?: BulkPlayer[] };
     const results = new Map(moderationRows(json).map((player) => [Number(player.id), moderationFromRow(player)]));

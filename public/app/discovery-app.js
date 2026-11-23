@@ -112,14 +112,51 @@
       const cookie = document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith('__Host-pc_csrf=') || v.startsWith('pc_csrf='));
       if (cookie) headers.set('X-CSRF-Token', decodeURIComponent(cookie.slice(cookie.indexOf('=') + 1)));
     }
-    const timeoutMs = Math.max(1000, Math.min(180000, options.timeoutMs || 10000));
-    let response;
-    try { response = await fetch(window.DiscoveryApi.path(path, method), { method, headers, body, credentials: 'same-origin', signal: options.signal || AbortSignal.timeout(timeoutMs) }); }
-    catch (cause) { if (['TimeoutError', 'AbortError'].includes(cause.name)) { const error = new Error('This request took too long. Try again.'); error.status = 504; error.code = 'TIMEOUT'; throw error; } throw cause; }
-    let data; try { data = await response.json(); } catch { data = null; }
-    if (!response.ok) { const error = new Error(data?.error?.message || data?.message || (response.status === 401 ? 'Sign in to continue.' : response.status === 403 ? 'This action requires additional access.' : 'This content could not be loaded.')); error.status = response.status; error.code = data?.error?.code; error.data = data; throw error; }
-    if (data == null && response.status !== 204) throw new Error('Invalid response');
-    return data;
+    const timeoutMs = Math.max(1000, Math.min(180000, Math.round(Number(options.timeoutMs) || 10000)));
+    const target = window.DiscoveryApi.path(path, method);
+    const query = new URL(target, location.origin).searchParams;
+    const canRetry = ['GET', 'HEAD'].includes(method) && !query.get('refresh') && !query.get('remote') && options.retries !== 0 && timeoutMs <= 30000;
+    const caller = options.signal;
+    for (let attempt = 0; ; attempt++) {
+      caller?.throwIfAborted();
+      const deadline = AbortSignal.timeout(timeoutMs);
+      const signal = caller ? AbortSignal.any([caller, deadline]) : deadline;
+      let retryDelay = 500;
+      let response;
+      try {
+        response = await fetch(target, { method, headers, body, credentials: 'same-origin', signal });
+        const pendingRetry = canRetry && attempt === 0 && [500,502,503,504].includes(response.status) && response.headers.get('cf-mitigated') !== 'challenge';
+        const retryAfter = Number(response.headers.get('retry-after')) * 1000;
+        if (pendingRetry && Number.isFinite(retryAfter) && retryAfter <= 30000) {
+          void response.body?.cancel().catch(() => {});
+          retryDelay = Math.max(retryDelay, retryAfter);
+        } else {
+          const data = await response.json().catch(() => null);
+          signal.throwIfAborted();
+          if (!response.ok) {
+            const error = new Error(data?.error?.message || data?.message || (response.status === 401 ? 'Sign in to continue.' : response.status === 403 ? 'This action requires additional access.' : 'This content could not be loaded.'));
+            error.status = response.status;
+            error.code = data?.error?.code;
+            error.data = data;
+            throw error;
+          }
+          if (data == null && response.status !== 204 && method !== 'HEAD') throw new Error('Invalid response');
+          return data;
+        }
+      } catch (cause) {
+        caller?.throwIfAborted();
+        if (!canRetry || attempt > 0 || (response && !response.ok) || (!deadline.aborted && !(cause instanceof TypeError))) {
+          if (!deadline.aborted) throw cause;
+          throw Object.assign(new Error('This request took too long. Try again.'), { status: 504, code: 'TIMEOUT' });
+        }
+      }
+      caller?.throwIfAborted();
+      await new Promise((resolve, reject) => {
+        const cancel = () => { clearTimeout(timer); reject(caller.reason); };
+        const timer = setTimeout(() => { caller?.removeEventListener('abort', cancel); resolve(); }, retryDelay);
+        caller?.addEventListener('abort', cancel, { once: true });
+      });
+    }
   }
   function getUser(refresh = false) { if (refresh || Date.now()-userRequestedAt > 30000) userRequest = null; if (!userRequest) { userRequestedAt = Date.now(); userRequest = request('/auth/me').catch(error => { userRequest = null; if ([401,403].includes(error.status)) return null; throw error; }); } return userRequest; }
   function scopedPath(path) { return window.DiscoveryLobbyTier?.withStoredLobbyTier(path) || path; }
@@ -199,10 +236,9 @@
   // scripts run before DOMContentLoaded, so every module has registered by then.
   const bootPath = location.pathname + location.search + location.hash;
   const boot = () => { if ((bootPath !== '/' || initialDocument) && resolve(bootPath)) navigate(bootPath); };
-  // Run after every module's own start-up work (some renderers anchor to home on
-  // init); the load event is the last hook before first paint settles.
+  // Enter the route after deferred modules and history restoration initialize.
   if (document.readyState === 'complete') setTimeout(boot, 0);
-  else window.addEventListener('load', () => setTimeout(boot, 0), { once: true });
+  else document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0), { once: true });
   document.querySelector('[data-discovery-features-trigger]')?.addEventListener('click',() => navigate('/features'));
   document.addEventListener('discovery:locale-changed', event => {
     const locale = window.DiscoveryLocale;

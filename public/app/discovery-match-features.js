@@ -70,30 +70,76 @@
   function factFor(player, facts) {
     return facts.find(f=>String(f.player_id)===String(player.player_id) && (Number(player.player_id)>0 || Number(f.private_player_id ?? 0)===Number(player.private_player_id ?? 0)) && (!f.champion_id || Number(f.champion_id)===Number(player.champion_id))) || {player_id:player.player_id,private_player_id:player.private_player_id,champion_id:player.champion_id,champion_name:player.champion_name,talents:[],cards:[],items:[]};
   }
-  function assetGroup(items, resolve, kind, onCard) {
-    const group=node('div','match-build-assets');
-    for(const item of items){const asset=node('span','match-build-asset'), name=item.talent_name || item.card_name || item.item_name || t('generated.matches.item','Item'), icon=resolve(item); asset.title=name;
-      if(icon && /^\/(?!\/)/.test(icon)){const img=node('img');img.src=icon;img.alt=name;img.loading='lazy';asset.append(img);}else{const missing=node('span','match-asset-fallback',name);asset.append(missing);}
-      const raw=kind==='item'?item.item_level:item.card_level; const level=raw==null?null:Number(raw)+(kind==='item'?1:0);if(kind!=='talent' && Number.isFinite(level)){const badge=node('span','match-asset-level',fmt(level));asset.append(badge);}if(kind==='card' && onCard){const holder=node('span','match-build-card'),trends=node('span','match-card-trends');holder.append(asset,trends);group.append(holder);onCard(item,trends);}else group.append(asset);
+  function assetGroup(items, kind, referenceIcons, current, onCard) {
+    const group = node('div','match-build-assets'), updateArtwork = [];
+    for (const item of items) {
+      const asset = node('span','match-build-asset');
+      const name = item.talent_name || item.card_name || item.item_name || t('generated.matches.item','Item');
+      asset.title = name;
+      asset.append(node('span','match-asset-fallback',name));
+      const setIcon = icon => {
+        if (!icon || !/^\/(?!\/)/.test(icon) || asset.firstElementChild.getAttribute('src') === icon) return;
+        const img = node('img');
+        img.src = icon;
+        img.alt = name;
+        img.loading = 'lazy';
+        asset.firstElementChild.replaceWith(img);
+      };
+      setIcon(item.icon_url);
+      if (!asset.firstElementChild.getAttribute('src')) setIcon(item.fallback_icon_url);
+      updateArtwork.push(resolve => setIcon(resolve(item)));
+
+      const raw = kind === 'item' ? item.item_level : item.card_level;
+      const level = raw == null ? null : Number(raw) + (kind === 'item' ? 1 : 0);
+      if (kind !== 'talent' && Number.isFinite(level)) asset.append(node('span','match-asset-level',fmt(level)));
+      if (kind === 'card' && onCard) {
+        const holder = node('span','match-build-card'), trends = node('span','match-card-trends');
+        holder.append(asset,trends);
+        group.append(holder);
+        onCard(item,trends);
+      } else group.append(asset);
     }
-    if(!items.length)group.append(node('span','discovery-copy','—'));return group;
+    if (!items.length) group.append(node('span','discovery-copy','—'));
+    else void referenceIcons.then(resolve => {
+      if (current() && group.isConnected) updateArtwork.forEach(update => update(resolve));
+    });
+    return group;
   }
-  async function renderLoadouts(host, detail, current) {
+  function renderLoadouts(host, detail, current) {
+    if (!current()) return;
     const facts=detail.fact?.players || (Array.isArray(detail.loadouts)?detail.loadouts:detail.loadouts?.players) || (Array.isArray(detail.facts)?detail.facts:detail.facts?.players) || [];
-    const [champions,activeItems]=await Promise.all([reference('/data/champion-data.json?v=ultimate-slots-2').catch(()=>({})),reference('/data/paladins-active-items.json').catch(()=>({items:[]}))]);if(!current())return;
+    const champions = reference('/data/champion-data.json?v=ultimate-slots-2').catch(() => ({}));
+    const itemIcons = reference('/data/paladins-active-items.json').catch(() => ({})).then(data => item => {
+      const ref = data?.items?.find(entry => nameKey(entry.name) === nameKey(item.item_name));
+      return ref ? '/images/items/' + ref.name.replace(/\s+/g,'_').replace(/,/g,'') + '_Icon.avif' : null;
+    });
     const section=panel(t('generated.matches.itemsLoadouts','Items and loadouts'));section.classList.add('match-detail-section','match-builds');
     const note=node('p','discovery-copy'); label(note,'generated.matches.talentAndCardsPurchasedItemsExpandARowForDescriptions','Talent and cards, purchased items. Expand a row for descriptions.');section.append(note);
     const headings=node('div','match-build-head'); for(const [key,fallback] of [['generated.matches.championPlayer','Champion / Player'],['generated.matches.loadout','Loadout'],['generated.matches.items','Items']]){const text=node('span');label(text,key,fallback);headings.append(text);}section.append(headings);
     for(const team of [1,2]) {
       if(team===2){const heading=node('h3','match-team-divider');label(heading,'generated.matches.opposingTeam','Opposing team');section.append(heading);}
       for(const player of detail.players.filter(p=>Number(p.task_force)===team)) {
-        const fact=factFor(player,facts), champion=champions[slug(player.champion_name)]||{}, row=node('div','match-build-row'), identity=node('div','match-build-player');addIdentity(identity,player);
-        const loadout=node('div','match-build-group'),cardTrends=[];const loadoutLabel=node('span','match-build-mobile-label');label(loadoutLabel,'generated.matches.talentCards','Talent and cards');loadout.append(loadoutLabel,assetGroup(fact.talents||[],x=>matching(champion.talents,x.talent_id,x.talent_name)?.iconUrl || x.icon_url || x.fallback_icon_url,'talent'),assetGroup(fact.cards||[],x=>matching(champion.loadouts,x.card_id,x.card_name,cardKey)?.iconUrl || x.icon_url || x.fallback_icon_url,'card',(card,trends)=>cardTrends.push({card,trends})));bindCardTrends(row,player,fact,cardTrends,current);
-        const items=node('div','match-build-group'),itemLabel=node('span','match-build-mobile-label');label(itemLabel,'generated.matches.purchasedItems','Purchased items');items.append(itemLabel,assetGroup(fact.items||[],x=>{const ref=(activeItems.items||[]).find(i=>nameKey(i.name)===nameKey(x.item_name));return ref?'/images/items/'+ref.name.replace(/\s+/g,'_').replace(/,/g,'')+'_Icon.avif':x.icon_url||x.fallback_icon_url;},'item'));
+        const fact = factFor(player,facts), row = node('div','match-build-row'), identity = node('div','match-build-player');
+        addIdentity(identity,player);
+        const champion = champions.then(data => data?.[slug(player.champion_name)] || {});
+        const talentIcons = champion.then(ref => talent => matching(ref.talents,talent.talent_id,talent.talent_name)?.iconUrl);
+        const cardIcons = champion.then(ref => card => matching(ref.loadouts,card.card_id,card.card_name,cardKey)?.iconUrl);
+        const loadout = node('div','match-build-group'), cardTrends = [];
+        const loadoutLabel = node('span','match-build-mobile-label');
+        label(loadoutLabel,'generated.matches.talentCards','Talent and cards');
+        loadout.append(loadoutLabel,
+          assetGroup(fact.talents || [], 'talent', talentIcons, current),
+          assetGroup(fact.cards || [], 'card', cardIcons, current, (card,trends) => cardTrends.push({card,trends})),
+        );
+        bindCardTrends(row,player,fact,cardTrends,current);
+        const items = node('div','match-build-group'), itemLabel = node('span','match-build-mobile-label');
+        label(itemLabel,'generated.matches.purchasedItems','Purchased items');
+        items.append(itemLabel,assetGroup(fact.items || [], 'item', itemIcons, current));
         const summary=node('div','match-build-summary');summary.append(identity,loadout,items);decorateLoadout(row,detail,fact,current,summary);section.append(row);
       }
     }
-    host.append(section);for(const ref of trendRows){const row=ref.deref();if(row?.isConnected && section.contains(row))void row.discoveryRefreshTrends();}
+    host.append(section);
+    for (const row of section.querySelectorAll('.match-build-row')) void row.discoveryRefreshTrends?.();
   }
   async function render(host, detail, current) {
     const {computeDamageStats,computeTeamAverages,storedProfileForMatch} = await loadLogic(); if(!current())return;
@@ -119,6 +165,17 @@
     reads.set(key, {time:Date.now(),promise}); return promise;
   }
   const api = path => { const key = App.scopedPath(path); return cached(key, () => App.request(key)); };
+  function cardMetrics(path, talentId) {
+    const key = App.scopedPath(path);
+    return cached(key, async () => {
+      if (App.scopedPath(path) !== key) throw new Error('Card metric scope changed');
+      const payload = await App.request(key, {timeoutMs:30000});
+      if (!Array.isArray(payload?.cards) || (talentId && Number(payload.talentId) !== talentId)) {
+        throw new Error('Card metric filter mismatch');
+      }
+      return payload;
+    });
+  }
   const reference = path => cached(path, async () => { const response = await fetch(path,{signal:AbortSignal.timeout(10000)}); if (!response.ok) throw Error('Reference unavailable'); return response.json(); }, 86400000);
   const slug = value => String(value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
   const nameKey = value => String(value || '').toLowerCase().replace(/[’']/g,'').replace(/guerrilla/g,'guerilla').replace(/[^a-z0-9]+/g,'');
@@ -152,9 +209,33 @@
   function bindCardTrends(row,player,fact,entries,current) {
     if(!entries.length || !window.DiscoveryChampionCards)return;
     const renderer=window.DiscoveryChampionCards,championId=Number(player.champion_id),talentId=Number(fact.talents?.[0]?.talent_id)||null;
-    const cardPath='/stats/cards/'+championId+'?mode=ranked'+(talentId?'&talentId='+talentId:'');let sequence=0;
+    const cardPath='/stats/cards/'+championId+'?mode=ranked'+(talentId?'&talentId='+talentId:'');
+    let sequence = 0, paintedScope, rows = [];
     const paint=rows=>{for(const {card,trends} of entries){const sample=matching(rows,card.card_id,card.card_name,cardKey),levels=Array.from({length:5},(_,i)=>renderer.cardMetricsAtLevel(sample,i+1)),level=Math.max(1,Math.min(5,Number(card.card_level)||1));trends.replaceChildren(renderer.renderCardLevelTrend(levels,'plays',level),renderer.renderCardLevelTrend(levels,'winRate',level));}};
-    row.discoveryRefreshTrends=async()=>{const seq=++sequence,scope=App.scopedPath(cardPath);paint([]);try{const [payload]=await Promise.all([api(cardPath),renderer.loadCardPercentageColors()]);if(!current()||!row.isConnected||seq!==sequence||scope!==App.scopedPath(cardPath))return;if(!Array.isArray(payload?.cards)||(talentId && Number(payload.talentId)!==talentId))throw Error('Card metric filter mismatch');paint(normalizeCards(payload));}catch{if(current()&&row.isConnected&&seq===sequence&&scope===App.scopedPath(cardPath))paint([]);}};
+    row.discoveryRefreshTrends = async () => {
+      if (!current() || !row.isConnected) return;
+      const seq = ++sequence, scope = App.scopedPath(cardPath);
+      const valid = () => current() && row.isConnected && seq === sequence && scope === App.scopedPath(cardPath);
+      if (scope !== paintedScope) {
+        paintedScope = scope;
+        rows = [];
+      }
+      paint(rows);
+
+      // Card values can render before the optional win-rate palette arrives.
+      void renderer.loadCardPercentageColors().then(() => {
+        if (valid() && rows.length) paint(rows);
+      }).catch(() => {});
+      try {
+        const payload = await cardMetrics(cardPath, talentId);
+        if (valid()) {
+          rows = normalizeCards(payload);
+          paint(rows);
+        }
+      } catch {
+        // Keep the recorded loadout and any already available values for this scope.
+      }
+    };
     trendRows.add(new WeakRef(row));
   }
   for(const event of ['discovery:lobby-tier-changed','discovery:locale-changed']) document.addEventListener(event,()=>{for(const ref of openDetails){const disclosure=ref.deref();if(!disclosure?.isConnected){openDetails.delete(ref);continue;}if(disclosure.open)disclosure.discoveryRefresh();}for(const ref of trendRows){const row=ref.deref();if(!row?.isConnected){trendRows.delete(ref);continue;}row.discoveryRefreshTrends();}});
@@ -180,7 +261,7 @@
       try {
         const [champions,activeItems,itemResult,talentResult,cardResult] = await Promise.all([
           reference('/data/champion-data.json?v=ultimate-slots-2').catch(()=>({})),reference('/data/paladins-active-items.json').catch(()=>({items:[]})),
-          items.length?api(itemPath).catch(()=>null):Promise.resolve([]),talents.length?api(talentPath).catch(()=>null):Promise.resolve({talents:[]}),cards.length?api(cardPath).catch(()=>null):Promise.resolve({cards:[]}),window.DiscoveryChampionCards?.loadCardPercentageColors().catch(()=>null)
+          items.length?api(itemPath).catch(()=>null):Promise.resolve([]),talents.length?api(talentPath).catch(()=>null):Promise.resolve({talents:[]}),cards.length?cardMetrics(cardPath,talentId).catch(()=>null):Promise.resolve({cards:[]}),window.DiscoveryChampionCards?.loadCardPercentageColors().catch(()=>null)
         ]);
         if (!valid()) return;
         const itemRows=Array.isArray(itemResult)?itemResult:[], missing=itemResult?[...new Set(items.filter(item=>!((itemRows.find(row=>Number(row.item_id)===Number(item.item_id))?.breakdown || []).length)).map(item=>Number(item.item_id)).filter(id=>id>0))]:[];

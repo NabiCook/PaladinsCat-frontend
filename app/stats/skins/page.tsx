@@ -3,7 +3,7 @@
  * refs: none
  */
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -20,10 +20,10 @@ import { skinPortraitImageProps } from "@/lib/skin-portraits";
 import { championSlug } from "@/lib/utils";
 import { getPercentageColor } from "@/lib/stat-quality";
 import { useLobbyTier } from "@/lib/lobby-tier-context";
-import { LoadingIndicator } from "@/components/async-state";
+import { ErrorState, LoadingIndicator } from "@/components/async-state";
 import { usePersistentDirectoryPage } from "@/components/player-directory-pagination";
 import { useLocalization } from "@/lib/localization-context";
-import { useRouteSettledLoading } from "@/lib/route-transition-context";
+import { useApiSection } from "@/lib/use-api-section";
 
 
 const ROLES = [
@@ -47,6 +47,9 @@ const STAT_SCOPES = [
 type SkinSort = "class" | "champion" | "plays" | "winRate";
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
+const EMPTY_SKINS: SkinStat[] = [];
+const EMPTY_BROKEN_SKINS: BrokenSkinStat[] = [];
+
 function championRole(champions: Champion[], championId: number): string {
   return champions.find((champion) => champion.id === championId)?.roles?.[0] ?? "";
 }
@@ -61,8 +64,6 @@ export default function SkinStatsPage() {
   const searchParams = useSearchParams();
   const initialChampion = Number(searchParams.get("champion") ?? 0) || 0;
   const [champions, setChampions] = useState<Champion[]>([]);
-  const [rows, setRows] = useState<SkinStat[]>([]);
-  const [brokenRows, setBrokenRows] = useState<BrokenSkinStat[]>([]);
   const [championId, setChampionId] = useState(initialChampion);
   const [filterRole, setFilterRole] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SkinSort>("plays");
@@ -70,35 +71,22 @@ export default function SkinStatsPage() {
   const [page, setPage] = usePersistentDirectoryPage();
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(25);
   const [statsScope, setStatsScope] = useState<PublicStatsScope>("ranked");
-  const [loading, setLoading] = useState(true);
-  const displayLoading = useRouteSettledLoading(loading);
   const { definition: lobbyTier, ready: lobbyTierReady } = useLobbyTier();
 
   useEffect(() => { fetchChampions({ limit: "200" }).then(setChampions).catch(() => setChampions([])); }, []);
-  useEffect(() => {
-    let cancelled = false;
-    if (!lobbyTierReady) return;
-    setLoading(true);
-    const rankedTier = statsScope === "ranked"
-      ? { tierMin: lobbyTier.tierMin, tierMax: lobbyTier.tierMax }
-      : {};
-    Promise.all([
-      fetchSkinStats({ championId: championId || undefined, ...rankedTier, limit: 200, scope: statsScope }),
-      fetchBrokenSkinStats({ championId: championId || undefined, ...rankedTier, scope: statsScope }),
-    ])
-      .then(([skinData, brokenData]) => {
-        if (cancelled) return;
-        setRows(skinData);
-        setBrokenRows(brokenData);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setRows([]);
-        setBrokenRows([]);
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [championId, lobbyTier.tierMin, lobbyTier.tierMax, lobbyTierReady, statsScope]);
+  const query = useMemo(() => lobbyTierReady ? {
+    championId: championId || undefined,
+    ...(statsScope === "ranked" ? { tierMin: lobbyTier.tierMin, tierMax: lobbyTier.tierMax } : {}),
+    limit: 200,
+    scope: statsScope,
+  } : null, [championId, lobbyTier.tierMin, lobbyTier.tierMax, lobbyTierReady, statsScope]);
+  const readSkins = useCallback(() => fetchSkinStats(query ?? undefined), [query]);
+  const readBrokenSkins = useCallback(() => fetchBrokenSkinStats(query ?? undefined), [query]);
+  const skins = useApiSection(query ? readSkins : null);
+  const brokenSkins = useApiSection(query ? readBrokenSkins : null);
+  const rows = skins.data ?? EMPTY_SKINS;
+  const brokenRows = brokenSkins.data ?? EMPTY_BROKEN_SKINS;
+  const displayLoading = skins.loading;
 
   const visibleRows = useMemo(() => rows
     .filter((row) => {
@@ -142,10 +130,7 @@ export default function SkinStatsPage() {
         </div>
         <select
           value={statsScope}
-          onChange={(event) => {
-            setLoading(true);
-            setStatsScope(event.target.value as PublicStatsScope);
-          }}
+          onChange={(event) => setStatsScope(event.target.value as PublicStatsScope)}
           className="pc-select w-44 shrink-0"
           aria-label={t("stats.scope.label")}
         >
@@ -165,15 +150,16 @@ export default function SkinStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(16rem,0.65fr)_minmax(0,2fr)]">
-        <section className="min-w-0 xl:self-start">
+        <section className="min-w-0 xl:self-start" aria-busy={brokenSkins.loading}>
           <div className="mb-3 xl:min-h-14"><h2 className="text-sm font-bold text-pc-text">{t("skins.brokenTitle")}</h2><p className="text-xs text-pc-text-muted">{t("skins.brokenDescription")}</p></div>
-          <div className="flex overflow-hidden rounded-xl border border-pc-border bg-pc-bg-elevated">
-            {displayLoading ? <div className="flex min-h-48 flex-1 items-center justify-center p-8 text-center"><LoadingIndicator /></div> : visibleBrokenRows.length === 0 ? <div className="flex flex-1 items-center p-6 text-sm text-pc-text-muted">{t("generated.stats.noBrokenSkinData")}</div> : <div className="min-w-0 flex-1 divide-y divide-pc-border/50">{visibleBrokenRows.map((skin) => <Link key={`${skin.championId}-${skin.skinId}`} href={`/champions/${championSlug(skin.championName)}?scope=${encodeURIComponent(statsScope)}`} className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-pc-bg-secondary/60"><img {...skinPortraitImageProps(skin.championId, skin.skinId, getChampionIconSafe(skin.championName))} alt="" className="h-8 w-8 rounded object-contain" /><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-pc-text">{skin.skinName}</div><div className="text-xs text-pc-text-muted">{skin.championName} · {formatNumber(skin.totalPlays)} {t("generated.stats.plays.0effba4")}</div></div><div className="text-right"><div className="text-xs font-bold" style={{ color: getPercentageColor(skin.usageShare) }}>{formatPercent(skin.usageShare)}</div><div className="text-xs" style={{ color: getPercentageColor(skin.winRate) }}>{t("generated.stats.wr")} {formatPercent(skin.winRate)}</div></div></Link>)}</div>}
-          </div>
+          {brokenSkins.failed ? <ErrorState onRetry={brokenSkins.retry} /> : <div className="flex overflow-hidden rounded-xl border border-pc-border bg-pc-bg-elevated">
+            {brokenSkins.loading ? <div className="flex min-h-48 flex-1 items-center justify-center p-8 text-center"><LoadingIndicator /></div> : visibleBrokenRows.length === 0 ? <div className="flex flex-1 items-center p-6 text-sm text-pc-text-muted">{t("generated.stats.noBrokenSkinData")}</div> : <div className="min-w-0 flex-1 divide-y divide-pc-border/50">{visibleBrokenRows.map((skin) => <Link key={`${skin.championId}-${skin.skinId}`} href={`/champions/${championSlug(skin.championName)}?scope=${encodeURIComponent(statsScope)}`} className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-pc-bg-secondary/60"><img {...skinPortraitImageProps(skin.championId, skin.skinId, getChampionIconSafe(skin.championName))} alt="" className="h-8 w-8 rounded object-contain" /><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-pc-text">{skin.skinName}</div><div className="text-xs text-pc-text-muted">{skin.championName} · {formatNumber(skin.totalPlays)} {t("generated.stats.plays.0effba4")}</div></div><div className="text-right"><div className="text-xs font-bold" style={{ color: getPercentageColor(skin.usageShare) }}>{formatPercent(skin.usageShare)}</div><div className="text-xs" style={{ color: getPercentageColor(skin.winRate) }}>{t("generated.stats.wr")} {formatPercent(skin.winRate)}</div></div></Link>)}</div>}
+          </div>}
         </section>
 
-        <section className="min-w-0">
+        <section className="min-w-0" aria-busy={displayLoading}>
           <div className="mb-3 xl:min-h-14"><h2 className="text-sm font-bold text-pc-text">{t("skins.fullTitle")}</h2><p className="text-xs text-pc-text-muted">{t("skins.fullDescription")}</p></div>
+      {skins.failed ? <ErrorState onRetry={skins.retry} /> : <>
       <div className="space-y-2 md:hidden">
         {pagedRows.map((row) => <Link key={`${row.championId}-${row.skinId}`} href={`/champions/${championSlug(row.championName)}?scope=${encodeURIComponent(statsScope)}`} className="pc-mobile-panel flex min-w-0 items-center gap-3 p-3">
           <img {...skinPortraitImageProps(row.championId, row.skinId, getChampionIconSafe(row.championName))} alt="" className="h-10 w-10 shrink-0 rounded-lg object-contain" />
@@ -230,6 +216,7 @@ export default function SkinStatsPage() {
           </div>
         </div>
       )}
+      </>}
         </section>
       </div>
     </div>

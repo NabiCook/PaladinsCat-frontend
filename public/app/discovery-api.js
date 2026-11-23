@@ -24,9 +24,16 @@
   function publicFetch(input, options) {
     const request = typeof Request !== 'undefined' && input instanceof Request;
     const source = request ? input.url : String(input);
+    const original = new URL(source, location.href);
+    if (original.origin !== location.origin || !/^\/(?:api|_pc)(?:\/|$)/.test(original.pathname)) {
+      return originalFetch(input, options);
+    }
     const destination = url(source, options?.method || (request ? input.method : 'GET'));
-    if (new URL(source, location.href).href === destination) return originalFetch(input, options);
-    return originalFetch(request ? new Request(destination, input) : destination, options);
+    const target = original.href === destination ? input : request ? new Request(destination, input) : destination;
+    const caller = options?.signal !== undefined ? options.signal : request ? input.signal : null;
+    const deadline = AbortSignal.timeout(caller ? 180000 : 30000);
+    const signal = caller ? AbortSignal.any([caller, deadline]) : deadline;
+    return originalFetch(target, { ...options, signal });
   }
 
   // Some source-owned widgets contain their own API client. One document-scoped

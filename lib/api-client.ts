@@ -3238,7 +3238,6 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
   };
   const safeErrorCode = (value: unknown) => typeof value === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(value) ? value : undefined;
   const safeRequestId = (value: unknown) => typeof value === "string" && /^[A-Za-z0-9:_-]{1,100}$/.test(value) ? value : undefined;
-  const retries = options?.retries ?? 2;
   const unwrapData = options?.unwrapData ?? true;
   const timeoutMs = options?.timeoutMs ?? FETCH_TIMEOUT_MS;
   const fetchOptions: RequestInit = { ...options };
@@ -3265,6 +3264,7 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
   // token. App-generated legacy headers must not mask that fresh session.
   if (hasCookieAuthSession() && headers.get("authorization") === `Bearer ${getAuthToken()}`) headers.delete("authorization");
   const method = (fetchOptions.method || "GET").toUpperCase();
+  const retries = method === "GET" || method === "HEAD" ? options?.retries ?? 2 : 0;
   const csrf = typeof document !== "undefined" ? csrfHeader(document.cookie, method) : null;
   if (csrf) headers.set("X-CSRF-Token", csrf);
   // Pseudonymized browser fingerprint for security access capture (profile_view
@@ -3272,6 +3272,16 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
   for (const [name, value] of Object.entries(fingerprintHeaders())) headers.set(name, value);
   fetchOptions.headers = headers;
   fetchOptions.credentials = "same-origin";
+  const scopedPath = withStoredLobbyTier(path);
+  const caller = options?.signal;
+  const waitToRetry = (delay: number) => {
+    caller?.throwIfAborted();
+    return new Promise<void>((resolve, reject) => {
+      const cancel = () => { clearTimeout(timer); reject(caller?.reason); };
+      const timer = setTimeout(() => { caller?.removeEventListener("abort", cancel); resolve(); }, delay);
+      caller?.addEventListener("abort", cancel, { once: true });
+    });
+  };
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     options?.signal?.throwIfAborted();
@@ -3280,7 +3290,6 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
     // Source: Fault #1 — "No timeout on fetch()"
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    const scopedPath = withStoredLobbyTier(path);
     let res: Response;
     try {
       const signal = options?.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
@@ -3291,7 +3300,7 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
       clearTimeout(timeoutId);
       options?.signal?.throwIfAborted();
       if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        await waitToRetry(500 * (attempt + 1));
         continue;
       }
       const kind = controller.signal.aborted ? "timeout" : "network";
@@ -3318,6 +3327,7 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
     if (!res.ok) {
       if (res.status >= 500 && attempt < retries) {
         clearTimeout(timeoutId);
+        void res.body?.cancel().catch(() => {});
         const backoffMs = 500 * (attempt + 1);
         const retryAfterSeconds = Number(res.headers.get("retry-after"));
         // Busy reads advertise when cache preparation can be retried. Keep the
@@ -3325,7 +3335,7 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
         const delayMs = method === "GET" && res.status === 503 && Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
           ? Math.max(backoffMs, Math.min(retryAfterSeconds * 1000, 30_000))
           : backoffMs;
-        await new Promise((r) => setTimeout(r, delayMs));
+        await waitToRetry(delayMs);
         continue;
       }
       const errBody = await res.json().catch(() => null).finally(() => clearTimeout(timeoutId));
@@ -3368,7 +3378,11 @@ export async function fetchJson<T>(path: string, options?: RequestInit & { retri
       json = await res.json();
     } catch (error) {
       options?.signal?.throwIfAborted();
-      const kind = error instanceof Error && error.name === "AbortError" ? "timeout" : "invalid-response";
+      const kind = controller.signal.aborted || (error instanceof Error && error.name === "AbortError") ? "timeout" : "invalid-response";
+      if (kind === "timeout" && attempt < retries) {
+        await waitToRetry(500 * (attempt + 1));
+        continue;
+      }
       const requestError = new ApiRequestError(API_ERROR_KEYS.genericFailure, res.status, {
         kind,
         endpoint: endpointForDiagnostics(scopedPath),
@@ -4150,7 +4164,7 @@ export async function fetchChampions(params?: {
  * I/O types: `none -> Promise<TopWinrateEntry[]>`.
  */
 export async function fetchTopWinrate(): Promise<TopWinrateEntry[]> {
-  const res = await fetch(`${API_BASE}${withStoredLobbyTier('/champions/top-winrate')}`);
+  const res = await fetch(`${API_BASE}${withStoredLobbyTier('/champions/top-winrate')}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) return [];
   // Backend returns a bare array, not wrapped in { value: [...] }
   return (await res.json()) as TopWinrateEntry[];
@@ -4578,12 +4592,12 @@ export interface UniversalSearchResponse {
  *
  * refs: none
  * Request `GET '/search/universal?${query.toString()}'` through the shared API transport. Uncaught network/API errors reject the returned promise.
- * I/O types: `queryText: string; limit: number; options?: { remote?: boolean; remoteTarget?: UniversalSearchRemoteTarget; refresh?: boolean } -> Promise<UniversalSearchResponse>`.
+ * I/O types: `queryText: string; limit: number; options?: { remote?: boolean; remoteTarget?: UniversalSearchRemoteTarget; refresh?: boolean; signal?: AbortSignal } -> Promise<UniversalSearchResponse>`.
  */
 export async function fetchUniversalSearch(
   queryText: string,
   limit = 30,
-  options?: { remote?: boolean; remoteTarget?: UniversalSearchRemoteTarget; refresh?: boolean },
+  options?: { remote?: boolean; remoteTarget?: UniversalSearchRemoteTarget; refresh?: boolean; signal?: AbortSignal },
 ): Promise<UniversalSearchResponse> {
   const query = new URLSearchParams({
     q: queryText,
@@ -4592,7 +4606,7 @@ export async function fetchUniversalSearch(
   if (options?.remote) query.set("remote", "true");
   if (options?.remoteTarget) query.set("remoteTarget", options.remoteTarget);
   if (options?.refresh) query.set("refresh", "true");
-  return fetchJson<UniversalSearchResponse>(`/search/universal?${query.toString()}`, { unwrapData: false });
+  return fetchJson<UniversalSearchResponse>(`/search/universal?${query.toString()}`, { unwrapData: false, signal: options?.signal, retries: options?.remote || options?.refresh ? 0 : undefined });
 }
 
 /**
@@ -5398,7 +5412,7 @@ export interface SkinStat {
  * Fetch skin stats data for client consumers.
  *
  * refs: none
- * Request `GET '/stats/skins${query.toString() ? '?${query.toString()}' : ''}'` through the shared API transport. Return `[]` on a caught request failure.
+ * Request `GET '/stats/skins${query.toString() ? '?${query.toString()}' : ''}'` through the shared API transport. Propagate request failures to the section.
  * I/O types: `params?: { championId?: number; tierMin?: number; tierMax?: number; limit?: number; scope?: PublicStatsScope; queueId?: number; sort?: 'plays' | 'winRate' } -> Promise<SkinStat[]>`.
  */
 export async function fetchSkinStats(params?: { championId?: number; tierMin?: number; tierMax?: number; limit?: number; scope?: PublicStatsScope; queueId?: number; sort?: 'plays' | 'winRate' }): Promise<SkinStat[]> {
@@ -5410,21 +5424,17 @@ export async function fetchSkinStats(params?: { championId?: number; tierMin?: n
   if (params?.scope) query.set('scope', params.scope);
   if (params?.queueId != null) query.set('queueId', String(params.queueId));
   if (params?.sort) query.set('sort', params.sort);
-  try {
-    const raw = await fetchJson<any[]>(`/stats/skins${query.toString() ? `?${query.toString()}` : ''}`);
-    return raw.map((row) => ({
-      skinId: Number(row.skin_id),
-      skinName: String(row.skin_name ?? 'Unknown Skin'),
-      championId: Number(row.champion_id),
-      championName: String(row.champion_name ?? 'Unknown Champion'),
-      totalPlays: Number(row.total_plays ?? 0),
-      wins: Number(row.wins ?? 0),
-      losses: Number(row.losses ?? 0),
-      winRate: Number(row.win_rate ?? 0),
-    }));
-  } catch {
-    return [];
-  }
+  const raw = await fetchJson<any[]>(`/stats/skins${query.toString() ? `?${query.toString()}` : ''}`);
+  return raw.map((row) => ({
+    skinId: Number(row.skin_id),
+    skinName: String(row.skin_name ?? 'Unknown Skin'),
+    championId: Number(row.champion_id),
+    championName: String(row.champion_name ?? 'Unknown Champion'),
+    totalPlays: Number(row.total_plays ?? 0),
+    wins: Number(row.wins ?? 0),
+    losses: Number(row.losses ?? 0),
+    winRate: Number(row.win_rate ?? 0),
+  }));
 }
 
 /**
@@ -5447,7 +5457,7 @@ export interface BrokenSkinStat {
  * Fetch broken skin stats data for client consumers.
  *
  * refs: none
- * Request `GET '/stats/broken-skins${query.toString() ? '?${query.toString()}' : ''}'` through the shared API transport. Return `[]` on a caught request failure.
+ * Request `GET '/stats/broken-skins${query.toString() ? '?${query.toString()}' : ''}'` through the shared API transport. Propagate request failures to the section.
  * I/O types: `params?: { championId?: number; tierMin?: number; tierMax?: number; scope?: PublicStatsScope; queueId?: number } -> Promise<BrokenSkinStat[]>`.
  */
 export async function fetchBrokenSkinStats(params?: { championId?: number; tierMin?: number; tierMax?: number; scope?: PublicStatsScope; queueId?: number }): Promise<BrokenSkinStat[]> {
@@ -5457,22 +5467,18 @@ export async function fetchBrokenSkinStats(params?: { championId?: number; tierM
   if (params?.tierMax != null) query.set('tierMax', String(params.tierMax));
   if (params?.scope) query.set('scope', params.scope);
   if (params?.queueId != null) query.set('queueId', String(params.queueId));
-  try {
-    const raw = await fetchJson<any[]>(`/stats/broken-skins${query.toString() ? `?${query.toString()}` : ''}`);
-    return raw.map((row) => ({
-      skinId: Number(row.skin_id),
-      skinName: String(row.skin_name ?? 'Unknown Skin'),
-      championId: Number(row.champion_id),
-      championName: String(row.champion_name ?? 'Unknown Champion'),
-      totalPlays: Number(row.total_plays ?? 0),
-      wins: Number(row.wins ?? 0),
-      losses: Number(row.losses ?? 0),
-      winRate: Number(row.win_rate ?? 0),
-      usageShare: Number(row.usage_share ?? 0),
-    }));
-  } catch {
-    return [];
-  }
+  const raw = await fetchJson<any[]>(`/stats/broken-skins${query.toString() ? `?${query.toString()}` : ''}`);
+  return raw.map((row) => ({
+    skinId: Number(row.skin_id),
+    skinName: String(row.skin_name ?? 'Unknown Skin'),
+    championId: Number(row.champion_id),
+    championName: String(row.champion_name ?? 'Unknown Champion'),
+    totalPlays: Number(row.total_plays ?? 0),
+    wins: Number(row.wins ?? 0),
+    losses: Number(row.losses ?? 0),
+    winRate: Number(row.win_rate ?? 0),
+    usageShare: Number(row.usage_share ?? 0),
+  }));
 }
 
 /**

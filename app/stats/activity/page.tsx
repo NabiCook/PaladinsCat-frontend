@@ -3,22 +3,15 @@
  * refs: none
  */
 import { fetchAccountServerJson } from "@/lib/server-api";
+import { Suspense } from "react";
+import { LoadingPanel } from "@/components/async-state";
 import PageHeader from "@/components/ui/page-header";
 import { getServerLocalization } from "@/lib/server-localization";
 import PlayerActivityPanel, { type PlayerActivityInitialData } from "@/components/player-activity-panel";
 
-async function getInitialActivityData(): Promise<PlayerActivityInitialData> {
-  const load = async <T,>(path: string): Promise<T | null> => {
-    return fetchAccountServerJson<T>(path).catch(() => null);
-  };
-
-  const [overview, presence, presenceHourly] = await Promise.all([
-    load<PlayerActivityInitialData["overview"]>("/matches/overview?view=activity-v3"),
-    load<PlayerActivityInitialData["presence"]>("/stats/presence?view=activity-v4"),
-    load<PlayerActivityInitialData["presenceHourly"]>("/stats/presence/hourly?view=activity-v3"),
-  ]);
-  if (!overview?.hourly) throw new Error("activity overview unavailable");
-  return { overview, presence, presenceHourly };
+async function ActivityContent() {
+  const overview = await fetchAccountServerJson<PlayerActivityInitialData["overview"]>("/matches/overview?view=activity-v3").catch(() => null);
+  return <PlayerActivityPanel showStatements={false} initialData={{ overview, presence: null, presenceHourly: null }} />;
 }
 
 // Render the data-bearing activity page on the first response. The browser
@@ -37,11 +30,12 @@ export const dynamic = "force-dynamic";
  */
 export default async function PlayerActivityPage() {
   const { t } = await getServerLocalization();
-  const initialData = await getInitialActivityData().catch(() => null);
   return (
     <div className="pc-player-activity-page space-y-6">
       <PageHeader parentHref="/stats" parentLabel={t("menu.globalStats")} title={t("menu.playerActivity")} description={t("stats.portal.activityDescription")} />
-      <PlayerActivityPanel showStatements={false} initialData={initialData} />
+      <Suspense fallback={<LoadingPanel compact className="min-h-[30rem]" />}>
+        <ActivityContent />
+      </Suspense>
     </div>
   );
 }

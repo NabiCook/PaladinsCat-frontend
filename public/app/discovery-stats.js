@@ -38,7 +38,11 @@
     if (refresh) requests.delete(path);
     if (!requests.has(path)) {
       if (requests.size >= 64) requests.delete(requests.keys().next().value);
-      requests.set(path, window.DiscoveryApp.scopedFetch("/api/v1" + path, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10000) }).then(async r => { if (!r.ok) { const error = new Error("Statistics unavailable"); error.status = r.status; throw error; } const body = await r.json(); return body?.data ?? body; }).catch(error => { requests.delete(path); throw error; }));
+      const pending = A.request(path).then(body => body?.data ?? body).catch(error => {
+        if (requests.get(path) === pending) requests.delete(path);
+        throw error;
+      });
+      requests.set(path, pending);
     }
     return requests.get(path);
   }
@@ -74,7 +78,18 @@
   if (window.DiscoveryApp) { window.DiscoveryApp.registerRoute("/stats", () => open("hub")); sections.forEach(([key]) => window.DiscoveryApp.registerRoute("/stats/" + key, () => open(key))); }
   nav.addEventListener("click", () => window.DiscoveryApp.navigate("/stats")); new MutationObserver(activate).observe(shell, { attributes: true, attributeFilter: ["data-view"] });
   function begin(s) { s.sequence = (s.sequence || 0) + 1;s.requestTierGeneration=tierGeneration;s.tierDirty=false; state(s.body, message("async.loading","Loading statistics…")); window.DiscoveryLoading?.show(s.body,["performance","activity"].includes(s.key)?"dashboard":"table"); s.body.setAttribute("aria-busy", "true"); return s.sequence; }
-  function finish(s, seq) { if (s.sequence !== seq || s.requestTierGeneration!==tierGeneration) return false; s.body.removeAttribute("aria-busy"); return true; }
+  function isCurrent(s, seq) { return s.sequence === seq && s.requestTierGeneration === tierGeneration; }
+  function finish(s, seq) { if (!isCurrent(s,seq)) return false; s.body.removeAttribute("aria-busy"); return true; }
+  function loadSection(s, seq, host, request, render, refresh = false) {
+    if (!isCurrent(s,seq)) return;
+    host.setAttribute('aria-busy','true');
+    state(host,message('async.loading','Loading statistics…'));
+    return request(refresh).then(value => {
+      if (isCurrent(s,seq)) render(value);
+    }).catch(() => {
+      if (isCurrent(s,seq)) failure(host,() => void loadSection(s,seq,host,request,render,true));
+    }).finally(() => host.removeAttribute('aria-busy'));
+  }
   function cards(host, values) { const grid = el("div", "stats-metrics"); values.forEach(([label, value]) => { const c = el("div", "stats-metric"); c.append(el("span", "stats-meta", label), el("strong", "", value)); grid.append(c); }); host.append(grid); }
   function table(host, title, columns, rows) {
     const p = panel(title); if (!rows.length) { p.append(copy(message("generated.search.noResultsFound","No data matches this selection."))); host.append(p); return; }
@@ -132,31 +147,39 @@
       field(message("skins.sortBy",'Sort by',undefined),[['plays',message("skins.sortPlays",'Most played',undefined)],['winRate',message("skins.sortWinRate",'Highest win rate',undefined)],['champion',message("skins.sortChampion",'Champion name',undefined)],['class',message("skins.sortClass",'Champion class',undefined)]],s.sort,value=>{s.sort=value;draw();}),
       search(message("generated.stats.searchSkins",'Search skins or champions',undefined),value=>{s.search=value;draw();}));
     if (fixedChampion) s.controls.querySelector('[role=group]')?.closest('.stats-field')?.setAttribute('hidden', '');
-    const reference=Promise.all(['/data/champion-data.json','/app/champion-titles.json'].map(async path=>{const r=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Champion reference unavailable');return r.json();})).then(([roster,ids])=>{
+    void Promise.all(['/data/champion-data.json','/app/champion-titles.json'].map(async path=>{const r=await fetch(path,{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Champion reference unavailable');return r.json();})).then(([roster,ids])=>{
       s.champions=Object.entries(roster).map(([slug,c])=>({id:Number(ids.championIds[slug]),name:c.name,role:c.roles?.[0],slug})).sort((a,b)=>a.name.localeCompare(b.name,A.locale()));
       for(const champion of s.champions){const option=el('option','',champion.name);option.value=champion.id;championControl.querySelector('select').append(option);}championControl.querySelector('select').value=s.champion;
+      s.draw?.();
     }).catch(()=>{championControl.querySelector('select').disabled=true;});
     const championFor=row=>s.champions.find(c=>c.id===Number(row.champion_id)||c.name===row.champion_name);
     const championLink=row=>{const champion=championFor(row);if(!champion)return row.champion_name;const a=el('a','browse-link',champion.name);a.href='/champions/'+champion.slug;return a;};
-    const portraitReference=import('./discovery-skin-portraits.js?v=avif-png-1');
+    let portraits = null;
+    void import('./discovery-skin-portraits.js?v=avif-png-1').then(module => { portraits = module; s.draw?.(); }).catch(() => {});
+    void championRateColorReady.then(() => s.draw?.()).catch(() => {});
     s.load=async refresh=>{const seq=begin(s),params=new URLSearchParams({scope:s.scope,sort:'plays',limit:'200'});if(s.champion)params.set('championId',s.champion);
       const broken=new URLSearchParams({scope:s.scope});if(s.champion)broken.set('championId',s.champion);
-      const results=await Promise.allSettled([request('/stats/skins?'+params,refresh),request('/stats/broken-skins?'+broken,refresh),reference,portraitReference]);await championRateColorReady;if(!finish(s,seq))return;
-      s.body.replaceChildren();s.skinHost=el('div');s.brokenHost=el('div');s.body.append(s.brokenHost,s.skinHost);
-      const portraits=results[3].status==='fulfilled'?results[3].value:null;
+      const skinHost = el('div'), brokenHost = el('div');
+      s.body.replaceChildren(brokenHost,skinHost);
+      finish(s,seq);
+      let skinRows, brokenRows;
       const skinName=row=>{const sources=portraits?.skinPortraitSources(Number(row.champion_id),Number(row.skin_id));if(!sources)return row.skin_name;const name=el('span','stats-skin-identity'),img=el('img','stats-skin-portrait');img.setAttribute('data-pc-image-managed','true');img.dataset.skinPng=sources.fallback;img.src=sources.preferred;img.alt='';img.width=40;img.height=29;img.loading='lazy';img.addEventListener('error',()=>portraits.retrySkinPortraitPng({currentTarget:img}));name.append(img,el('span','',row.skin_name));return name;};
       const matchesClass=row=>!s.role||championFor(row)?.role===s.role;
       const matches=row=>matchesClass(row)&&(row.skin_name+' '+row.champion_name).toLowerCase().includes(s.search.toLowerCase());
-      s.draw=()=>{if(!s.skinHost)return;s.skinHost.replaceChildren();s.brokenHost.replaceChildren();
-        if(results[0].status==='rejected')failure(s.skinHost,()=>void s.load(true));else{const filtered=arr(results[0].value).filter(matches).sort((a,b)=>s.sort==='champion'?a.champion_name.localeCompare(b.champion_name,A.locale())||a.skin_name.localeCompare(b.skin_name,A.locale()):s.sort==='class'?(championFor(a)?.role||'').localeCompare(championFor(b)?.role||'',A.locale())||a.champion_name.localeCompare(b.champion_name,A.locale()):Number(b[s.sort==='winRate'?'win_rate':'total_plays'])-Number(a[s.sort==='winRate'?'win_rate':'total_plays']));
+      s.draw=()=>{if(!isCurrent(s,seq))return;
+        if(skinRows){skinHost.replaceChildren();const filtered=skinRows.filter(matches).sort((a,b)=>s.sort==='champion'?a.champion_name.localeCompare(b.champion_name,A.locale())||a.skin_name.localeCompare(b.skin_name,A.locale()):s.sort==='class'?(championFor(a)?.role||'').localeCompare(championFor(b)?.role||'',A.locale())||a.champion_name.localeCompare(b.champion_name,A.locale()):Number(b[s.sort==='winRate'?'win_rate':'total_plays'])-Number(a[s.sort==='winRate'?'win_rate':'total_plays']));
           const total=Math.max(1,Math.ceil(filtered.length/s.pageSize));s.page=Math.min(total,s.page);const start=(s.page-1)*s.pageSize,visible=filtered.slice(start,start+s.pageSize);
-          table(s.skinHost,message("skins.fullTitle",'Skin statistics',undefined),[message("generated.stats.skin",'Skin',undefined),...(fixedChampion?[]:[message("generated.matches.champion",'Champion',undefined),message("generated.champions.class.41ff354",'Class',undefined)]),message("generated.stats.plays",'Plays',undefined),message("generated.players.wins",'Wins',undefined),message("generated.players.losses",'Losses',undefined),message("common.metrics.winRate",'Win rate',undefined)],visible.map(row=>[skinName(row),...(fixedChampion?[]:[championLink(row),roleLabel(championFor(row)?.role)||'—']),fmt(row.total_plays),fmt(row.wins),fmt(row.losses),championRate(row.win_rate,row.total_plays)]));
+          table(skinHost,message("skins.fullTitle",'Skin statistics',undefined),[message("generated.stats.skin",'Skin',undefined),...(fixedChampion?[]:[message("generated.matches.champion",'Champion',undefined),message("generated.champions.class.41ff354",'Class',undefined)]),message("generated.stats.plays",'Plays',undefined),message("generated.players.wins",'Wins',undefined),message("generated.players.losses",'Losses',undefined),message("common.metrics.winRate",'Win rate',undefined)],visible.map(row=>[skinName(row),...(fixedChampion?[]:[championLink(row),roleLabel(championFor(row)?.role)||'—']),fmt(row.total_plays),fmt(row.wins),fmt(row.losses),championRate(row.win_rate,row.total_plays)]));
           const pager=el('nav','players-pagination stats-skins-pagination'),controls=el('div','players-profile-match-pager'),prev=btn(message("skins.previous",'Previous',undefined),()=>{s.page--;s.draw();}),next=btn(message("skins.next",'Next',undefined),()=>{s.page++;s.draw();});prev.disabled=s.page<=1;next.disabled=s.page>=total;attribute(pager,'aria-label',message('generated.changelog.pagination','Pagination'));
           const range=message('skins.showingStatus','{start}–{end} of {total}',{start:A.formatNumber(filtered.length ? start+1 : 0),end:A.formatNumber(Math.min(start+s.pageSize,filtered.length)),total:A.formatNumber(filtered.length)});
-          controls.append(field(message("skins.rowsPerPage",'Rows per page',undefined),[10,25,50,100].map(value=>[String(value),A.formatNumber(value)]),String(s.pageSize),value=>{s.pageSize=Number(value);s.page=1;s.draw();}),el('span','stats-meta',message("skins.pageStatus",'Page {page} of {total}',{page:A.formatNumber(s.page),total:A.formatNumber(total)})),prev,next);pager.append(el('span','stats-meta',range),controls);s.skinHost.lastElementChild.append(pager);
+          controls.append(field(message("skins.rowsPerPage",'Rows per page',undefined),[10,25,50,100].map(value=>[String(value),A.formatNumber(value)]),String(s.pageSize),value=>{s.pageSize=Number(value);s.page=1;s.draw();}),el('span','stats-meta',message("skins.pageStatus",'Page {page} of {total}',{page:A.formatNumber(s.page),total:A.formatNumber(total)})),prev,next);pager.append(el('span','stats-meta',range),controls);skinHost.lastElementChild.append(pager);
         }
-        if(results[1].status==='rejected')failure(s.brokenHost,()=>void s.load(true));else {const brokenRows=arr(results[1].value).filter(matchesClass);if(brokenRows.length)table(s.brokenHost,message("skins.brokenTitle",'Broken skin statistics',undefined),[message("generated.stats.skin",'Skin',undefined),...(fixedChampion?[]:[message("generated.matches.champion",'Champion',undefined)]),message("generated.stats.plays",'Plays',undefined),message("common.metrics.winRate",'Win rate',undefined),message("stats.tiers.share",'Usage share',undefined)],brokenRows.map(row=>[skinName(row),...(fixedChampion?[]:[championLink(row)]),fmt(row.total_plays),championRate(row.win_rate,row.total_plays),championRate(row.usage_share,row.total_plays)]));}
-      };s.draw();
+        if(brokenRows){brokenHost.replaceChildren();const filtered=brokenRows.filter(matchesClass);if(filtered.length)table(brokenHost,message("skins.brokenTitle",'Broken skin statistics',undefined),[message("generated.stats.skin",'Skin',undefined),...(fixedChampion?[]:[message("generated.matches.champion",'Champion',undefined)]),message("generated.stats.plays",'Plays',undefined),message("common.metrics.winRate",'Win rate',undefined),message("stats.tiers.share",'Usage share',undefined)],filtered.map(row=>[skinName(row),...(fixedChampion?[]:[championLink(row)]),fmt(row.total_plays),championRate(row.win_rate,row.total_plays),championRate(row.usage_share,row.total_plays)]));}
+      };
+      await Promise.all([
+        loadSection(s,seq,skinHost,retry => request('/stats/skins?'+params,refresh || retry).then(arr),rows => { skinRows = rows; s.draw(); }),
+        loadSection(s,seq,brokenHost,retry => request('/stats/broken-skins?'+broken,refresh || retry).then(arr),rows => { brokenRows = rows; s.draw(); }),
+      ]);
     };
   }
   function buildCompositions(s) {
@@ -174,13 +197,28 @@
   }
   function buildTiers(s) {
     s.source="profiles";s.controls.append(field(message("stats.scope.label","Rank population"),[["profiles",message("generated.stats.playerProfiles","Player profiles")],["matches",message("stats.tiers.matches","Match participation")]],s.source,value=>{s.source=value;void s.load();}));
-    s.load=async refresh=>{const seq=begin(s),source=s.source,results=await Promise.allSettled([request("/stats/tiers?source="+source,refresh),request("/stats/tiers/summary",refresh)]);if(!finish(s,seq))return;s.redraw=()=>{s.body.replaceChildren();
-      if(results[1].status==="fulfilled"){const r=record(results[1].value);cards(s.body,[[message("generated.stats.playerProfiles","Ranked profiles"),fmt(r.profile_players)],[message("generated.stats.activePlayers","Active ranked players"),fmt(r.active_players)],[message("generated.stats.matchPlayerRows","Player-match observations"),fmt(r.match_player_rows)],[message("generated.stats.rankedMatches.0b47f50","Ranked matches"),fmt(r.ranked_matches)]]);}
-      else {const warning=panel();failure(warning,()=>void s.load(true));s.body.append(warning);}
-      if(results[0].status==="rejected"){const host=panel();failure(host,()=>void s.load(true));s.body.append(host);return;}
-      try{const rows=arr(results[0].value).sort((a,b)=>Number(a.tier_sort)-Number(b.tier_sort));bars(s.body,message("stats.tiers.title","Distribution by rank (%)"),rows.map(r=>[r.tier,r.percentage]));
-        table(s.body,source==="profiles"?message("stats.tiers.profiles","Profile ranks"):message("stats.tiers.matches","Participation ranks"),[message("generated.players.rank","Rank"),source==="profiles"?message("stats.tiers.players","Profiles"):message("generated.stats.matchPlayerRows","Player-match observations"),message("stats.tiers.share","Share"),message("common.metrics.winRate","Average win rate")],rows.map(row=>{const wr=validNumber(row.avg_win_rate)?Number(row.avg_win_rate):null;return[row.tier,fmt(row.total_plays),rate(row.percentage,row.total_plays),rate(wr==null?null:Math.abs(wr)<=1?wr*100:wr,row.total_plays)];}));
-      }catch{failure(s.body,()=>void s.load(true));}};s.redraw();
+    s.load = async refresh => {
+      const seq = begin(s), source = s.source;
+      const summaryHost = el('div'), rowsHost = el('div');
+      s.body.replaceChildren(summaryHost,rowsHost);
+      finish(s,seq);
+      let totals, rows;
+      const drawSummary = () => {
+        if (!totals) return;
+        summaryHost.replaceChildren();
+        cards(summaryHost,[[message("generated.stats.playerProfiles","Ranked profiles"),fmt(totals.profile_players)],[message("generated.stats.activePlayers","Active ranked players"),fmt(totals.active_players)],[message("generated.stats.matchPlayerRows","Player-match observations"),fmt(totals.match_player_rows)],[message("generated.stats.rankedMatches.0b47f50","Ranked matches"),fmt(totals.ranked_matches)]]);
+      };
+      const drawRows = () => {
+        if (!rows) return;
+        rowsHost.replaceChildren();
+        bars(rowsHost,message("stats.tiers.title","Distribution by rank (%)"),rows.map(row => [row.tier,row.percentage]));
+        table(rowsHost,source==="profiles"?message("stats.tiers.profiles","Profile ranks"):message("stats.tiers.matches","Participation ranks"),[message("generated.players.rank","Rank"),source==="profiles"?message("stats.tiers.players","Profiles"):message("generated.stats.matchPlayerRows","Player-match observations"),message("stats.tiers.share","Share"),message("common.metrics.winRate","Average win rate")],rows.map(row=>{const wr=validNumber(row.avg_win_rate)?Number(row.avg_win_rate):null;return[row.tier,fmt(row.total_plays),rate(row.percentage,row.total_plays),rate(wr==null?null:Math.abs(wr)<=1?wr*100:wr,row.total_plays)];}));
+      };
+      s.redraw = () => { if (isCurrent(s,seq)) { drawSummary(); drawRows(); } };
+      await Promise.all([
+        loadSection(s,seq,summaryHost,retry => request('/stats/tiers/summary',refresh || retry).then(record),result => { totals = result; drawSummary(); }),
+        loadSection(s,seq,rowsHost,retry => request('/stats/tiers?source='+source,refresh || retry).then(arr),result => { rows = [...result].sort((a,b)=>Number(a.tier_sort)-Number(b.tier_sort)); drawRows(); }),
+      ]);
     };
   }
   function buildActivity(s) {

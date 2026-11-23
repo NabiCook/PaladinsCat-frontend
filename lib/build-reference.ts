@@ -140,27 +140,27 @@ function itemIconPath(name: string) {
 
 async function loadLocalItems() {
   if (!localItemPromise) {
-    localItemPromise = fetch("/data/paladins-items-reference.json")
+    localItemPromise = fetch("/data/paladins-items-reference.json", { signal: AbortSignal.timeout(10_000) })
       .then((res) => (res.ok ? res.json() : []))
-      .catch(() => []);
+      .catch(() => { localItemPromise = null; return []; });
   }
   return localItemPromise;
 }
 
 async function loadLocalCards() {
   if (!localCardPromise) {
-    localCardPromise = fetch("/data/paladins-card-reference.json")
+    localCardPromise = fetch("/data/paladins-card-reference.json", { signal: AbortSignal.timeout(10_000) })
       .then((res) => (res.ok ? res.json() : []))
-      .catch(() => []);
+      .catch(() => { localCardPromise = null; return []; });
   }
   return localCardPromise;
 }
 
 async function loadLocalTalents() {
   if (!localTalentPromise) {
-    localTalentPromise = fetch("/data/paladins-talent-reference.json")
+    localTalentPromise = fetch("/data/paladins-talent-reference.json", { signal: AbortSignal.timeout(10_000) })
       .then((res) => (res.ok ? res.json() : []))
-      .catch(() => []);
+      .catch(() => { localTalentPromise = null; return []; });
   }
   return localTalentPromise;
 }

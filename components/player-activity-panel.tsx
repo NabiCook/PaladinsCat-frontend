@@ -149,16 +149,16 @@ export default function PlayerActivityPanel({
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      setLoading(true);
+    let overviewPending = false;
+    let presencePending = false;
+    const loadOverview = async () => {
+      if (overviewPending) return;
+      overviewPending = true;
       try {
         // Activity is a global match-count surface. Lobby tier preferences are
         // intentionally not sent because ID-only casual discovery has no
         // player-detail/tier data and must remain comparable with ranked.
-        const [overview, presenceResult] = await Promise.all([
-          fetchMatchesOverview({ view: "activity-v3" }),
-          fetchPresenceStats().catch(() => null),
-        ]);
+        const overview = await fetchMatchesOverview({ view: "activity-v3" });
         if (!active) return;
         if (!overview.hourly) {
           setActivityUnavailable(true);
@@ -166,7 +166,6 @@ export default function PlayerActivityPanel({
         }
         setHourlyStats(overview.hourly);
         setDroppedIdsByHour(overview.droppedIdsByHour);
-        if (presenceResult) setPresence(presenceResult);
         setActivityUnavailable(false);
       } catch {
         // Keep the last confirmed activity visible during a transient API
@@ -174,13 +173,30 @@ export default function PlayerActivityPanel({
         // rendering an empty chart as if no matches were played.
         if (active) setActivityUnavailable(true);
       } finally {
+        overviewPending = false;
         if (active) setLoading(false);
+      }
+    };
+    const loadPresence = async () => {
+      if (presencePending) return;
+      presencePending = true;
+      try {
+        const result = await fetchPresenceStats();
+        if (active) setPresence(result);
+      } catch {
+        // Preserve the last confirmed observation until the next refresh.
+      } finally {
+        presencePending = false;
       }
     };
     // The server already obtained the first payload. Refresh it on the normal
     // cadence instead of reissuing the same requests during hydration.
-    if (!serverData?.overview?.hourly || !serverData?.presence) void load();
-    const interval = window.setInterval(() => void load(), 60_000);
+    if (!serverData?.overview?.hourly) void loadOverview();
+    if (!serverData?.presence) void loadPresence();
+    const interval = window.setInterval(() => {
+      void loadOverview();
+      void loadPresence();
+    }, 60_000);
     return () => { active = false; window.clearInterval(interval); };
   }, [serverData]);
 
@@ -304,7 +320,7 @@ export default function PlayerActivityPanel({
       </section>
 
       <PlayerHourlyRegionCard
-        loading={displayLoading || presenceHourlyLoading}
+        loading={presenceHourlyLoading}
         stats={presenceHourly}
         hourly={playerHourly}
         queues={queues}
@@ -347,7 +363,7 @@ export default function PlayerActivityPanel({
 
       {showRankedHealth && droppedRows.length > 0 && <section className="pc-card p-3 sm:p-4"><div className="mb-2 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-wider text-amber-300">{t("generated.matches.trueDropped")}</h2><span className="text-xs text-pc-text-muted">{droppedRows.reduce((sum: number, row: any) => sum + row.droppedIds.length, 0)} {t("generated.matches.ids")}</span></div><div className="space-y-2">{droppedRows.map((row: any) => <div key={`${row.date}|${row.hour}`} className="flex gap-2 text-xs"><span suppressHydrationWarning className="w-10 shrink-0 text-right font-mono text-pc-text-muted">{formatHourFromUtcBucket(row.date, row.hour)}</span><div className="flex flex-wrap gap-1">{row.droppedIds.map((id: string) => <Link key={id} href={`/matches/${id}`} className="font-mono text-amber-200 hover:text-pc-accent">#{id}</Link>)}</div></div>)}</div></section>}
 
-      {!displayLoading && presence && <PlayerPresenceBreakdown
+      {presence && <PlayerPresenceBreakdown
         presence={presence}
         formatNumber={formatNumber}
         title={t("playerActivity.players24h")}

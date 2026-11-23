@@ -2,14 +2,18 @@
  * refs: none
  */
 "use client";
-import { useEffect, useState } from "react";
-import { fetchTierSummary, fetchTiers, type TierStat, type TierSummary } from "@/lib/api-client";
+import { useState } from "react";
+import { fetchTierSummary, fetchTiers, type TierStat } from "@/lib/api-client";
 import { getRankIconPath, TIER_NAMES } from "@/lib/tier-utils";
 import { getPercentageColor } from "@/lib/stat-quality";
 import PageHeader from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { LoadingIndicator } from "@/components/async-state";
 import { useLocalization } from "@/lib/localization-context";
+import { useApiSection } from "@/lib/use-api-section";
+
+const fetchProfileTiers = () => fetchTiers({ source: "profiles" });
+const fetchMatchTiers = () => fetchTiers({ source: "matches" });
 
 function rankIcon(tier: number) {
   return getRankIconPath(tier, tier === 26 ? 101 : tier === 27 ? 1 : 0);
@@ -93,43 +97,27 @@ function DistributionPanel({ source, rows, loading, onRetry, detail }: {
  */
 export default function TiersPage() {
   const { t, formatNumber } = useLocalization();
-  const [profiles, setProfiles] = useState<TierStat[] | null>(null);
-  const [matches, setMatches] = useState<TierStat[] | null>(null);
-  const [summary, setSummary] = useState<TierSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [attempt, setAttempt] = useState(0);
+  const profiles = useApiSection(fetchProfileTiers);
+  const matches = useApiSection(fetchMatchTiers);
+  const summaryRequest = useApiSection(fetchTierSummary);
+  const summary = summaryRequest.data;
   const [detail, setDetail] = useState<"ranks" | "divisions">("ranks");
-  const retry = () => setAttempt(value => value + 1);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    Promise.allSettled([fetchTiers({ source: "profiles" }), fetchTiers({ source: "matches" }), fetchTierSummary()])
-      .then(([profileResult, matchResult, summaryResult]) => {
-        if (cancelled) return;
-        setProfiles(profileResult.status === "fulfilled" ? profileResult.value : null);
-        setMatches(matchResult.status === "fulfilled" ? matchResult.value : null);
-        setSummary(summaryResult.status === "fulfilled" ? summaryResult.value : null);
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [attempt]);
 
   return <div className="space-y-6">
     <PageHeader parentHref="/stats" parentLabel={t("menu.globalStats")} title={t("stats.tiers.title")} description={t("stats.tiers.description")} />
     <SegmentedControl label={t("stats.tiers.detail")} items={[{ value: "ranks", label: t("stats.tiers.ranks") }, { value: "divisions", label: t("stats.tiers.divisions") }]} value={detail} onChange={setDetail} />
     <div className="grid items-start gap-4 xl:grid-cols-2">
-      <DistributionPanel source="profiles" rows={profiles} loading={loading} onRetry={retry} detail={detail} />
-      <DistributionPanel source="matches" rows={matches} loading={loading} onRetry={retry} detail={detail} />
+      <DistributionPanel source="profiles" rows={profiles.data ?? null} loading={profiles.loading} onRetry={profiles.retry} detail={detail} />
+      <DistributionPanel source="matches" rows={matches.data ?? null} loading={matches.loading} onRetry={matches.retry} detail={detail} />
     </div>
-    <section className="pc-card" aria-label={t("stats.tiers.matches")}>
+    <section className="pc-card" aria-label={t("stats.tiers.matches")} aria-busy={summaryRequest.loading}>
       <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div><dt className="text-xs text-pc-text-secondary">{t("generated.stats.activePlayers")}</dt><dd className="mt-2 text-lg font-semibold tabular-nums text-pc-text">{summary ? formatNumber(summary.activePlayers) : "—"}</dd></div>
         <div><dt className="text-xs text-pc-text-secondary">{t("generated.stats.rankedMatches.0b47f50")}</dt><dd className="mt-2 text-lg font-semibold tabular-nums text-pc-text">{summary ? formatNumber(summary.rankedMatches) : "—"}</dd></div>
         <div><dt className="text-xs text-pc-text-secondary">{t("generated.stats.avgMatchTier")}</dt><dd className="mt-2 text-sm font-semibold text-pc-text"><AverageRank value={summary?.avgMatchTier} /></dd></div>
         <div><dt className="text-xs text-pc-text-secondary">{t("generated.stats.medianMatchTier")}</dt><dd className="mt-2 text-sm font-semibold text-pc-text"><AverageRank value={summary?.medianMatchTier} /></dd></div>
       </dl>
-      {!loading && !summary && <div className="mt-4 flex flex-wrap items-center gap-3" role="status"><span className="text-sm text-pc-text-secondary">{t("stats.tiers.unavailable")}</span><button type="button" onClick={retry} className="pc-btn-secondary">{t("stats.tiers.retry")}</button></div>}
+      {summaryRequest.failed && <div className="mt-4 flex flex-wrap items-center gap-3" role="status"><span className="text-sm text-pc-text-secondary">{t("stats.tiers.unavailable")}</span><button type="button" onClick={summaryRequest.retry} className="pc-btn-secondary">{t("stats.tiers.retry")}</button></div>}
     </section>
   </div>;
 }

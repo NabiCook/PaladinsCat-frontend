@@ -95,8 +95,11 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   if (/^Bearer (null|undefined)$/i.test(headers.get("authorization") || "")) headers.delete("authorization");
   const csrf = typeof document !== "undefined" ? csrfHeader(document.cookie, init?.method ?? "GET") : null;
   if (csrf) headers.set("X-CSRF-Token", csrf);
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: "same-origin" });
+  const deadline = AbortSignal.timeout(10_000);
+  const signal = init?.signal ? AbortSignal.any([init.signal, deadline]) : deadline;
+  const response = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: "same-origin", signal });
   const payload = await response.json().catch(() => ({}));
+  signal.throwIfAborted();
   if (!response.ok) {
     const message = payload && typeof payload.error === "string" ? payload.error : `Request failed (${response.status})`;
     throw new Error(message);

@@ -56,9 +56,9 @@ function uniqueByName(rows: StaticReferenceRow[]) {
 export async function loadStaticReferenceIndex(): Promise<StaticReferenceIndex> {
   if (!staticReferencePromise) {
     staticReferencePromise = Promise.all([
-      fetch("/data/paladins-items-reference.json").then((res) => res.ok ? res.json() : []),
-      fetch("/data/paladins-card-reference.json").then((res) => res.ok ? res.json() : []),
-      fetch("/data/paladins-talent-reference.json").then((res) => res.ok ? res.json() : []),
+      fetch("/data/paladins-items-reference.json", { signal: AbortSignal.timeout(10_000) }).then((res) => res.ok ? res.json() : []),
+      fetch("/data/paladins-card-reference.json", { signal: AbortSignal.timeout(10_000) }).then((res) => res.ok ? res.json() : []),
+      fetch("/data/paladins-talent-reference.json", { signal: AbortSignal.timeout(10_000) }).then((res) => res.ok ? res.json() : []),
       fetchReferenceChampions().catch(() => []),
     ]).then(([items, cards, talents, champions]) => {
       const championNames = new Map<number, string>(
@@ -74,7 +74,7 @@ export async function loadStaticReferenceIndex(): Promise<StaticReferenceIndex> 
         talents: uniqueByName(talents as StaticReferenceRow[]),
         championNames,
       };
-    });
+    }).catch(error => { staticReferencePromise = null; throw error; });
   }
   return staticReferencePromise;
 }

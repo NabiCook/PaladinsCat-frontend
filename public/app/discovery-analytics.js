@@ -152,25 +152,39 @@
             if(seq!==sequence||!current())return;if(!Array.isArray(raw.rows))throw Error('Invalid matchup response');
             matchupRows=currentMatchupRows(raw.rows,champion,champions).filter(row=>talent==='0'||String(row.champion_talent_id)===talent);drawMatchups();
           }else{
-            const results=await Promise.allSettled([read('/stats/talents/'+champion.id+'?mode=ranked',refresh),read('/stats/cards/'+champion.id+'?mode=ranked'+(talent!=='0'?'&talentId='+talent:''),refresh)]);
-            if(seq!==sequence||!current())return;output.replaceChildren();
-            const talents=n('section','discovery-panel');talents.append(n('h2','',text('generated.champions.talents','Talents')));output.append(talents);
-            try{
-              if(results[0].status!=='fulfilled')throw results[0].reason;
-              const summaries=currentTalentSummaries(results[0].value,champion);
+            const talents=n('section','discovery-panel'), cards=n('section','discovery-panel');
+            output.replaceChildren(talents,cards);
+            output.removeAttribute('aria-busy');
+            const valid=()=>seq===sequence && current();
+            function loadPanel(host, path, render, errorKey, errorLabel, force=false) {
+              if(!valid())return;
+              state(host,text('async.loading','Loading'));
+              host.setAttribute('aria-busy','true');
+              return read(path,refresh||force).then(raw=>{
+                if(!valid())return;
+                host.replaceChildren();
+                render(raw);
+              }).catch(()=>{
+                if(valid())state(host,text(errorKey,errorLabel),()=>void loadPanel(host,path,render,errorKey,errorLabel,true));
+              }).finally(()=>host.removeAttribute('aria-busy'));
+            }
+            const talentPath='/stats/talents/'+champion.id+'?mode=ranked';
+            const cardPath='/stats/cards/'+champion.id+'?mode=ranked'+(talent!=='0'?'&talentId='+talent:'');
+            const talentRequest=loadPanel(talents,talentPath,raw=>{
+              talents.append(n('h2','',text('generated.champions.talents','Talents')));
+              const summaries=currentTalentSummaries(raw,champion);
               table(talents,[text('generated.champions.talent','Talent'),text('generated.champions.winRate','Win rate'),text('generated.champions.pickRate','Pick Rate'),text('common.sort.totalPlays','Total Plays'),text('generated.champions.wins','Wins'),text('generated.champions.losses','Losses')],summaries.map(row=>{
                 const filter=button(row.name,()=>{talent=talent===String(row.id)?'0':String(row.id);talentField.querySelector('select').value=talent;void load();});filter.setAttribute('aria-pressed',String(talent===String(row.id)));
                 return[filter,Number(row.plays)>0?percent(row.winRate):'—',percent(row.pickRate),fmt(row.plays),fmt(row.wins),fmt(row.losses)];
               }));
-            }catch{state(talents,text('generated.champions.talentStatisticsUnavailable','Talent statistics unavailable'),()=>load(true));}
-            const cards=n('section','discovery-panel');output.append(cards);
-            try{
-              if(results[1].status!=='fulfilled')throw results[1].reason;
-              const raw=results[1].value;if(!Array.isArray(raw.cards))throw Error('Invalid card statistics response');
+            },'generated.champions.talentStatisticsUnavailable','Talent statistics unavailable');
+            const cardRequest=loadPanel(cards,cardPath,raw=>{
+              if(!Array.isArray(raw.cards))throw Error('Invalid card statistics response');
               const flattened=raw.cards.flatMap(card=>(card.levels||[]).map(level=>({name:card.cardName??card.card_name,id:card.cardId??card.card_id,level:level.level,plays:level.plays??level.totalPlays,rate:cardPercent(level.winRate??level.win_rate)}))).sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):sort==='rate'?(Number(b.rate)||0)-(Number(a.rate)||0):(Number(b.plays)||0)-(Number(a.plays)||0));
               if(!flattened.length)cards.append(n('p','discovery-copy',text('generated.champions.noCardDataForQueue','No card data is available for this queue.')));
               else table(cards,[text('generated.matches.card','Card'),text('generated.players.level','Level'),text('common.sort.totalPlays','Total Plays'),text('generated.champions.winRate','Win rate')],flattened.map(row=>[link(row.name,'/stats/loadouts/'+champion.slug+'/cards/'+row.id+(talent!=='0'?'?talentId='+talent:'')),fmt(row.level),fmt(row.plays),Number(row.plays)>0?percent(row.rate):'—']));
-            }catch{state(cards,text('generated.champions.cardStatisticsUnavailable','Card statistics unavailable'),()=>load(true));}
+            }, 'generated.champions.cardStatisticsUnavailable','Card statistics unavailable');
+            await Promise.all([talentRequest,cardRequest]);
           }
         }catch{if(seq===sequence&&current())state(output,text(kind==='matchups'?'stats.matchups.error':'async.couldNotLoad','Could not load this data'),()=>load(true));}
         finally{if(seq===sequence&&current())output.setAttribute('aria-busy','false');}

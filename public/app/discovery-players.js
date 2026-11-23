@@ -55,13 +55,36 @@
     for(const card of catalogue){const entry=link('',card.path,'players-hub-card');entry.dataset.playerDirectory=card.path;entry.dataset.cardAccent=card.accent;const count=n('span','players-hub-count','…');counts.set(card.path,count);entry.append(icon(card.icon),n('h2','',directoryTitle(card)),count,icon('ArrowRight'));grid.append(entry);}
     main.append(status,grid);App.open(view);const seq=(tokens.get(view)||0)+1;tokens.set(view,seq);
     const active=[['/players/cheaters','/cheaters/active?limit=1&offset=0'],['/players/exploiters','/players/exploiters/active?limit=1&offset=0']];
-    const results=await Promise.allSettled([App.request('/players/overview'),...active.map(([,path])=>App.request(path))]);
-    if(tokens.get(view)!==seq)return;
-    let error=null;const overview=results[0];const data=overview.status==='fulfilled'?(overview.value?.data??overview.value):null;
-    if(overview.status==='rejected'||!data?.community_counts||!data?.directory_counts)error=overview.status==='rejected'?overview.reason:new Error('Invalid overview');
-    for(const card of catalogue){if(active.some(([path])=>path===card.path))continue;counts.get(card.path).textContent=data?.community_counts&&data?.directory_counts?fmt(data[card.group]?.[card.field]):'—';}
-    active.forEach(([path],index)=>{const result=results[index+1],payload=result.status==='fulfilled'?(result.value?.data??result.value):null,total=num(payload?.total);if(total==null||!Number.isInteger(total)||total<0){counts.get(path).textContent='—';error ||= result.status==='rejected'?result.reason:new Error('Invalid active total');}else counts.get(path).textContent=fmt(total);});
-    if(error)failure(status,error,hub);else status.textContent='';
+    const current = () => tokens.get(view) === seq;
+    const overviewCards = catalogue.filter(card => !active.some(([path]) => path === card.path));
+    let errorShown = false;
+    const report = error => {
+      if (!errorShown) failure(status,error,hub);
+      errorShown = true;
+    };
+    void App.request('/players/overview').then(result => {
+      if (!current()) return;
+      const data = result?.data ?? result;
+      if (!data?.community_counts || !data?.directory_counts) throw new Error('Invalid overview');
+      for (const card of overviewCards) counts.get(card.path).textContent = fmt(data[card.group]?.[card.field]);
+    }).catch(error => {
+      if (!current()) return;
+      for (const card of overviewCards) counts.get(card.path).textContent = '—';
+      report(error);
+    });
+    for (const [path, endpoint] of active) {
+      const count = counts.get(path);
+      void App.request(endpoint).then(result => {
+        if (!current()) return;
+        const total = num((result?.data ?? result)?.total);
+        if (!Number.isInteger(total) || total < 0) throw new Error('Invalid active total');
+        count.textContent = fmt(total);
+      }).catch(error => {
+        if (!current()) return;
+        count.textContent = '—';
+        report(error);
+      });
+    }
   }
   App.registerRoute('/players',hub);
 

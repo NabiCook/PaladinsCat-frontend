@@ -157,7 +157,7 @@
   const searchTypeLabel = type => M(searchTypeKeys[type], undefined, type[0].toUpperCase()+type.slice(1));
   let searchLogicRequest;
   function searchLogic() {
-    return searchLogicRequest ||= Promise.all([import('./discovery-search-state.js'), import('./discovery-search-reference.js')]).catch(error => { searchLogicRequest = null; throw error; });
+    return searchLogicRequest ||= Promise.all([import('./discovery-search-state.js'), import('./discovery-search-reference.js?v=2')]).catch(error => { searchLogicRequest = null; throw error; });
   }
   const searchActions = document.createElement('div');
   searchActions.className = 'reference-filters search-remote-actions'; searchActions.hidden = true;
@@ -254,7 +254,7 @@
         resultList.setAttribute('aria-busy','true');
         try {
           const params = new URLSearchParams({q:query,limit:'36',remote:'true',remoteTarget:target}); if (target === 'match-id') params.set('refresh','true');
-          const raw = await window.DiscoveryApp.request('/search/universal?'+params,{signal:controller.signal});
+          const raw = await window.DiscoveryApp.request('/search/universal?'+params,{signal:controller.signal,retries:0});
           if (!current()) return;
           const [logic] = await searchLogic(); if (!current()) return;
           paintSearchResults(logic.mergeResults([...searchResults,...raw.data]));
@@ -298,15 +298,21 @@
     nativeText(emptyMessage, M("generated.search.searching", undefined, "Searching…"));
     try {
       const [logic, references] = await searchLogic();
-      const localPromise = references.loadStaticReferenceIndex().then(index => references.staticReferenceResults(query,index)).catch(() => []);
-      const remotePromise = window.DiscoveryApp.request('/search/universal?q='+encodeURIComponent(query)+'&limit=36',{signal:controller.signal});
-      const [remote, local] = await Promise.allSettled([remotePromise, localPromise]);
+      let returned = [], bundled = [];
+      const publish = () => {
+        if (current() && (returned.length || bundled.length)) paintSearchResults(logic.mergeResults([...returned,...bundled]).slice(0,48));
+      };
+      const [remote] = await Promise.allSettled([
+        window.DiscoveryApp.request('/search/universal?q='+encodeURIComponent(query)+'&limit=36',{signal:controller.signal}).then(result => {
+          if (!Array.isArray(result?.data)) throw new Error('Invalid search response');
+          returned = result.data;
+          publish();
+        }),
+        references.loadStaticReferenceIndex().then(index => { bundled = references.staticReferenceResults(query,index); publish(); }),
+      ]);
       if (!current()) return;
-      const bundled = local.status === 'fulfilled' ? local.value : [];
       if (remote.status === 'rejected' && !bundled.length) throw remote.reason;
-      const returned = remote.status === 'fulfilled' ? remote.value.data : [];
-      if (!Array.isArray(returned)) throw new Error('Invalid search response');
-      paintSearchResults(logic.mergeResults([...returned,...bundled]).slice(0,48));
+      if (!returned.length && !bundled.length) paintSearchResults([]);
       paintSearchActions(query,current,controller);
     } catch (error) {
       if (!current()) return;

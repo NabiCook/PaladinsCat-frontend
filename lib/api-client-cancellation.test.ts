@@ -94,3 +94,20 @@ test("shared fetch propagates cancellation and bounds stalled response bodies", 
     await assert.rejects(fetchJson("/players/1/friends",{timeoutMs:10,retries:0}),{name:"AbortError"});
   } finally { globalThis.fetch=original; }
 });
+
+test("a stalled read body retries and a stalled mutation body is sent once", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  try {
+    globalThis.fetch = async (_url, options) => {
+      if (++calls === 2) return Response.json({ ready: true });
+      return new Response(new ReadableStream({ start(controller) {
+        options?.signal?.addEventListener("abort", () => controller.error(options.signal?.reason), { once: true });
+      } }));
+    };
+    assert.deepEqual(await fetchJson("/stats/tiers", { timeoutMs: 20, retries: 1 }), { ready: true });
+    assert.equal(calls, 2);
+    await assert.rejects(fetchJson("/account/action", { method: "POST", timeoutMs: 20, retries: 1 }), { name: "AbortError" });
+    assert.equal(calls, 3);
+  } finally { globalThis.fetch = original; }
+});

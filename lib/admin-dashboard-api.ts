@@ -90,12 +90,15 @@ export const ADMIN_ERROR_KEYS = {
  * I/O types: `mode: "admin" | "developer" -> Promise<AdminDashboard>`.
  */
 export async function fetchAdminDashboard(mode: "admin" | "developer" = "admin"): Promise<AdminDashboard> {
+  const signal = AbortSignal.timeout(10_000);
   const response = await fetch(mode === "developer" ? "/api/developer/dashboard" : "/api/admin/dashboard", {
     headers: accountAuthHeaders(),
     credentials: "same-origin",
     cache: "no-store",
+    signal,
   });
   const body = await response.json().catch(() => ({}));
+  signal.throwIfAborted();
   if (!response.ok) throw new Error(body?.error?.message || body?.error || `Dashboard request failed (${response.status}).`);
   const raw = body?.data && !body?.generated_at ? body.data : body;
   const summary = raw.traffic?.summary ?? {};

@@ -63,23 +63,24 @@ export default function HomeSearch({ onSearchActiveChange, variant = "home", act
     }
 
     let acceptingResults = true;
+    const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLoading(true);
-      try {
-        const [response, references] = await Promise.all([
-          fetchUniversalSearch(query, 6),
-          loadStaticReferenceIndex().then((index) => staticReferenceResults(query, index)).catch(() => []),
-        ]);
-        if (acceptingResults) setResults(mergeResults([...response.data, ...references]).slice(0, 6));
-      } catch {
-        if (acceptingResults) setResults([]);
-      } finally {
-        if (acceptingResults) setLoading(false);
-      }
+      setResults([]);
+      let apiResults: UniversalSearchResult[] = [], references: UniversalSearchResult[] = [];
+      const publish = () => {
+        if (acceptingResults) setResults(mergeResults([...apiResults, ...references]).slice(0, 6));
+      };
+      await Promise.allSettled([
+        fetchUniversalSearch(query, 6, { signal: controller.signal }).then(response => { apiResults = response.data; publish(); }),
+        loadStaticReferenceIndex().then(index => { references = staticReferenceResults(query, index); publish(); }),
+      ]);
+      if (acceptingResults) setLoading(false);
     }, 200);
 
     return () => {
       acceptingResults = false;
+      controller.abort();
       window.clearTimeout(timer);
     };
   }, [active, isHeader, value]);
@@ -101,7 +102,7 @@ export default function HomeSearch({ onSearchActiveChange, variant = "home", act
           className={`${isHeader ? "pc-header-search-dropdown " : ""}absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 origin-top overflow-hidden rounded-lg border border-pc-border bg-pc-bg-elevated shadow-md`}
         >
           <AnimatePresence mode="wait" initial={false}>
-            {loading ? (
+            {loading && results.length === 0 ? (
               <motion.div
                 key="loading"
                 initial={animateHome ? { opacity: 0 } : false}
