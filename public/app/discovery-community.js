@@ -163,7 +163,7 @@
       for (const row of streams) {
         const card = safeExternal("", row.url), details = el("div", "community-stream-details");
         card.className = "community-stream-card";
-        if (row.thumbnailUrl) card.append(image(row.thumbnailUrl, "", "community-stream-image"));
+        if (row.thumbnailUrl) { const preview = image(row.thumbnailUrl, "", "community-stream-image"); preview.decoding = "async"; card.append(preview); }
         const title = paragraph(row.title || t("generated.community.playingPaladins"));
         title.title = row.title || "";
         details.append(el("strong", "", row.userName || row.userLogin), title, el("span", "community-meta", fmt(row.viewerCount)));

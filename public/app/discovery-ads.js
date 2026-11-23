@@ -59,6 +59,12 @@
       const script=make('script');
       script.src='https://cdnjs.cloudflare.com/ajax/libs/postscribe/2.0.8/postscribe.min.js';
       script.integrity='sha384-pojMXilfEgorjtWzSw/Vs8lxOfhlNdEEZDHGECbzEHXolojlD+1JRKLpNSuGMW4C';script.crossOrigin='anonymous';
+      // Pinned writer stays off the parser-blocking path: a dynamically built
+      // script is already force-async, so this only states that intent. It does
+      // NOT remove the writer from the document's load event (measured in
+      // Chromium: any injected script still delays load), so the match route is
+      // decoupled from that event by the boot gate in discovery-app.js instead.
+      script.async=true;
       script.onload=()=>window.postscribe?resolve(window.postscribe):reject(Error('Ad writer unavailable'));
       script.onerror=()=>reject(Error('Ad writer unavailable'));document.head.append(script);
     });
