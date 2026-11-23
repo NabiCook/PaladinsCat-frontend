@@ -5,12 +5,13 @@
  */
 "use client";
 
-import { memo, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from "react";
+import { memo, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   fetchUniversalSearch,
+  fetchArchivedMatchSearch,
   type UniversalSearchResult,
   type UniversalSearchResponse,
   type UniversalSearchRemoteTarget,
@@ -183,6 +184,31 @@ function SearchPageBody() {
   // Mirror the reducer's generation into a ref so the debounced effect can read
   // the latest generation without re-running on every keystroke.
   const generationRef = useRef(0);
+  const archiveRequest = useRef<AbortController | null>(null);
+  const [archiveLookup, setArchiveLookup] = useState<{ query: string; loading: boolean; error: string | null }>({ query: "", loading: false, error: null });
+
+  useEffect(() => {
+    archiveRequest.current?.abort();
+    setArchiveLookup({ query: "", loading: false, error: null });
+    return () => archiveRequest.current?.abort();
+  }, [state.query]);
+
+  async function searchOlderMatch() {
+    const query = state.query.trim(), generation = state.generation;
+    if (!isLikelyMatchId(query)) return;
+    archiveRequest.current?.abort();
+    const controller = new AbortController();
+    archiveRequest.current = controller;
+    setArchiveLookup({ query, loading: true, error: null });
+    try {
+      const response = await fetchArchivedMatchSearch(query, controller.signal);
+      if (controller.signal.aborted || generationRef.current !== generation) return;
+      dispatch({ type: "search-append", generation, results: response.data });
+      setArchiveLookup({ query, loading: false, error: response.data.length ? null : t("history.noOlderMatches") });
+    } catch (cause) {
+      if (!controller.signal.aborted && generationRef.current === generation) setArchiveLookup({ query, loading: false, error: cause instanceof Error ? cause.message : t("generated.search.searchUnavailable") });
+    }
+  }
 
   useEffect(() => {
     generationRef.current = state.generation;
@@ -364,8 +390,11 @@ function SearchPageBody() {
               {action.label}
             </AsyncButton>
           ))}
+          {isLikelyMatchId(q) && <AsyncButton type="button" className="pc-btn-secondary" loading={archiveLookup.loading} disabled={state.loading || archiveLookup.loading} onClick={() => void searchOlderMatch()}>{t("history.searchOlderMatch")}</AsyncButton>}
         </div>
       )}
+
+      {archiveLookup.query === q && archiveLookup.error && <div role="status" className="pc-card mx-auto max-w-3xl text-xs text-pc-text-muted">{archiveLookup.error}</div>}
 
       {state.remoteNotice && (
         <div className="pc-card mx-auto max-w-3xl text-xs text-pc-text-muted">{state.remoteNotice}</div>

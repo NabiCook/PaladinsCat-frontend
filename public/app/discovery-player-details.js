@@ -394,14 +394,39 @@
     }return list;
   }
   function profileRecentMatches(ctx,id) {
-    const section=n('section','players-profile-recent'),title=n('h2','players-section-title',tr('generated.players.recentMatches','Recent matches')),output=n('div'),controls=n('div','players-profile-match-controls');section.append(title,output,controls);let pageNumber=1,limit=25,seq=0;
-    const load=async()=>{const current=++seq;state(output,tr('generated.players.loading','Loading…'));try{const data=await App.request('/players/'+id+'/matches?limit='+limit+'&offset='+((pageNumber-1)*limit),{timeoutMs:30000});if(!active(ctx)||current!==seq)return;const entries=[...new Map(rows(data).map(row=>[String(row.match_id),row])).values()];output.replaceChildren();controls.replaceChildren();
-      if(!entries.length)output.append(paragraph(tr('generated.players.noMatchesRecordedYet','No matches recorded yet.')));
+    const section=n('section','players-profile-recent'),title=n('h2','players-section-title',tr('generated.players.recentMatches','Recent matches')),sources=n('div','players-controls'),output=n('div'),controls=n('div','players-profile-match-controls');section.append(title,sources,output,controls);let pageNumber=1;const limit=25;let older=false;
+    const recent=button(tr('history.recent','Past 30 days'),()=>{older=false;pageNumber=1;void load();}),past=button(tr('history.loadOlderMatches','Load older matches'),()=>{older=true;pageNumber=1;void load();});sources.append(recent,past,link(tr('generated.stats.playerCharts','Player charts'),'/stats/player/'+id+'/charts','players-inline-link'));
+    const loader=window.DiscoveryArchive.createLoader({request:App.request,current:()=>active(ctx),changed:result=>{
+      output.setAttribute('aria-busy',String(result.status==='loading'));recent.disabled=result.status==='loading';past.disabled=result.status==='loading';recent.setAttribute('aria-pressed',String(!older));past.setAttribute('aria-pressed',String(older));title.textContent=older?tr('history.older','Older'):tr('generated.players.recentMatches','Recent matches');controls.replaceChildren();
+      if(result.status==='loading'){state(output,tr('generated.players.loading','Loading…'));return;}
+      if(result.status==='error'){failure(output,result.error,()=>loader.retry());return;}
+      if(result.status!=='ready')return;
+      const entries=[...new Map(rows(result.data).map(row=>[String(row.match_id),row])).values()];output.replaceChildren();
+      if(!entries.length)output.append(paragraph(older?tr('history.noOlderMatches','No older matches found.'):tr('generated.players.noMatchesRecordedYet','No matches recorded yet.')));
       else table(output,[tr('generated.players.match.0335207','Match'),tr('generated.players.flags','Flags'),tr('generated.players.champion','Champion'),tr('generated.players.queue','Queue'),tr('common.playerChampions.killsShort','K'),tr('common.playerChampions.deathsShort','D'),tr('common.playerChampions.assistsShort','A'),'KDA',tr('generated.players.result','Result'),tr('generated.players.time','Time'),tr('generated.players.played','Played')],entries.map(row=>[positive(row.match_id)?link('#'+String(row.match_id),'/matches/'+row.match_id):fmt(row.match_id),profileMatchFlags(row),profileChampionCell(row),profileMatchQueue(row),fmt(row.kills),fmt(row.deaths),fmt(row.assists),profileMatchKda(row),profileMatchResult(row),profileMatchClock(row.duration_seconds),date(row.entry_datetime)]),tr('generated.players.recentMatches','Recent matches'));
       if(entries.length)output.append(profileMatchMobile(entries));
       if(window.DiscoveryPlayerName?.mountMatchTags)output.querySelectorAll('.players-profile-match-flags').forEach(group=>window.DiscoveryPlayerName.mountMatchTags(group,group._performanceTags));
-      const info=n('span','players-meta',tr('generated.players.page','Page')+' '+pageNumber+' · '+entries.length+' '+tr('generated.players.paginationShown','shown')),nav=n('div','players-profile-match-pager'),prev=button('‹ '+tr('generated.players.previous','Previous'),()=>{if(pageNumber>1){pageNumber--;void load();}}),next=button(tr('generated.players.next','Next')+' ›',()=>{if(pageNumber<4){pageNumber++;void load();}});prev.disabled=pageNumber===1;next.disabled=entries.length<limit||pageNumber>=4;nav.append(prev,next);controls.append(info,nav);
-    }catch(error){if(active(ctx)&&current===seq)failure(output,error,load);}};void load();return section;
+      const info=n('span','players-meta',tr('generated.players.page','Page')+' '+pageNumber+' · '+entries.length+' '+tr('generated.players.paginationShown','shown')),nav=n('div','players-profile-match-pager'),prev=button('‹ '+tr('generated.players.previous','Previous'),()=>{if(pageNumber>1){pageNumber--;void load();}}),next=button(tr('generated.players.next','Next')+' ›',()=>{pageNumber++;void load();});prev.disabled=pageNumber===1;next.disabled=entries.length<limit;nav.append(prev,next);controls.append(info,nav);
+    }});
+    const load=()=>loader.run(window.DiscoveryArchive.playerMatches(id,older,limit,(pageNumber-1)*limit),{older,page:pageNumber});void load();return section;
+  }
+
+  function playerCharts(path,match) {
+    const id=match[1],ctx=begin('player-'+id+'-charts',tr('generated.stats.playerCharts','Player charts'),'/players/'+id),sources=n('div','players-controls'),output=n('div'),controls=n('div','players-profile-match-controls');ctx.body.replaceChildren(sources,output,controls);let older=false,pageNumber=1;const limit=50;
+    const recent=button(tr('history.recent','Past 30 days'),()=>{older=false;pageNumber=1;void load();}),past=button(tr('history.loadOlderData','Load older data'),()=>{older=true;pageNumber=1;void load();});sources.append(recent,past);
+    const loader=window.DiscoveryArchive.createLoader({request:App.request,current:()=>active(ctx),changed:result=>{
+      const busy=result.status==='loading';ctx.body.setAttribute('aria-busy',String(busy));output.setAttribute('aria-busy',String(busy));recent.disabled=busy;past.disabled=busy;recent.setAttribute('aria-pressed',String(!older));past.setAttribute('aria-pressed',String(older));controls.replaceChildren();
+      if(busy){state(output,tr('generated.players.loading','Loading…'));return;}
+      if(result.status==='error'){failure(output,result.error,()=>loader.retry());return;}
+      if(result.status!=='ready')return;output.replaceChildren();const entries=rows(result.data);
+      if(!entries.length)output.append(paragraph(older?tr('history.noOlderData','No older data found.'):tr('generated.stats.noKdaDataAvailable','No chart data available.')));
+      else for(const [key,label,fields]of [['kda',tr('generated.stats.kdaHistory','KDA history'),['kills','deaths','assists']],['dpm',tr('generated.stats.damagePerMinute','Damage per minute'),['damage_per_minute']],['rating',tr('generated.stats.glicko2Rating','Glicko-2 rating'),['rating']]]){
+        const section=panel(label),names={kills:tr('common.playerChampions.killsShort','K'),deaths:tr('common.playerChampions.deathsShort','D'),assists:tr('common.playerChampions.assistsShort','A'),damage_per_minute:tr('generated.stats.damagePerMinute','Damage per minute'),rating:tr('generated.stats.glicko2Rating','Glicko-2 rating')},series=[...entries].reverse().map(row=>({date:date(row.entry_datetime),...Object.fromEntries(fields.map(field=>[field,num(row[field])]))}));
+        trendPlot(section,series,fields,field=>names[field],key);table(section,[tr('generated.matches.date.eb9a4bc','Date'),...fields.map(field=>names[field])],entries.map(row=>[date(row.entry_datetime),...fields.map(field=>fmt(row[field]))]),label);output.append(section);
+      }
+      const prev=button('‹ '+tr('generated.players.previous','Previous'),()=>{pageNumber--;void load();}),next=button(tr('generated.players.next','Next')+' ›',()=>{pageNumber++;void load();});prev.disabled=pageNumber===1;next.disabled=entries.length<limit;controls.append(n('span','players-meta',(older?tr('history.older','Older'):tr('history.recent','Past 30 days'))+' · '+tr('generated.players.page','Page')+' '+pageNumber),prev,next);
+    }});
+    const load=()=>loader.run(window.DiscoveryArchive.playerCharts(id,older,limit,(pageNumber-1)*limit),{older,page:pageNumber});void load();
   }
 
   async function profileEvidence(ctx,id,host,before) {
@@ -616,6 +641,7 @@
   }
   App.registerRoute(/^\/evidence\/([1-9]\d*)$/,async(path,match)=>{const id=match[1];await loadView('players-evidence-subject-'+id,ui('moderation.evidence','Player evidence'),'/evidence',async()=>{try{return await App.request('/players/exploiters/'+id);}catch(error){if(Number(error.status)!==404)throw error;return App.request('/cheaters/'+id);}},(ctx,data)=>{renderPlayerEvidence(ctx,data,id);});});
   App.registerRoute(/^\/players\/([1-9]\d*)(?:\/(matches|champions|loadouts|friends|relationships|evidence))?$/,showProfile);
+  App.registerRoute(/^\/stats\/player\/([1-9]\d*)\/charts$/,playerCharts);
 
   async function exportDeck(ctx,target,deck,status,control) {
     if(control.disabled)return;control.disabled=true;target.dataset.imageExport='true';

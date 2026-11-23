@@ -14,7 +14,7 @@ import CardIcon from "@/components/card-icon";
 import { useRouter } from "next/navigation";
 import { PlayersBackLink } from "@/components/ui/players-page-header";
 import { getChampionIconSafe } from "@/lib/champion-icons";
-import { clearPlayerTag, fetchPlayerMatches, fetchPlayerEvidence, type ClearablePlayerTag, type MatchRecord, type ReportType, type ExploiterEvidenceDetail } from "@/lib/api-client";
+import { clearPlayerTag, fetchPlayerMatches, fetchArchivedPlayerMatches, fetchPlayerEvidence, type ClearablePlayerTag, type MatchRecord, type ReportType, type ExploiterEvidenceDetail } from "@/lib/api-client";
 import PlayerMatchTags from "@/components/player-match-tags";
 import { getTierColor, resolveEffectiveTier, getRankIconPath } from "@/lib/tier-utils";
 import { useAuth } from "@/lib/auth-context";
@@ -237,6 +237,9 @@ export default function PlayerProfileClient({
   const initialProfile = initialResponse === null ? null : decodePlayerProfileResponse(initialResponse);
   const [response, setResponse] = useState<NormalizedPlayerProfile | null>(() => initialProfile?.ok ? initialProfile.value : null);
   const [matches, setMatches] = useState<MatchRecord[]>([]);
+  const [olderHistory, setOlderHistory] = useState(false);
+  const [historyOffset, setHistoryOffset] = useState(0);
+  const historyRequest = useRef<AbortController | null>(null);
   const [matchesError, setMatchesError] = useState<Error | null>(null);
   const [evidence, setEvidence] = useState<ExploiterEvidenceDetail | null>(null);
   const [evidenceLoading, setEvidenceLoading] = useState(true);
@@ -257,7 +260,7 @@ export default function PlayerProfileClient({
   const [currentMatch, setCurrentMatch] = useState<any>(null);
   const [showCurrentMatch, setShowCurrentMatch] = useState(false);
   const [fetchKey, setFetchKey] = useState(0);
-  const [historyFetchKey, setHistoryFetchKey] = useState(0);
+
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const [verifiedFallback, setVerifiedFallback] = useState<boolean | null>(null);
 
@@ -505,7 +508,6 @@ export default function PlayerProfileClient({
         setRefreshCooldownUntil(null);
         setRefreshFeedback({ kind: relatedRefreshError ? 'warning' : 'success', message: relatedRefreshError || data.message || t("common.playerRefresh.success", { remaining: formatNumber(5) }) });
         setFetchKey(k => k + 1);
-        setHistoryFetchKey((key) => key + 1);
         return;
       }
       const remaining = Math.max(0, Number(data?.refreshQuota?.remaining ?? 0));
@@ -529,7 +531,6 @@ export default function PlayerProfileClient({
         });
       }
       setFetchKey(k => k + 1);
-      setHistoryFetchKey((key) => key + 1);
     } catch (err) {
       setRefreshCooldownUntil(null);
       setRefreshFeedback({
@@ -574,26 +575,34 @@ export default function PlayerProfileClient({
     }
   }, [id]);
 
-  // Fetch matches independently — doesn't block profile rendering
-  useEffect(() => {
-    if (!id || !response || error) return;
-    let cancelled = false;
+  const loadHistory = useCallback(async (older = false, offset = 0) => {
+    historyRequest.current?.abort();
+    const controller = new AbortController();
+    historyRequest.current = controller;
+    setOlderHistory(older);
+    setHistoryOffset(offset);
+    setMatches([]);
     setMatchesLoading(true);
     setMatchesError(null);
+    try {
+      const query = { limit: "25", offset: String(offset) };
+      const data = older
+        ? await fetchArchivedPlayerMatches(id, query, controller.signal)
+        : await fetchPlayerMatches(id, query, { signal: controller.signal });
+      if (!controller.signal.aborted) setMatches(data);
+    } catch (failure) {
+      if (!controller.signal.aborted) setMatchesError(failure instanceof Error ? failure : new Error("Could not load matches"));
+    } finally {
+      if (!controller.signal.aborted) setMatchesLoading(false);
+    }
+  }, [id]);
 
-    fetchPlayerMatches(id, { limit: "10" })
-      .then((data) => {
-        if (!cancelled) setMatches(data);
-      })
-      .catch((failure) => {
-        if (!cancelled) setMatchesError(failure instanceof Error ? failure : new Error("Could not load recent matches"));
-      })
-      .finally(() => {
-        if (!cancelled) setMatchesLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }, [id, historyFetchKey, response, error]);
+  // Only recent history loads automatically. Older pages require a control click.
+  useEffect(() => {
+    if (!id || !response || error) return;
+    void loadHistory();
+    return () => historyRequest.current?.abort();
+  }, [id, response, error, loadHistory]);
 
   // Fetch the player's published evidence independently — doesn't block profile
   // rendering. Only players with published evidence (or a public exploiter tag)
@@ -1077,7 +1086,12 @@ export default function PlayerProfileClient({
           {/* Recent Matches */}
           <div>
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-semibold text-pc-text">{t("generated.players.recentMatches")}</h2>
+              <h2 className="text-sm font-semibold text-pc-text">{t(olderHistory ? "history.older" : "generated.players.recentMatches")}</h2>
+              <button type="button" className="pc-btn-secondary" disabled={matchesLoading} aria-pressed={!olderHistory} onClick={() => void loadHistory()}>{t("history.recent")}</button>
+              <button type="button" className="pc-btn-secondary" disabled={matchesLoading} aria-pressed={olderHistory} onClick={() => void loadHistory(true)}>{t("history.loadOlderMatches")}</button>
+              <Link href={`/stats/player/${id}/charts`} className="text-xs text-pc-accent">{t("generated.stats.playerCharts")}</Link>
+              <button type="button" className="pc-btn-secondary" disabled={matchesLoading || historyOffset === 0} onClick={() => void loadHistory(olderHistory, Math.max(0, historyOffset - 25))}>{t("generated.players.previous")}</button>
+              <button type="button" className="pc-btn-secondary" disabled={matchesLoading || matches.length < 25} onClick={() => void loadHistory(olderHistory, historyOffset + 25)}>{t("generated.players.next")}</button>
             </div>
             <div>
               {matchesLoading ? (
@@ -1086,10 +1100,10 @@ export default function PlayerProfileClient({
                 <ErrorState
                   title={t("generated.players.recentMatches")}
                   message={formatApiErrorMessage(matchesError, t, t("generated.matches.weCouldnTLoadMatchDataRightNowPleaseTry"))}
-                  onRetry={() => setHistoryFetchKey((key) => key + 1)}
+                  onRetry={() => void loadHistory(olderHistory, historyOffset)}
                 />
               ) : matches.length === 0 ? (
-                <p className="text-pc-text-muted text-sm">{t("generated.players.noMatchesRecordedYet")}</p>
+                <p className="text-pc-text-muted text-sm">{t(olderHistory ? "history.noOlderMatches" : "generated.players.noMatchesRecordedYet")}</p>
               ) : (
                 <>
                 <div className="space-y-2 lg:hidden">

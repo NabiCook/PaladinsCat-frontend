@@ -23,10 +23,11 @@
 "use client";
 
 import { formatApiErrorMessage } from "@/lib/api-errors";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   fetchMatchDetail,
+  fetchArchivedMatchDetail,
   type MatchDetailWithBans,
   type MatchFact,
   type MatchFactPlayer,
@@ -200,10 +201,38 @@ export default function MatchDetailPage({ initialMatch = null }: { initialMatch?
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [olderMatch, setOlderMatch] = useState(false);
+  const archiveRequest = useRef<AbortController | null>(null);
   const accessScope = user?.linkedPlayerId != null ? "verified" : user ? "account" : "guest";
+
+  async function loadOlderMatch() {
+    archiveRequest.current?.abort();
+    const controller = new AbortController();
+    archiveRequest.current = controller;
+    setOlderMatch(true);
+    setLoading(true);
+    setError(null);
+    setMatch(null);
+    try {
+      const detail = await fetchArchivedMatchDetail(Number(matchId), controller.signal);
+      if (controller.signal.aborted) return;
+      if (!detail) { setError(t("history.noOlderMatches")); return; }
+      const currentMatch = await withCurrentStoredModeration(detail).catch(() => detail);
+      if (controller.signal.aborted) return;
+      setMatch(currentMatch);
+      setFact(embeddedFact(detail));
+      setSnapshots(embeddedSnapshots(detail));
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(formatApiErrorMessage(cause, t, t("generated.matches.matchDetailsUnavailable")));
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
+    archiveRequest.current?.abort();
+    setOlderMatch(false);
 
     const numericMatchId = parseInt(matchId, 10);
     async function load() {
@@ -223,7 +252,7 @@ export default function MatchDetailPage({ initialMatch = null }: { initialMatch?
       setLoading(true);
       setError(null);
       // v11 invalidates cached rows from the pre-complete-payload fanout path.
-      const cacheKey = `paladinscat:match-result:v12:${accessScope}:${numericMatchId}`;
+      const cacheKey = `paladinscat:match-result:v13-recent:${accessScope}:${numericMatchId}`;
       try {
         const cached = reloadKey === 0 ? readBrowserResult<CachedMatchResult>(cacheKey) : null;
         if (cached) {
@@ -268,7 +297,7 @@ export default function MatchDetailPage({ initialMatch = null }: { initialMatch?
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; archiveRequest.current?.abort(); };
   }, [accessScope, authLoading, initialMatch, matchId, reloadKey, t]);
 
   useEffect(() => {
@@ -352,7 +381,8 @@ export default function MatchDetailPage({ initialMatch = null }: { initialMatch?
   if (error) {
     return (
       <div className="space-y-4">
-        <ErrorState title={t("generated.matches.matchDetailsUnavailable")} message={error} onRetry={() => setReloadKey((key) => key + 1)} />
+        <ErrorState title={t("generated.matches.matchDetailsUnavailable")} message={error} onRetry={() => olderMatch ? void loadOlderMatch() : setReloadKey((key) => key + 1)} />
+        <button type="button" className="pc-btn-secondary" onClick={() => void loadOlderMatch()}>{t("history.loadOlderMatch")}</button>
         <ContextBackLink
           fallbackHref="/matches"
           label={t("generated.matches.backToMatches")}

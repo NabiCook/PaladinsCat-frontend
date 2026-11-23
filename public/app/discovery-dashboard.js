@@ -244,7 +244,7 @@
     searchActions.replaceChildren();
     const numeric = /^\d{2,}$/.test(query), matchId = /^\d{10,13}$/.test(query) && Number(query) >= 1000000000;
     const playerName = (/^(xbox|xbl|psn|ps|playstation|switch|nintendo)[:/].{2,64}$/i.test(query) || (query.length >= 3 && query.length <= 32 && !/^\d+$/.test(query))) && !/[,%*?]/.test(query);
-    const actions = [[numeric && !matchId,'player-id','generated.search.lookUpPlayerId','Look up player ID'],[matchId,'match-id','generated.search.lookUpMatchId','Look up match ID'],[playerName,'player-name','generated.search.searchHiRezExactPlayerName','Search Hi-Rez']];
+    const actions = [[numeric && !matchId,'player-id','generated.search.lookUpPlayerId','Look up player ID'],[matchId,'match-id','generated.search.lookUpMatchId','Look up match ID'],[matchId,'older-match','history.searchOlderMatch','Search older match'],[playerName,'player-name','generated.search.searchHiRezExactPlayerName','Search Hi-Rez']];
     for (const [show,target,key,fallback] of actions) {
       if (!show) continue;
       const action = document.createElement('button'); action.type = 'button'; action.className = 'reference-filter'; nativeText(action, M(key, undefined, fallback));
@@ -254,7 +254,7 @@
         resultList.setAttribute('aria-busy','true');
         try {
           const params = new URLSearchParams({q:query,limit:'36',remote:'true',remoteTarget:target}); if (target === 'match-id') params.set('refresh','true');
-          const raw = await window.DiscoveryApp.request('/search/universal?'+params,{signal:controller.signal,retries:0});
+          const raw = await window.DiscoveryApp.request(target==='older-match'?window.DiscoveryArchive.searchMatch(query):'/search/universal?'+params,{signal:controller.signal,timeoutMs:target==='older-match'?30000:undefined,retries:0});
           if (!current()) return;
           const [logic] = await searchLogic(); if (!current()) return;
           paintSearchResults(logic.mergeResults([...searchResults,...raw.data]));

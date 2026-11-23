@@ -4,10 +4,10 @@
  */
 "use client";
 import { formatApiErrorMessage } from "@/lib/api-errors";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import ContextBackLink from "@/components/context-back-link";
-import { fetchPlayerChartHistory, type KdaHistoryEntry, type DpmHistoryEntry, type GlickoHistoryEntry } from "@/lib/api-client";
+import { fetchPlayerChartHistory, fetchArchivedPlayerChartHistory, type KdaHistoryEntry, type DpmHistoryEntry, type GlickoHistoryEntry } from "@/lib/api-client";
 import { useLocalization } from "@/lib/localization-context";
 import { useRouteSettledLoading } from "@/lib/route-transition-context";
 import { RouteSkeleton } from "@/components/route-skeleton";
@@ -27,35 +27,62 @@ export default function PlayerChartsPage({ params }: { params: Promise<{ id: str
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(30);
   const [id, setId] = useState<string | null>(null);
+  const [older, setOlder] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const request = useRef<AbortController | null>(null);
   const displayLoading = useRouteSettledLoading(loading);
 
   useEffect(() => {
-    params.then((p) => setId(p.id));
+    let cancelled = false;
+    params.then((p) => { if (!cancelled) setId(p.id); });
+    return () => { cancelled = true; request.current?.abort(); };
   }, [params]);
 
   const loadData = useCallback(async () => {
     if (!id) return;
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    setOlder(false);
+    setOffset(0); setKdaData([]); setDpmData([]); setGlickoData([]);
     setLoading(true);
     setError(null);
     try {
-      const { kda, dpm, glicko } = await fetchPlayerChartHistory(id, days, 50);
+      const { kda, dpm, glicko } = await fetchPlayerChartHistory(id, days, 50, controller.signal);
+      if (controller.signal.aborted) return;
       setKdaData(kda);
       setDpmData(dpm);
       setGlickoData(glicko);
     } catch (cause) {
-      setError(formatApiErrorMessage(cause, t, t("generated.stats.failedToLoadChartData")));
+      if (!controller.signal.aborted) setError(formatApiErrorMessage(cause, t, t("generated.stats.failedToLoadChartData")));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [id, days, t]);
 
   useEffect(() => {
-    loadData();
+    void loadData();
+    return () => request.current?.abort();
   }, [loadData]);
+
+  async function loadOlder(nextOffset = 0) {
+    if (!id) return;
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    setOlder(true); setOffset(nextOffset); setLoading(true); setError(null);
+    setKdaData([]); setDpmData([]); setGlickoData([]);
+    try {
+      const data = await fetchArchivedPlayerChartHistory(id, 50, nextOffset, controller.signal);
+      if (controller.signal.aborted) return;
+      setKdaData(data.kda); setDpmData(data.dpm); setGlickoData(data.glicko);
+    } catch (cause) {
+      if (!controller.signal.aborted) setError(formatApiErrorMessage(cause, t, t("generated.stats.failedToLoadChartData")));
+    } finally { if (!controller.signal.aborted) setLoading(false); }
+  }
 
 
   if (displayLoading) return <RouteSkeleton variant="detail" />;
-  if (error) return <div className="text-center py-12 text-pc-text-muted">{error}</div>;
 
   return (
     <ContentFade className="space-y-8">
@@ -71,9 +98,15 @@ export default function PlayerChartsPage({ params }: { params: Promise<{ id: str
         >
           <option value={7}>{t("generated.stats.last7Days")}</option>
           <option value={30}>{t("generated.stats.last30Days")}</option>
-          <option value={90}>{t("generated.stats.last90Days")}</option>
         </select>
       </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className="pc-btn-secondary" aria-pressed={!older} onClick={() => void loadData()}>{t("history.recent")}</button>
+        <button type="button" className="pc-btn-secondary" aria-pressed={older} onClick={() => void loadOlder()}>{t("history.loadOlderData")}</button>
+        {older && <><button type="button" className="pc-btn-secondary" disabled={offset === 0} onClick={() => void loadOlder(Math.max(0, offset - 50))}>{t("generated.players.previous")}</button><button type="button" className="pc-btn-secondary" disabled={kdaData.length < 50} onClick={() => void loadOlder(offset + 50)}>{t("generated.players.next")}</button></>}
+      </div>
+      {error && <div role="alert" className="pc-card text-pc-text-muted">{error}<button type="button" className="pc-btn-secondary" onClick={() => older ? void loadOlder(offset) : void loadData()}>{t("async.tryAgain")}</button></div>}
+      {older && !error && kdaData.length === 0 && <p className="text-pc-text-muted">{t("history.noOlderData")}</p>}
 
       {/* KDA Chart */}
       <div className="pc-card min-w-0 p-4 sm:p-6">
