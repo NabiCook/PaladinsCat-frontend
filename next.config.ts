@@ -71,6 +71,19 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Every /app/ asset URL in index.html and in the scripts themselves carries a `?v=`
+        // token, so a year-long immutable cache is pinned to the build that asked for it and
+        // only removes the per-visit revalidation. The document route keeps its own no-store
+        // policy: it mints the guest cookie.
+        source: "/app/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
         source: "/images/:path*",
         headers: [
           {
