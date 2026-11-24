@@ -547,7 +547,7 @@ export default function PlayerProfileClient({
     setShowCurrentMatch(true);
     setCurrentMatch(null);
     try {
-      const res = await fetch(`${API_BASE}/live/players/${id}`, { cache: 'no-store', signal: AbortSignal.timeout(60_000) });
+      const res = await fetch(`${API_BASE}/live/players/${encodeURIComponent(id)}?refresh=true`, { cache: 'no-store', signal: AbortSignal.timeout(60_000) });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.error?.message || data?.error || PLAYER_PROFILE_ERROR_KEYS.failedToFetchLiveMatchData);

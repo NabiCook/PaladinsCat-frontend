@@ -170,10 +170,14 @@ export function decodePlayerLiveMatchResponse(input: unknown): PlayerResponseDec
         const playerId = identifier(item.player_id, true), taskForce = numeric(item.task_force);
         if (playerId === undefined) return fail(code, `${prefix}.player_id`);
         if (!Number.isSafeInteger(taskForce) || (taskForce !== 1 && taskForce !== 2)) return fail(code, `${prefix}.task_force`);
+        if (item.platform != null && typeof item.platform !== "string"
+          && !(typeof item.platform === "number" && Number.isSafeInteger(item.platform) && item.platform >= 0)) {
+          return fail(code, `${prefix}.platform`);
+        }
         const invalid = scalars(item, prefix, ["mastery_level", "account_level", "win_ratio", "wins", "losses", "mu", "phi", "queue_id",
           "avg_dpm", "kbm_rank", "kbm_tier", "live_tier", "profile_level", "profile_mastery_level", "profile_matches",
           "profile_win_rate", "queue_elo", "ranked_matches", "ranked_win_rate", "total_matches", "total_wins"],
-          ["name", "player_name", "champion_name", "platform", "profile_platform", "privacy_flag"], ["has_profile"]);
+          ["name", "player_name", "champion_name", "profile_platform", "privacy_flag"], ["has_profile"]);
         if (invalid) return fail(code, invalid);
         rows.push({ ...item, player_id: playerId, task_force: taskForce });
       }
