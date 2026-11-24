@@ -22,7 +22,7 @@ export const runtime = "nodejs";
 export const maxDuration = 180;
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "authorization", "content-type", "x-csrf-token", "origin", "x-forwarded-proto"] as const;
-const FORWARDED_RESPONSE_HEADERS = ["cache-control", "content-type"] as const;
+const FORWARDED_RESPONSE_HEADERS = ["cache-control", "content-type", "retry-after"] as const;
 
 /** Resolve the backend base address from the server-only runtime setting. */
 function backendBase(): string {
